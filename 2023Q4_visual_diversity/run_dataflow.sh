@@ -1,0 +1,15 @@
+python -m analyze_embedding \
+    --output_table etsy-search-ml-dev:yzhang.visual_diversity_vsv2_explore \
+    --output_dir gs://training-dev-search-data-jtzn/users/yzhang/tmp \
+    --runner DataflowRunner \
+    --project etsy-sr-etl-prod \
+    --region us-central1 \
+    --temp_location gs://training-dev-search-data-jtzn/users/yzhang/tmp \
+    --staging_location gs://training-dev-search-data-jtzn/users/yzhang/tmp \
+    --experiment use_runner_v2 \
+    --experiment upload_graph \
+    --experiment max_workflow_runtime_walltime_seconds=43200 \
+    --machine_type n2-highmem-8 \
+    --disk_size_gb 200 \
+    --num_workers 8 \
+    --max_num_workers 16
