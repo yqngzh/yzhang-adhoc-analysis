@@ -162,7 +162,7 @@ def run(argv=None):
     )
     args, _ = parser.parse_known_args(argv)
 
-    now = int(time.time())
+    now = str(int(time.time()))
     pipeline_options = PipelineOptions(
         save_main_session=True,
         pipeline_type_check=True,
