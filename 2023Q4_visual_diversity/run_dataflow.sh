@@ -1,5 +1,5 @@
 python -m analyze_embedding \
-    --output_table etsy-search-ml-dev:yzhang.visual_diversity_vsv2_explore \
+    --output_table etsy-data-warehouse-dev:search.yzhang_explore_visual_diversity_vsv2 \
     --output_dir gs://training-dev-search-data-jtzn/users/yzhang/tmp \
     --runner DataflowRunner \
     --project etsy-search-ml-dev \
