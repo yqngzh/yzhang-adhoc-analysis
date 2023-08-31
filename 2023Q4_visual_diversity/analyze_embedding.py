@@ -10,15 +10,28 @@ from google.cloud import bigquery
 # from analyze_embedding import GetEmbeddingAndSimilarity, run_query_df, BQ_SQL, input_data
 
 
-BQ_SQL = """select distinct
-    requestUUID, position,
-    ctx.docInfo.queryInfo.query as query_str,
-    ctx.docInfo.queryInfo.queryLevelMetrics.bin as query_bin,
-    candidateInfo.docInfo.listingInfo.listingId as listing_id,
-from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_08_29`,
-    unnest(contextualInfo) as ctx
-where ctx.docInfo.queryInfo.query is not null
-and candidateInfo.docInfo.listingInfo.listingId is not null
+BQ_SQL = """with train_data as (
+  select distinct
+      requestUUID, position,
+      ctx.docInfo.queryInfo.query as query_str,
+      ctx.docInfo.queryInfo.queryLevelMetrics.bin as query_bin,
+      candidateInfo.docInfo.listingInfo.listingId as listing_id,
+  from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_08_29`,
+      unnest(contextualInfo) as ctx
+  where ctx.docInfo.queryInfo.query is not null
+  and candidateInfo.docInfo.listingInfo.listingId is not null
+),
+fb_data as (
+  select key as listing_id, VSV2Embeddings_vsv2Embedding512.list as embedding
+  from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
+  where key in (
+    select distinct listing_id from train_data
+  )
+)
+select train_data.*, fb_data.embedding
+from train_data
+left join fb_data
+on train_data.listing_id = fb_data.listing_id
 order by requestUUID, position
 """
 
@@ -29,6 +42,7 @@ order by requestUUID, position
 #         "query_str": "test1",
 #         "query_bin": "head",
 #         "listing_id": 902792488,
+#         "embedding": [{"element": 1.0}, {"element": 2.0}],
 #     },
 #     {
 #         "requestUUID": "aaa",
@@ -36,6 +50,7 @@ order by requestUUID, position
 #         "query_str": "test1",
 #         "query_bin": "head",
 #         "listing_id": 725104244,
+#         "embedding": [{"element": 3.0}, {"element": 4.0}],
 #     },
 #     {
 #         "requestUUID": "aaa",
@@ -43,6 +58,7 @@ order by requestUUID, position
 #         "query_str": "test1",
 #         "query_bin": "head",
 #         "listing_id": 1221932302,
+#         "embedding": [{"element": 5.0}, {"element": 6.0}],
 #     },
 #     {
 #         "requestUUID": "bbb",
@@ -50,6 +66,7 @@ order by requestUUID, position
 #         "query_str": "xxx",
 #         "query_bin": "top01",
 #         "listing_id": 793904541,
+#         "embedding": [{"element": 7.0}, {"element": 8.0}],
 #     },
 #     {
 #         "requestUUID": "bbb",
@@ -57,6 +74,7 @@ order by requestUUID, position
 #         "query_str": "xxx",
 #         "query_bin": "top01",
 #         "listing_id": 795642038,
+#         "embedding": None,
 #     },
 #     {
 #         "requestUUID": "bbb",
@@ -64,27 +82,7 @@ order by requestUUID, position
 #         "query_str": "xxx",
 #         "query_bin": "top01",
 #         "listing_id": 1323065344,
-#     },
-#     {
-#         "requestUUID": "ccc",
-#         "position": 0,
-#         "query_str": "random",
-#         "query_bin": "head",
-#         "listing_id": 855096617,
-#     },
-#     {
-#         "requestUUID": "ccc",
-#         "position": 1,
-#         "query_str": "random",
-#         "query_bin": "head",
-#         "listing_id": 1007337105,
-#     },
-#     {
-#         "requestUUID": "ccc",
-#         "position": 2,
-#         "query_str": "random",
-#         "query_bin": "head",
-#         "listing_id": 1506329131,
+#         "embedding": [],
 #     },
 # ]
 
@@ -107,25 +105,15 @@ def convert_bq_beam_schema(schema):
 
 class GetEmbeddingAndSimilarity(beam.DoFn):
     def compute_similarity(self, embeddings: List[List[float]]):
-        embed_array = np.array(embeddings)
-        data_normed = embed_array / np.linalg.norm(embed_array, axis=1, keepdims=True)
-        cosine_sim_matrix = data_normed @ data_normed.T
-        return list(cosine_sim_matrix.flatten())
-
-    def _get_vsv2_embeddings(self, listing_ids: List[int]) -> List[List[float]]:
-        qstr = f"""select key as listing_id, VSV2Embeddings_vsv2Embedding512.list as embedding
-        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
-        where key in ({','.join([str(x) for x in listing_ids])})
-        """
-        df = run_query_df(qstr)
-        df["embedding"] = df.embedding.apply(
-            lambda lst: [item["element"] for item in lst]
-        )
-        df = df.sort_values(
-            by="listing_id", key=lambda col: [listing_ids.index(x) for x in col]
-        )
-        assert np.all(df.listing_id.values == listing_ids)
-        return list(df.embedding)
+        if len(embeddings) > 0:
+            embed_array = np.array(embeddings)
+            data_normed = embed_array / np.linalg.norm(
+                embed_array, axis=1, keepdims=True
+            )
+            cosine_sim_matrix = data_normed @ data_normed.T
+            return list(cosine_sim_matrix.flatten())
+        else:
+            return []
 
     def process(self, row):
         in_data = row[1]
@@ -135,17 +123,21 @@ class GetEmbeddingAndSimilarity(beam.DoFn):
             "query_bin": in_data[0]["query_bin"],
             "listing_ids": [],
         }
-        try:
-            prev_position = -1
-            for i in range(len(in_data)):
-                assert in_data[i]["position"] > prev_position
-                prev_position = in_data[i]["position"]
-                out_data["listing_ids"].append(in_data[i]["listing_id"])
-            embeddings = self._get_vsv2_embeddings(out_data["listing_ids"])
-            out_data["cosine_sim"] = self.compute_similarity(embeddings)
-            return [out_data]
-        except:
-            logging.warning(f"Request {in_data[0]['requestUUID']} has missing listing")
+        prev_position = -1
+        embeddings = []
+        for i in range(len(in_data)):
+            curr_in_data = in_data[i]
+            assert curr_in_data["position"] > prev_position
+            prev_position = curr_in_data["position"]
+            if (curr_in_data["embedding"] is not None) and (
+                len(curr_in_data["embedding"]) > 0
+            ):
+                out_data["listing_ids"].append(curr_in_data["listing_id"])
+                embeddings.append(
+                    [item["element"] for item in curr_in_data["embedding"]]
+                )
+        out_data["cosine_sim"] = self.compute_similarity(embeddings)
+        return [out_data]
 
 
 def run(argv=None):
