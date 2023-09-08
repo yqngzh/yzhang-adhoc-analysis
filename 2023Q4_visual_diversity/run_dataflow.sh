@@ -1,12 +1,12 @@
 python -m analyze_embedding \
-    --output_table etsy-data-warehouse-dev:search.yzhang_explore_visual_diversity_vsv2 \
-    --output_dir gs://training-dev-search-data-jtzn/users/yzhang/tmp \
+    --output_table etsy-sr-etl-prod:yzhang.explore_visual_diversity_vsv2 \
+    --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --runner DataflowRunner \
-    --project etsy-search-ml-dev \
+    --project etsy-sr-etl-prod \
     --region us-central1 \
-    --service_account_email sa-dataflow@etsy-search-ml-dev.iam.gserviceaccount.com \
-    --temp_location gs://training-dev-search-data-jtzn/users/yzhang/tmp/temp \
-    --staging_location gs://training-dev-search-data-jtzn/users/yzhang/tmp/staging \
+    --service_account_email dataflow-worker@etsy-sr-etl-prod.iam.gserviceaccount.com \
+    --temp_location gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
+    --staging_location gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --experiment use_runner_v2 \
     --experiment upload_graph \
     --experiment max_workflow_runtime_walltime_seconds=43200 \
