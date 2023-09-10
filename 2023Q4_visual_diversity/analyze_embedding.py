@@ -224,9 +224,9 @@ def run(argv=None):
             # | "Create" >> beam.Create(input_data)
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
-                query="select * from `etsy-sr-etl-prod.yzhang.visual_diversity_vsv2_embedding` limit 200",
+                query="select * from `etsy-sr-etl-prod.yzhang.visual_diversity_vsv2_embedding`",
                 use_standard_sql=True,
-                gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp/bq_load",
+                gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )
             | "Group by request" >> beam.GroupBy(lambda x: x["requestUUID"])
             | "Get embedding similarity" >> beam.ParDo(GetEmbeddingAndSimilarity())
