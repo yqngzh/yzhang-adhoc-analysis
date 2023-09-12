@@ -9,35 +9,6 @@ from apache_beam.io.gcp.internal.clients.bigquery import TableSchema
 from apache_beam.io.gcp.internal.clients.bigquery import TableFieldSchema
 from google.cloud import bigquery
 
-
-# Run the following in B
-# create table `etsy-sr-etl-prod.yzhang.visual_diversity_vsv2_embedding` as (
-#   with train_data as (
-#     select distinct
-#         requestUUID, position,
-#         ctx.docInfo.queryInfo.query as query_str,
-#         ctx.docInfo.queryInfo.queryLevelMetrics.bin as query_bin,
-#         candidateInfo.docInfo.listingInfo.listingId as listing_id,
-#     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_09_08`,
-#         unnest(contextualInfo) as ctx
-#     where ctx.docInfo.queryInfo.query is not null
-#     and candidateInfo.docInfo.listingInfo.listingId is not null
-#   ),
-#   fb_data as (
-#     select key as listing_id, VSV2Embeddings_vsv2Embedding512.list as embedding
-#     from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
-#     where key in (
-#       select distinct listing_id from train_data
-#     )
-#   )
-#   select train_data.*, fb_data.embedding
-#   from train_data
-#   left join fb_data
-#   on train_data.listing_id = fb_data.listing_id
-#   order by requestUUID, position
-# )
-# ```
-
 input_data = [
     {
         "requestUUID": "aaa",
@@ -151,6 +122,11 @@ class GetEmbeddingAndSimilarity(beam.DoFn):
 def run(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--input_table",
+        required=True,
+        help="Input table with requests and embeddings",
+    )
+    parser.add_argument(
         "--output_table",
         required=True,
         help="Output table to write results to",
@@ -224,7 +200,7 @@ def run(argv=None):
             # | "Create" >> beam.Create(input_data)
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
-                query="select * from `etsy-sr-etl-prod.yzhang.visual_diversity_vsv2_embedding`",
+                query=f"select * from `{args.input_table}`",
                 use_standard_sql=True,
                 gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )

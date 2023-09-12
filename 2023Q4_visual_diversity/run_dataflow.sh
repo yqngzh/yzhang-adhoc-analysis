@@ -1,5 +1,6 @@
 python -m analyze_embedding \
-    --output_table etsy-sr-etl-prod:yzhang.explore_visual_diversity_vsv2 \
+    --input_table etsy-sr-etl-prod.yzhang.visual_diversity_clipjoint_embedding \
+    --output_table etsy-sr-etl-prod:yzhang.explore_visual_diversity_clip_joint \
     --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \
