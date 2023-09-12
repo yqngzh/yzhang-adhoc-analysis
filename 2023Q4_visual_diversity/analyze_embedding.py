@@ -200,7 +200,7 @@ def run(argv=None):
             # | "Create" >> beam.Create(input_data)
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
-                query=f"select * from `{args.input_table}`",
+                query=f"select * from `{args.input_table}` order by requestUUID, position",
                 use_standard_sql=True,
                 gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )
