@@ -54,9 +54,10 @@ class GetEmbeddingAndSimilarity(beam.DoFn):
                 len(curr_in_data["embedding"]) > 0
             ):
                 new_listing_ids.append(curr_in_data["listing_id"])
-                embeddings.append(
-                    [item["element"] for item in curr_in_data["embedding"]]
-                )
+                # embeddings.append(
+                #     [item["element"] for item in curr_in_data["embedding"]]
+                # )
+                embeddings.append(curr_in_data["embedding"])
                 positions.append(curr_in_data["position"])
 
         # sort by position
