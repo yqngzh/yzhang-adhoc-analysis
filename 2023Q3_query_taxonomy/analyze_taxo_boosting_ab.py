@@ -10,37 +10,71 @@ from apache_beam.io.gcp.internal.clients.bigquery import TableFieldSchema
 from google.cloud import bigquery
 
 
-class ImpressionSummary(beam.DoFn):
+input_data = [
+    {
+        "full_path": "pet_supplies.pet_clothing_accessories_and_shoes.pet_accessories.pet_neckwear",
+        "click_top_taxo": [
+            {"element": "home_and_living"},
+            {"element": "art_and_collectibles"},
+        ],
+        "click_taxo": [
+            {"element": "art_and_collectibles.prints"},
+            {"element": "home_and_living.home_decor"},
+        ],
+    }
+]
+
+
+class DemandProcess(beam.DoFn):
     def process(self, row):
-        in_data = row[1]
-        out_data = {
-            "requestUUID": in_data[0]["requestUUID"],
-            "visitId": in_data[0]["visitId"],
-            "query_str": in_data[0]["query_str"],
-            "query_bin": in_data[0]["query_bin"],
-        }
+        listing_full_path = row["full_path"]
+        if listing_full_path is None or len(listing_full_path) == 0:
+            # no listing information, assume not overlapping
+            row["click_top_overlap"] = 0
+            row["click_level2_overlap"] = 0
+            row["purchase_top_overlap"] = 0
+            row["purchase_level2_overlap"] = 0
+        else:
+            query_click_top_node = [item["element"] for item in row["click_top_taxo"]]
+            query_click_level2_node = [
+                item["element"] for item in row["click_level2_taxo"]
+            ]
+            query_purchase_top_node = [
+                item["element"] for item in row["purchase_top_taxo"]
+            ]
+            query_purchase_level2_node = [
+                item["element"] for item in row["purchase_level2_taxo"]
+            ]
 
-        new_listing_ids, positions, embeddings = [], [], []
-        for i in range(len(in_data)):
-            curr_in_data = in_data[i]
-            if (curr_in_data["embedding"] is not None) and (
-                len(curr_in_data["embedding"]) > 0
-            ):
-                new_listing_ids.append(curr_in_data["listing_id"])
-                # embeddings.append(
-                #     [item["element"] for item in curr_in_data["embedding"]]
-                # )
-                embeddings.append(curr_in_data["embedding"])
-                positions.append(curr_in_data["position"])
-
-        # sort by position
-        zipped_data = sorted(zip(positions, new_listing_ids, embeddings))
-        new_listing_ids_sorted = [item[1] for item in zipped_data]
-        embeddings_sorted = [item[2] for item in zipped_data]
-
-        out_data["listing_ids"] = new_listing_ids_sorted
-        out_data["cosine_sim"] = self.compute_similarity(embeddings_sorted)
-        return [out_data]
+            listing_full_path_split = listing_full_path.split(".")
+            if len(listing_full_path_split) > 1:
+                # listing has at least 2 levels of taxonomy nodes
+                listing_top_node = listing_full_path_split[0]
+                listing_level2_node = (
+                    listing_full_path_split[0] + "." + listing_full_path_split[1]
+                )
+                row["click_top_overlap"] = (
+                    1 if listing_top_node in query_click_top_node else 0
+                )
+                row["click_level2_overlap"] = (
+                    1 if listing_level2_node in query_click_level2_node else 0
+                )
+                row["purchase_top_overlap"] = (
+                    1 if listing_top_node in query_purchase_top_node else 0
+                )
+                row["purchase_level2_overlap"] = (
+                    1 if listing_level2_node in query_purchase_level2_node else 0
+                )
+            else:
+                # listing only has top taxonomy node
+                row["click_top_overlap"] = (
+                    1 if listing_full_path in query_click_top_node else 0
+                )
+                row["purchase_top_overlap"] = (
+                    1 if listing_full_path in query_purchase_top_node else 0
+                )
+                row["click_level2_overlap"] = 0
+                row["purchase_level2_overlap"] = 0
 
 
 def run(argv=None):
@@ -124,25 +158,26 @@ def run(argv=None):
     client = bigquery.Client(project=pipeline_options.get_all_options()["project"])
     client.create_table(table, exists_ok=True)
 
-    with beam.Pipeline(options=pipeline_options) as pipeline:
-        # with beam.Pipeline() as pipeline:
+    # with beam.Pipeline(options=pipeline_options) as pipeline:
+    with beam.Pipeline() as pipeline:
         (
             pipeline
-            # | "Create" >> beam.Create(input_data)
-            | "Read input data"
-            >> beam.io.ReadFromBigQuery(
-                query=f"select * from `{args.input_table}` order by requestUUID, position",
-                use_standard_sql=True,
-                gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
-            )
-            | "Data summary" >> beam.ParDo(GetEmbeddingAndSimilarity())
-            # | "Print" >> beam.Map(print)
-            | "Write results to BigQuery"
-            >> beam.io.WriteToBigQuery(
-                args.output_table,
-                schema=output_schema_beam,
-                method="FILE_LOADS",
-            )
+            | "Create" >> beam.Create(input_data)
+            # | "Read input data"
+            # >> beam.io.ReadFromBigQuery(
+            #     # query=f"select * from `{args.input_table}`",
+            #     query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_web_full` limit 1",
+            #     use_standard_sql=True,
+            #     gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
+            # )
+            | "Print" >> beam.Map(print)
+            # | "Data summary" >> beam.ParDo(DemandProcess())
+            # | "Write results to BigQuery"
+            # >> beam.io.WriteToBigQuery(
+            #     args.output_table,
+            #     schema=output_schema_beam,
+            #     method="FILE_LOADS",
+            # )
         )
 
 

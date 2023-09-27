@@ -13,30 +13,121 @@ limit 200
 -- top is "clothing.women" and second is "home.living_room.desk"
 -- we want top ["clothing", "home"], second ["clothing.women", "home.living_room"]
 
-CREATE OR REPLACE TABLE etsy-sr-etl-prod.yzhang.query_taxo_web_corrected AS (
-    WITH exp_data AS (
+-- boe test
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_boe`
+AS
+(
+    WITH query_taxo AS (
         SELECT 
-            ab_variant, visit_id, query, page_no, full_path,
-            impressions, clicks, purchases, price_usd,
-            top_clicked_taxo as query_click_level2_taxo, top_purchased_taxo as query_purchase_level2_taxo
-        FROM `etsy-sr-etl-prod.yfu_insights.query_taxo_web`
-    ),
-    join_intent as (
-        select exp_data.*, tmp.query_intent
-        from exp_data
-        left join (
-            select query_raw, inference.label as query_intent
-            from `etsy-data-warehouse-prod.arizona.query_intent_labels`
-            QUALIFY ROW_NUMBER() OVER(PARTITION BY query_raw ORDER BY inference.confidence DESC) = 1
-        ) as tmp
-        on exp_data.query = tmp.query_raw
-    ),
-    full_exp_data as (
-        select join_intent.*, query_fl.queryLevelMetrics_bin as query_bin
-        from join_intent
-        left join `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent` query_fl
-        on join_intent.query = query_fl.key
+            `key`,
+            queryTaxoDemandFeatures_clickTopTaxonomyPaths as click_top_taxo,
+            queryTaxoDemandFeatures_clickLevel2TaxonomyPaths as click_level2_taxo,
+            queryTaxoDemandFeatures_purchaseTopTaxonomyPaths as purchase_top_taxo,
+            queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths as purchase_level2_taxo,
+            queryLevelMetrics_bin as query_bin
+        FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+        WHERE queryTaxoDemandFeatures_clickTopTaxonomyPaths is not NULL
     )
-    select * from full_exp_data
+    SELECT
+        ab_variant, visit_id, query, page_no, full_path,
+        impressions, clicks, purchases, price_usd,
+        click_top_taxo, click_level2_taxo, purchase_top_taxo, purchase_level2_taxo, query_bin
+    FROM etsy-sr-etl-prod.search_ab_tests.taxo_demand_boe_0619 as ab_boe
+    JOIN query_taxo ON ab_boe.query=query_taxo.key
 )
 
+-- web test
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_web`
+AS
+(
+    WITH query_taxo AS (
+        SELECT 
+            `key`,
+            queryTaxoDemandFeatures_clickTopTaxonomyPaths as click_top_taxo,
+            queryTaxoDemandFeatures_clickLevel2TaxonomyPaths as click_level2_taxo,
+            queryTaxoDemandFeatures_purchaseTopTaxonomyPaths as purchase_top_taxo,
+            queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths as purchase_level2_taxo,
+            queryLevelMetrics_bin as query_bin
+        FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+        WHERE queryTaxoDemandFeatures_clickTopTaxonomyPaths is not NULL
+    )
+    SELECT
+        ab_variant, visit_id, query, page_no, full_path,
+        impressions, clicks, purchases, price_usd,
+        click_top_taxo, click_level2_taxo, purchase_top_taxo, purchase_level2_taxo, query_bin
+    FROM etsy-sr-etl-prod.search_ab_tests.taxo_demand_web_0612 as ab_web
+    JOIN query_taxo ON ab_web.query=query_taxo.key
+)
+
+-- boe with query intent
+CREATE OR REPLACE TABLE etsy-sr-etl-prod.yzhang.query_taxo_boe_full AS (
+    WITH query_intent_data as (
+        select query_raw, inference.label as query_intent
+        from `etsy-data-warehouse-prod.arizona.query_intent_labels`
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY query_raw ORDER BY inference.confidence DESC) = 1
+    )
+    select exp_data.*, query_intent_data.query_intent
+    from `etsy-sr-etl-prod.yzhang.query_taxo_boe` exp_data
+    left join query_intent_data
+    on exp_data.query = query_intent_data.query_raw
+)
+
+-- web with query intent
+CREATE OR REPLACE TABLE etsy-sr-etl-prod.yzhang.query_taxo_web_full AS (
+    WITH query_intent_data as (
+        select query_raw, inference.label as query_intent
+        from `etsy-data-warehouse-prod.arizona.query_intent_labels`
+        QUALIFY ROW_NUMBER() OVER(PARTITION BY query_raw ORDER BY inference.confidence DESC) = 1
+    )
+    select exp_data.*, query_intent_data.query_intent
+    from `etsy-sr-etl-prod.yzhang.query_taxo_web` exp_data
+    left join query_intent_data
+    on exp_data.query = query_intent_data.query_raw
+)
+
+
+-- price
+SELECT 
+    CASE
+       WHEN page_no > 3 THEN 4
+       ELSE page_no
+    END AS page_no_reduced, 
+    ab_variant, 
+    sum(impressions) as total_impression,
+    sum(clicks) as total_clicks, 
+    sum(purchases) as total_purchases,
+    avg(price_usd) as avg_price
+FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
+GROUP BY page_no_reduced, ab_variant
+ORDER BY page_no_reduced, ab_variant DESC
+
+
+-- query_bin
+SELECT 
+    CASE
+       WHEN page_no > 3 THEN 4
+       ELSE page_no
+    END AS page_no_reduced, 
+    ab_variant, 
+    query_bin,
+    sum(clicks) / sum(impressions) as ctr, 
+    sum(purchases) / sum(clicks) as post_click_cvr,
+FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
+GROUP BY page_no_reduced, query_bin, ab_variant
+ORDER BY page_no_reduced, query_bin, ab_variant DESC
+
+
+-- query intent
+SELECT 
+    CASE
+       WHEN page_no > 3 THEN 4
+       ELSE page_no
+    END AS page_no_reduced, 
+    ab_variant, 
+    query_intent,
+    sum(clicks) / (sum(impressions) + 0.000001) as ctr, 
+    sum(purchases) / (sum(clicks) + 0.000001) as post_click_cvr,
+FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
+where query_intent is not null and query_intent != ''
+GROUP BY page_no_reduced, query_intent, ab_variant
+ORDER BY page_no_reduced, query_intent, ab_variant DESC
