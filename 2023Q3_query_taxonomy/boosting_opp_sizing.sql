@@ -27,13 +27,18 @@ AS
             queryLevelMetrics_bin as query_bin
         FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
         WHERE queryTaxoDemandFeatures_clickTopTaxonomyPaths is not NULL
+    ),
+    user_segment AS (
+        select `key`, userSegmentFeatures_buyerSegment as buyer_segment
+        from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_most_recent`
     )
     SELECT
-        ab_variant, visit_id, query, page_no, full_path,
+        ab_variant, visit_id, query, page_no, full_path, user_id, buyer_segment,
         impressions, clicks, purchases, price_usd,
         click_top_taxo, click_level2_taxo, purchase_top_taxo, purchase_level2_taxo, query_bin
     FROM etsy-sr-etl-prod.search_ab_tests.taxo_demand_boe_0619 as ab_boe
-    JOIN query_taxo ON ab_boe.query=query_taxo.key
+    left JOIN query_taxo ON ab_boe.query=query_taxo.key
+    left join user_segment on ab_boe.user_id = user_segment.key
 )
 
 -- web test
@@ -50,13 +55,18 @@ AS
             queryLevelMetrics_bin as query_bin
         FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
         WHERE queryTaxoDemandFeatures_clickTopTaxonomyPaths is not NULL
+    ),
+    user_segment AS (
+        select `key`, userSegmentFeatures_buyerSegment as buyer_segment
+        from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_most_recent`
     )
     SELECT
-        ab_variant, visit_id, query, page_no, full_path,
+        ab_variant, visit_id, query, page_no, full_path, user_id, buyer_segment,
         impressions, clicks, purchases, price_usd,
         click_top_taxo, click_level2_taxo, purchase_top_taxo, purchase_level2_taxo, query_bin
     FROM etsy-sr-etl-prod.search_ab_tests.taxo_demand_web_0612 as ab_web
-    JOIN query_taxo ON ab_web.query=query_taxo.key
+    left JOIN query_taxo ON ab_web.query=query_taxo.key
+    left join user_segment on ab_web.user_id = user_segment.key
 )
 
 -- boe with query intent
@@ -93,9 +103,6 @@ SELECT
        ELSE page_no
     END AS page_no_reduced, 
     ab_variant, 
-    sum(impressions) as total_impression,
-    sum(clicks) as total_clicks, 
-    sum(purchases) as total_purchases,
     avg(price_usd) as avg_price
 FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
 GROUP BY page_no_reduced, ab_variant
@@ -110,9 +117,10 @@ SELECT
     END AS page_no_reduced, 
     ab_variant, 
     query_bin,
-    sum(clicks) / sum(impressions) as ctr, 
-    sum(purchases) / sum(clicks) as post_click_cvr,
+    sum(clicks) / sum(impressions + 0.000001) as ctr, 
+    sum(purchases) / sum(clicks + 0.000001) as post_click_cvr,
 FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
+where page_no is not null and query_bin is not null and query_bin != ''
 GROUP BY page_no_reduced, query_bin, ab_variant
 ORDER BY page_no_reduced, query_bin, ab_variant DESC
 
@@ -128,6 +136,35 @@ SELECT
     sum(clicks) / (sum(impressions) + 0.000001) as ctr, 
     sum(purchases) / (sum(clicks) + 0.000001) as post_click_cvr,
 FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
-where query_intent is not null and query_intent != ''
+where page_no is not null and query_intent is not null and query_intent != ''
 GROUP BY page_no_reduced, query_intent, ab_variant
 ORDER BY page_no_reduced, query_intent, ab_variant DESC
+
+
+-- buyer segment
+SELECT 
+    CASE
+       WHEN page_no > 3 THEN 4
+       ELSE page_no
+    END AS page_no_reduced, 
+    ab_variant, 
+    buyer_segment,
+    sum(clicks) / (sum(impressions) + 0.000001) as ctr, 
+    sum(purchases) / (sum(clicks) + 0.000001) as post_click_cvr,
+FROM etsy-sr-etl-prod.yzhang.query_taxo_web_full
+where page_no is not null and buyer_segment is not null and buyer_segment != ''
+GROUP BY page_no_reduced, buyer_segment, ab_variant
+ORDER BY page_no_reduced, buyer_segment, ab_variant DESC
+
+
+-- query taxonomy match % change
+select 
+    CASE
+       WHEN page_no > 3 THEN 4
+       ELSE page_no
+    END AS page_no_reduced, 
+    ab_variant, 
+from etsy-sr-etl-prod.yzhang.query_taxo_web_full
+where page_no is not null 
+GROUP BY page_no_reduced, ab_variant
+ORDER BY page_no_reduced, ab_variant DESC
