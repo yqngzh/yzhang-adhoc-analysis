@@ -1,7 +1,6 @@
 import logging
 import time
 import argparse
-from copy import deepcopy
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.io.gcp.internal.clients.bigquery import TableSchema
@@ -11,7 +10,17 @@ from google.cloud import bigquery
 
 class DemandProcess(beam.DoFn):
     def process(self, row):
-        out_data = deepcopy(row)
+        out_data = {
+            k: v
+            for k, v in row.items()
+            if k
+            not in [
+                "click_top_taxo",
+                "click_level2_taxo",
+                "purchase_top_taxo",
+                "purchase_level2_taxo",
+            ]
+        }
         listing_full_path = row["full_path"]
         if (
             (listing_full_path is None)
@@ -105,7 +114,18 @@ def run(argv=None):
     client = bigquery.Client(project=pipeline_options.get_all_options()["project"])
     in_table = client.get_table(args.input_table)
     in_schema_bq = in_table.schema
-    output_schema_bq = in_schema_bq + [
+    in_schema_bq_reduced = [
+        item
+        for item in in_schema_bq
+        if item.name
+        not in [
+            "click_top_taxo",
+            "click_level2_taxo",
+            "purchase_top_taxo",
+            "purchase_level2_taxo",
+        ]
+    ]
+    output_schema_bq = in_schema_bq_reduced + [
         bigquery.SchemaField("click_top_overlap", bigquery.enums.SqlTypeNames.INT64),
         bigquery.SchemaField("purchase_top_overlap", bigquery.enums.SqlTypeNames.INT64),
         bigquery.SchemaField("click_level2_overlap", bigquery.enums.SqlTypeNames.INT64),
@@ -121,19 +141,9 @@ def run(argv=None):
     output_schema_beam = TableSchema()
     for item in output_schema_bq:
         field_schema = TableFieldSchema()
-        if item.name in [
-            "click_top_taxo",
-            "click_level2_taxo",
-            "purchase_top_taxo",
-            "purchase_level2_taxo",
-        ]:
-            field_schema.name = item.name
-            field_schema.type = "STRING"
-            field_schema.mode = "REPEATED"
-        else:
-            field_schema.name = item.name
-            field_schema.type = item.field_type
-            field_schema.mode = item.mode
+        field_schema.name = item.name
+        field_schema.type = item.field_type
+        field_schema.mode = item.mode
         output_schema_beam.fields.append(field_schema)
 
     with beam.Pipeline(options=pipeline_options) as pipeline:
@@ -144,7 +154,7 @@ def run(argv=None):
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
                 query=f"select * from `{args.input_table}`",
-                # query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_web_full` limit 1",
+                # query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_web_full` limit 100",
                 use_standard_sql=True,
                 gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )
