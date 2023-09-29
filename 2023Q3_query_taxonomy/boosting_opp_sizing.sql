@@ -164,7 +164,12 @@ select
        ELSE page_no
     END AS page_no_reduced, 
     ab_variant, 
-from etsy-sr-etl-prod.yzhang.query_taxo_web_full
+    sum(impressions) as total_impressions,
+    sum(click_top_overlap) as clip_top_match,
+    sum(click_level2_overlap) as click_level2_match,
+    sum(purchase_top_overlap) as purchase_top_match,
+    sum(purchase_level2_overlap) as purchase_level2_match
+from etsy-sr-etl-prod.yzhang.query_taxo_web_summary
 where page_no is not null 
 GROUP BY page_no_reduced, ab_variant
 ORDER BY page_no_reduced, ab_variant DESC

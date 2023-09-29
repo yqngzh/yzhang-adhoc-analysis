@@ -1,6 +1,6 @@
 python -m analyze_taxo_boosting_ab \
-    --input_table etsy-sr-etl-prod.yzhang.query_taxo_web_full \
-    --output_table etsy-sr-etl-prod:yzhang.query_taxo_web_summary \
+    --input_table etsy-sr-etl-prod.yzhang.query_taxo_boe_full \
+    --output_table etsy-sr-etl-prod:yzhang.query_taxo_boe_summary \
     --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \
