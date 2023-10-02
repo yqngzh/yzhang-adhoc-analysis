@@ -164,6 +164,7 @@ class ComputePageDistance(beam.DoFn):
             "query_bin": row_data[0]["query_bin"],
             "buyer_segment": row_data[0]["buyer_segment"],
         }
+
         # collect listing taxonomy
         listing_top_taxo = []
         listing_level2_taxo = []
@@ -188,43 +189,76 @@ class ComputePageDistance(beam.DoFn):
         listing_level2_distrib = self._process_listing_distribution(
             listing_level2_taxo_counter
         )
-        # clean up query taxo features
-        click_top_distrib = self._process_query_taxonomy_distribution(
-            paths=row_data[0]["click_top_paths"],
-            counts=row_data[0]["click_top_counts"],
-        )
-        purchase_top_distrib = self._process_query_taxonomy_distribution(
-            paths=row_data[0]["purchase_top_paths"],
-            counts=row_data[0]["purchase_top_counts"],
-        )
-        click_level2_distrib = self._process_query_taxonomy_distribution(
-            paths=row_data[0]["click_level2_paths"],
-            counts=row_data[0]["click_level2_counts"],
-        )
-        purchase_level2_distrib = self._process_query_taxonomy_distribution(
-            paths=row_data[0]["purchase_level2_paths"],
-            counts=row_data[0]["purchase_level2_counts"],
-        )
-        # compute distance
-        out_data["dist_click_top"] = self._compute_distance(
-            click_top_distrib, listing_top_distrib
-        )
-        out_data["dist_purchase_top"] = self._compute_distance(
-            purchase_top_distrib, listing_top_distrib
-        )
-        out_data["dist_click_level2"] = self._compute_distance(
-            click_level2_distrib, listing_level2_distrib
-        )
-        out_data["dist_purchase_level2"] = self._compute_distance(
-            purchase_level2_distrib, listing_level2_distrib
-        )
+
+        # compute distribution
+        if row_data[0]["click_top_paths"] is None:
+            out_data["dist_click_top"] = None
+        else:
+            click_top_distrib = self._process_query_taxonomy_distribution(
+                paths=row_data[0]["click_top_paths"],
+                counts=row_data[0]["click_top_counts"],
+            )
+            out_data["dist_click_top"] = self._compute_distance(
+                click_top_distrib, listing_top_distrib
+            )
+
+        if row_data[0]["purchase_top_paths"] is None:
+            out_data["dist_purchase_top"] = None
+        else:
+            purchase_top_distrib = self._process_query_taxonomy_distribution(
+                paths=row_data[0]["purchase_top_paths"],
+                counts=row_data[0]["purchase_top_counts"],
+            )
+            out_data["dist_purchase_top"] = self._compute_distance(
+                purchase_top_distrib, listing_top_distrib
+            )
+
+        if row_data[0]["click_level2_paths"] is None:
+            out_data["dist_click_level2"] = None
+        else:
+            click_level2_distrib = self._process_query_taxonomy_distribution(
+                paths=row_data[0]["click_level2_paths"],
+                counts=row_data[0]["click_level2_counts"],
+            )
+            out_data["dist_click_level2"] = self._compute_distance(
+                click_level2_distrib, listing_level2_distrib
+            )
+
+        if row_data[0]["purchase_level2_paths"] is None:
+            out_data["dist_purchase_level2"] = None
+        else:
+            purchase_level2_distrib = self._process_query_taxonomy_distribution(
+                paths=row_data[0]["purchase_level2_paths"],
+                counts=row_data[0]["purchase_level2_counts"],
+            )
+            out_data["dist_purchase_level2"] = self._compute_distance(
+                purchase_level2_distrib, listing_level2_distrib
+            )
+
         # record distributions
         out_data["listing_top_distrib"] = json.dumps(listing_top_distrib)
-        out_data["click_top_distrib"] = json.dumps(click_top_distrib)
-        out_data["purchase_top_distrib"] = json.dumps(purchase_top_distrib)
+        out_data["click_top_distrib"] = (
+            None
+            if row_data[0]["click_top_paths"] is None
+            else json.dumps(click_top_distrib)
+        )
+        out_data["purchase_top_distrib"] = (
+            None
+            if row_data[0]["purchase_top_paths"] is None
+            else json.dumps(purchase_top_distrib)
+        )
         out_data["listing_level2_distrib"] = json.dumps(listing_level2_distrib)
-        out_data["click_level2_distrib"] = json.dumps(click_level2_distrib)
-        out_data["purchase_level2_distrib"] = json.dumps(purchase_level2_distrib)
+        out_data["click_level2_distrib"] = (
+            None
+            if row_data[0]["click_level2_paths"] is None
+            else json.dumps(click_level2_distrib)
+        )
+        out_data["purchase_level2_distrib"] = (
+            None
+            if row_data[0]["purchase_level2_paths"] is None
+            else json.dumps(purchase_level2_distrib)
+        )
+
         return [out_data]
 
 
@@ -304,8 +338,7 @@ def run(argv=None):
             # | "Create" >> beam.Create(input_data)
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
-                query=f"select * from `{args.input_table}` order by mmxRequestUUID, position limit 1000",
-                # query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_web_full` limit 100",
+                query=f"select * from `{args.input_table}` order by mmxRequestUUID, position",
                 use_standard_sql=True,
                 gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )
