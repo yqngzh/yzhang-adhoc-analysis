@@ -39,9 +39,24 @@ row = {
     "listing_second_taxo": "art_and_collectibles.drawing_and_illustration",
     "listing_past_year_gms": "2146.09",
 }
+purchase_top_paths = ["art_and_collectibles", "craft_supplies_and_tools"]
+purchase_top_distrib = [60.0 / 61.0, 1.0 / 61.0]
+purchase_level2_paths = ["art_and_collectibles.prints"]
+purchase_level2_distrib = [57.0 / 60.0, 3.0 / 60.0]
 
 
 class QueryTaxoListingProcess(beam.DoFn):
+    def _process_single_feature(self, x, is_count=False):
+        x_out = [y["element"] for y in x["list"]]
+        if is_count:
+            count_sum = np.sum(x_out).astype(np.float32)
+            if count_sum > 0:
+                x_out = [y / count_sum for y in x_out]
+            else:
+                logging.warning(x["list"])
+                x_out = [float(y) for y in x_out]
+        return x_out
+
     def process(self, row):
         out_data = {
             k: v
@@ -54,6 +69,31 @@ class QueryTaxoListingProcess(beam.DoFn):
                 "purchase_level2_counts",
             ]
         }
+        purchase_top_paths = self._process_single_feature(row["purchase_top_paths"])
+        purchase_top_distrib = self._process_single_feature(
+            row["purchase_top_counts"], is_count=True
+        )
+        purchase_level2_paths = self._process_single_feature(
+            row["purchase_level2_paths"]
+        )
+        purchase_level2_distrib = self._process_single_feature(
+            row["purchase_level2_counts"], is_count=True
+        )
+        listing_top_taxo = row["listing_top_taxo"]
+        listing_level2_taxo = row["listing_second_taxo"]
+        distrib_threshold = np.arange(0.5, 0.0, -0.05)
+        ## top taxo
+        if listing_top_taxo is not None:
+            out_data["top_overlap0"] = (
+                1 if listing_top_taxo not in purchase_top_paths else 0
+            )
+            if listing_top_taxo in purchase_top_paths:
+                idx = purchase_top_paths.index(listing_top_taxo)
+                ptop_cdf = np.sum(purchase_level2_distrib[idx:])
+        else:
+            pass
+
+        ## second taxo
 
         return [out_data]
 

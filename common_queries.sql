@@ -79,3 +79,10 @@ left join listing_data l
 on rpc_data.listingId = l.listing_id
 left join user_data u 
 on rpc_data.userId = u.user_id
+
+
+CREATE OR REPLACE EXTERNAL TABLE `etsy-sr-etl-prod.yzhang.query_missing_fl_raw`
+OPTIONS (
+    format = 'parquet',
+    uris = ['gs://ml-systems-prod-raw-mmx-logs-zjh13h/java-consumer/parquet/query_pipeline_web_organic/_DATE=2023-10-04/_HOUR=23/*.parquet']
+)
