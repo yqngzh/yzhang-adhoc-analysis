@@ -10,6 +10,7 @@ as (
 select count(distinct query_raw) 
 from `etsy-sr-etl-prod.yzhang.query_raw_processed_mapping`
 where query_raw != query_processed
+and query_raw is not null and query_processed is not null
 -- query feature bank most recent: 1,988,039,065 queries
 -- map table: 1,775,529,950 distinct raw queries, 1,125,797,568 raw queries differ from processed queries
 
@@ -174,52 +175,8 @@ and query not in (
     select query_processed from query_raw_processed_mapping
 )
 
+-- can these features be partially null? - yes for trebuchet
 
-
-
--- trebuchet
--- process method simplified: s.toLowerCase.replaceAll("[^0-9a-zA-Z\\s]", "").replaceAll("\\s+", " ")
-with query_raw_processed_trebuchet as (
-    select query_raw, 
-        REGEXP_REPLACE(REGEXP_REPLACE(LOWER(query_raw), "[^0-9a-zA-Z\\s]", ""), "\\s+", " ") as query_processed
-    from `etsy-sr-etl-prod.yzhang.query_raw_processed_mapping`
-),
-query_raw_processed_mapping as (
-    select query_raw, query_processed
-    from query_raw_processed_trebuchet
-    where query_raw != query_processed
-)
-select count(distinct requestUUID)
-from `etsy-sr-etl-prod.yzhang.query_missing_fl_web_1004`
-where query is not null
-and (
-    trebuchetQuery.avgClickPrice is null and 
-    trebuchetQuery.avgDwellTime is null and 
-    trebuchetQuery.avgPurchasePrice is null and 
-    trebuchetQuery.level2TaxoPath is null and 
-    trebuchetQuery.logImpressionCount is null and 
-    trebuchetQuery.logNoListingsDwelled is null and 
-    trebuchetQuery.logTotalCarts is null and
-    trebuchetQuery.logTotalCartsInVisit is null and
-    trebuchetQuery.logTotalClicks is null and
-    trebuchetQuery.logTotalClicksInVisit is null and
-    trebuchetQuery.logTotalGmsInVisit is null and
-    trebuchetQuery.logTotalPurchases is null and
-    trebuchetQuery.logTotalPurchasesInVisit is null and
-    trebuchetQuery.logTotalRevenueInVisit is null and
-    trebuchetQuery.stdDwellTime is null and
-    trebuchetQuery.stdPurchasePrice is null
-)
-and 'purchase' in unnest(attributions)
-and query in (
-    select query_raw from query_raw_processed_mapping
-)
-and query not in (
-    select query_processed from query_raw_processed_mapping
-)
-
-
--- can these features be partially null?
 
 -- check feature logging raw data before joining
 CREATE OR REPLACE EXTERNAL TABLE `etsy-sr-etl-prod.yzhang.query_missing_fl_raw`
@@ -227,3 +184,86 @@ OPTIONS (
     format = 'parquet',
     uris = ['gs://ml-systems-prod-raw-mmx-logs-zjh13h/java-consumer/parquet/query_pipeline_web_organic/_DATE=2023-10-04/_HOUR=23/*.parquet']
 )
+
+SELECT
+  requestUUID,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.query,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.avgClickPrice,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.avgDwellTime,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.avgPurchasePrice,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.level2TaxoPath,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logImpressionCount,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logNoListingsDwelled,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalCarts,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalCartsInVisit,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalClicks,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalClicksInVisit,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalGmsInVisit,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalPurchases,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalPurchasesInVisit,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.logTotalRevenueInVisit,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.stdDwellTime,
+  rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.trebuchetQuery.stdPurchasePrice,
+FROM `etsy-sr-etl-prod.yzhang.query_missing_fl_raw` 
+where rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.query in ("gift", "gifts")
+order by rankUnit.contextualInfo.array[SAFE_OFFSET(0)].docInfo.queryInfo.query
+limit 100000
+
+
+-- coverage in FBv2
+with query_raw_processed_mapping as (
+    select query_processed, query_raw
+    from `etsy-sr-etl-prod.yzhang.query_raw_processed_mapping`
+    where query_processed != query_raw
+)
+select count(key)
+from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent` fb
+left join `etsy-data-warehouse-prod.rollups.query_level_metrics_raw` qlm
+on fb.key = qlm.query_raw 
+-- where (
+--     trebuchetQuery_avgClickPrice is null and
+--     trebuchetQuery_avgDwellTime is null and
+--     trebuchetQuery_avgPurchasePrice is null and
+--     trebuchetQuery_level2TaxoPath is null and
+--     trebuchetQuery_logImpressionCount is null and
+--     trebuchetQuery_logNoListingsDwelled is null and
+--     trebuchetQuery_logTotalCarts is null and
+--     trebuchetQuery_logTotalCartsInVisit is null and
+--     trebuchetQuery_logTotalClicks is null and
+--     trebuchetQuery_logTotalClicksInVisit is null and
+--     trebuchetQuery_logTotalGmsInVisit is null and
+--     trebuchetQuery_logTotalPurchases is null and
+--     trebuchetQuery_logTotalPurchasesInVisit is null and
+--     trebuchetQuery_logTotalRevenueInVisit is null and
+--     trebuchetQuery_stdDwellTime is null and
+--     trebuchetQuery_stdPurchasePrice is null
+-- )
+where (
+    queryLevelMetrics_bin is null and 
+    queryLevelMetrics_cartRate is null and 
+    queryLevelMetrics_clickRate is null and 
+    queryLevelMetrics_isDigital is null and 
+    queryLevelMetrics_purchaseEntropy is null and 
+    queryLevelMetrics_purchaseRate is null and 
+    queryLevelMetrics_totalPurchases is null
+)
+and `key` in (
+    select query_raw from query_raw_processed_mapping
+)
+and `key` not in (
+    select query_processed from query_raw_processed_mapping
+)
+-- total queries: 1989642554
+-- total query level gms: 214273836293
+
+-- trebuchet
+-- queries: 1297309599 (65%)
+-- query level gms: 83390732041 (39%)
+-- queries raw not processed: 452032438 (35% of queries all trebuchet null)
+-- query level gms when query is raw not processed: 76869324791 (92% of trebuchet missing, 36% of total)
+
+-- query level metrics
+-- queries: 831182463 (41%)
+-- query level gms: 93978173988 (44%)
+-- queries raw not processed: 552176597 (66% of queries all qlm null)
+-- query level gms when quer is raw not processed: 93885408879 (99.9%, 44% of total)
