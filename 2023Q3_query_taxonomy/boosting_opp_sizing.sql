@@ -173,3 +173,19 @@ from etsy-sr-etl-prod.yzhang.query_taxo_web_summary
 where page_no is not null 
 GROUP BY page_no_reduced, ab_variant
 ORDER BY page_no_reduced, ab_variant DESC
+
+
+-- listing taxonmy vs purchase position
+select
+    requestUUID, visitId, position,
+    attributions,
+    ctx.docInfo.queryInfo.query, 
+    ctx.docInfo.queryInfo.queryLevelMetrics.*,
+    ctx.docInfo.queryInfo.queryTaxoDemandFeatures.*,
+    candidateInfo.docInfo.listingInfo.listingId,
+    candidateInfo.docInfo.listingInfo.verticaListings.taxonomyPath
+from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_10_10`, 
+    unnest(contextualInfo) as ctx
+where ctx.docInfo.queryInfo.query is not null
+and 'purchase' in unnest(attributions)
+order by requestUUID, position
