@@ -100,3 +100,8 @@ and new_tb.listingId = old.listingId
 and new_tb.userId = old.userId
 and new_tb.page_no = old.page_no
 and new_tb.winsorized_gms = old.winsorized_gms
+
+
+SELECT sum(winsorized_gms) 
+FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_analysis`
+where top40 = 'remove'
