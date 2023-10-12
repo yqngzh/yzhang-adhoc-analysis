@@ -74,49 +74,53 @@ class QueryTaxoListingProcess(beam.DoFn):
                 "purchase_level2_counts",
             ]
         }
-        purchase_top_paths = self._process_single_feature(row["purchase_top_paths"])
-        purchase_top_distrib = self._process_single_feature(
-            row["purchase_top_counts"], is_count=True
-        )
-        purchase_level2_paths = self._process_single_feature(
-            row["purchase_level2_paths"]
-        )
-        purchase_level2_distrib = self._process_single_feature(
-            row["purchase_level2_counts"], is_count=True
-        )
-        listing_top_taxo = row["listing_top_taxo"]
-        listing_level2_taxo = row["listing_second_taxo"]
-        ## remove listings if not overlap with purchased taxonomy
-        ## remove listings if overlaps and puchase likelihood < threshold
-        ## top taxo
-        if listing_top_taxo is not None:
-            if listing_top_taxo in purchase_top_paths:
-                out_data["top0"] = "keep"
-                idx = purchase_top_paths.index(listing_top_taxo)
-                ptop = purchase_top_distrib[idx]
-                for i in range(1, len(DISTRIB_THRESHOLD)):
-                    if ptop < DISTRIB_THRESHOLD[i]:
+        if (
+            row["purchase_top_paths"] is not None
+            and row["purchase_level2_paths"] is not None
+        ):
+            purchase_top_paths = self._process_single_feature(row["purchase_top_paths"])
+            purchase_top_distrib = self._process_single_feature(
+                row["purchase_top_counts"], is_count=True
+            )
+            purchase_level2_paths = self._process_single_feature(
+                row["purchase_level2_paths"]
+            )
+            purchase_level2_distrib = self._process_single_feature(
+                row["purchase_level2_counts"], is_count=True
+            )
+            listing_top_taxo = row["listing_top_taxo"]
+            listing_level2_taxo = row["listing_second_taxo"]
+            ## remove listings if not overlap with purchased taxonomy
+            ## remove listings if overlaps and puchase likelihood < threshold
+            ## top taxo
+            if listing_top_taxo is not None:
+                if listing_top_taxo in purchase_top_paths:
+                    out_data["top0"] = "keep"
+                    idx = purchase_top_paths.index(listing_top_taxo)
+                    ptop = purchase_top_distrib[idx]
+                    for i in range(1, len(DISTRIB_THRESHOLD)):
+                        if ptop < DISTRIB_THRESHOLD[i]:
+                            out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
+                        else:
+                            out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
+                else:
+                    for i in range(len(DISTRIB_THRESHOLD)):
                         out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
-                    else:
-                        out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
-            else:
-                for i in range(len(DISTRIB_THRESHOLD)):
-                    out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
-        ## level2 taxo
-        if listing_level2_taxo is not None:
-            if listing_level2_taxo in purchase_level2_paths:
-                out_data["second0"] = "keep"
-                idx = purchase_level2_paths.index(listing_level2_taxo)
-                plevel2 = purchase_level2_distrib[idx]
-                for i in range(1, len(DISTRIB_THRESHOLD)):
-                    if plevel2 < DISTRIB_THRESHOLD[i]:
+            ## level2 taxo
+            if listing_level2_taxo is not None:
+                if listing_level2_taxo in purchase_level2_paths:
+                    out_data["second0"] = "keep"
+                    idx = purchase_level2_paths.index(listing_level2_taxo)
+                    plevel2 = purchase_level2_distrib[idx]
+                    for i in range(1, len(DISTRIB_THRESHOLD)):
+                        if plevel2 < DISTRIB_THRESHOLD[i]:
+                            out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
+                        else:
+                            out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
+                else:
+                    for i in range(len(DISTRIB_THRESHOLD)):
                         out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
-                    else:
-                        out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
-            else:
-                for i in range(len(DISTRIB_THRESHOLD)):
-                    out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
-        ## if missing listing taxo info, default keep listing
+        ## if missing query or listing taxo info, default keep listing
         for th in DISTRIB_THRESHOLD_LABEL:
             if f"top{th}" not in out_data:
                 out_data[f"top{th}"] = "keep"
@@ -195,8 +199,8 @@ def run(argv=None):
             # | "Create" >> beam.Create(input_data)
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
-                # query=f"select * from `{args.input_table}`",
-                query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` limit 100",
+                query=f"select * from `{args.input_table}`",
+                # query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` limit 100",
                 use_standard_sql=True,
                 gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )

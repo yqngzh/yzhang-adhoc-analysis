@@ -84,3 +84,19 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         qlg.listingId = rpc_data.listingId
     )
 )
+
+-- sanity check
+select 
+    old.purchase_top_paths,
+    old.purchase_top_counts,
+    old.listing_top_taxo,
+    new_tb.top0
+from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_analysis` new_tb
+join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` old
+on new_tb.mmxRequestUUID = old.mmxRequestUUID
+and new_tb.query = old.query
+and new_tb.query_date = old.query_date
+and new_tb.listingId = old.listingId
+and new_tb.userId = old.userId
+and new_tb.page_no = old.page_no
+and new_tb.winsorized_gms = old.winsorized_gms
