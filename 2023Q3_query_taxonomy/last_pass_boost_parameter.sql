@@ -51,6 +51,13 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         join `etsy-data-warehouse-prod.materialized.listing_taxonomy` lt
         on alb.listing_id = lt.listing_id
         and alb.taxonomy_id = lt.taxonomy_id
+    ),
+    query_listing_gms as (
+        select * 
+        from `etsy-data-warehouse-prod.propensity.adjusted_query_listing_pairs`
+        where platform = 'web' and region = 'US' and language = 'en-US'
+        and _date >= DATE('2023-09-28')
+        and _date <= DATE('2023-09-30')
     )
     select 
         rpc_data.*,
@@ -62,7 +69,7 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         q.purchase_level2_counts,
         l.top_category as listing_top_taxo,
         if (l.second_category is not null, concat(l.top_category, '.', l.second_category), null) as listing_second_taxo,
-        l.past_year_gms as listing_past_year_gms
+        qlg.total_winsorized_gms as winsorized_gms
     from rpc_data
     left join query_taxo_data q
     on rpc_data.query = q.query_str
@@ -70,4 +77,10 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
     on rpc_data.listingId = l.listing_id
     left join user_data u 
     on rpc_data.userId = u.user_id
+    left join query_listing_gms qlg
+    on (
+        qlg._date = rpc_data.query_date and 
+        qlg.query = rpc_data.query and
+        qlg.listingId = rpc_data.listingId
+    )
 )
