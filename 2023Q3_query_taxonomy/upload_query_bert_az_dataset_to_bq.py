@@ -1,9 +1,42 @@
+import logging
+import time
+import argparse
+import json
+import apache_beam as beam
+from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.io.gcp.internal.clients.bigquery import TableSchema
+from apache_beam.io.gcp.internal.clients.bigquery import TableFieldSchema
+from google.cloud import bigquery
+
+# taxo_data = '[{"taxonomy": "jewelry.earrings.stud_earrings", "predicted_probability": 0.9365665912628174, "scaled_probability": 2.0}, {"taxonomy": "jewelry.earrings.screw_back_earrings", "predicted_probability": 0.02278164029121399, "scaled_probability": 1.0227261593978056}]'
+# taxo_data = json.loads(taxo_data)
+
+
+class ProcessQueryBert(beam.DoFn):
+    def process(self, row):
+        row_split = row.split("\t")
+        query = row_split[0]
+        out_data = {
+            "query": query,
+            "taxonomy": [],
+            "predicted_probability": [],
+            "scaled_probability": [],
+        }
+        taxo_data = json.loads(row_split[1])
+        if len(taxo_data) > 0:
+            for dt in taxo_data:
+                out_data["taxonomy"].append(dt["taxonomy"])
+                out_data["predicted_probability"].append(dt["predicted_probability"])
+                out_data["scaled_probability"].append(dt["scaled_probability"])
+        return [out_data]
+
+
 def run(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input_table",
+        "--input_path",
         required=True,
-        help="Input table with requests and embeddings",
+        help="Input data path",
     )
     parser.add_argument(
         "--output_table",
@@ -21,29 +54,22 @@ def run(argv=None):
     pipeline_options = PipelineOptions(
         save_main_session=True,
         pipeline_type_check=True,
-        job_name=f"yzhang-taxo-boost-ab-analysis-{now}",
+        job_name=f"yzhang-upload-query-bert-{now}",
     )
 
     client = bigquery.Client(project=pipeline_options.get_all_options()["project"])
-    in_table = client.get_table(args.input_table)
-    in_schema_bq = in_table.schema
-    in_schema_bq_reduced = [
-        item
-        for item in in_schema_bq
-        if item.name
-        not in [
-            "click_top_taxo",
-            "click_level2_taxo",
-            "purchase_top_taxo",
-            "purchase_level2_taxo",
-        ]
-    ]
-    output_schema_bq = in_schema_bq_reduced + [
-        bigquery.SchemaField("click_top_overlap", bigquery.enums.SqlTypeNames.INT64),
-        bigquery.SchemaField("purchase_top_overlap", bigquery.enums.SqlTypeNames.INT64),
-        bigquery.SchemaField("click_level2_overlap", bigquery.enums.SqlTypeNames.INT64),
+    output_schema_bq = [
+        bigquery.SchemaField("query", bigquery.enums.SqlTypeNames.STRING),
         bigquery.SchemaField(
-            "purchase_level2_overlap", bigquery.enums.SqlTypeNames.INT64
+            "taxonomy", bigquery.enums.SqlTypeNames.STRING, mode="REPEATED"
+        ),
+        bigquery.SchemaField(
+            "predicted_probability",
+            bigquery.enums.SqlTypeNames.FLOAT64,
+            mode="REPEATED",
+        ),
+        bigquery.SchemaField(
+            "scaled_probability", bigquery.enums.SqlTypeNames.FLOAT64, mode="REPEATED"
         ),
     ]
     out_table = bigquery.Table(
@@ -63,16 +89,9 @@ def run(argv=None):
         # with beam.Pipeline() as pipeline:
         (
             pipeline
-            # | "Create" >> beam.Create(input_data)
-            | "Read input data"
-            >> beam.io.ReadFromBigQuery(
-                query=f"select * from `{args.input_table}`",
-                # query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_web_full` limit 100",
-                use_standard_sql=True,
-                gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
-            )
-            # | "Print" >> beam.Map(print)
-            | "Data summary" >> beam.ParDo(DemandProcess())
+            | "Read input data" >> beam.io.ReadFromText(f"{args.input_path}/part-*")
+            # | "Print" >> beam.Map(logging.info)
+            | "Data formatting" >> beam.ParDo(ProcessQueryBert())
             | "Write results to BigQuery"
             >> beam.io.WriteToBigQuery(
                 args.output_table,
@@ -85,6 +104,3 @@ def run(argv=None):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     run()
-
-
-print_row(row)
