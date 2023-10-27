@@ -12,6 +12,7 @@ from google.cloud import bigquery
 
 DISTRIB_THRESHOLD = np.arange(0, 0.55, 0.05)
 DISTRIB_THRESHOLD_LABEL = [str(int(x * 100)) for x in DISTRIB_THRESHOLD]
+PURCHASE_COUNT_THRESHOLD = 0
 
 row = {
     "mmxRequestUUID": "6ff08a13-87fc-49b7-bde3-4b9dd7166fc2",
@@ -54,6 +55,7 @@ class QueryTaxoListingProcess(beam.DoFn):
     def _process_single_feature(self, x, is_count=False):
         x_out = [y["element"] for y in x["list"]]
         if is_count:
+            x_out = [y if y >= PURCHASE_COUNT_THRESHOLD else 0 for y in x_out]
             count_sum = np.sum(x_out).astype(np.float32)
             if count_sum > 0:
                 x_out = [y / count_sum for y in x_out]

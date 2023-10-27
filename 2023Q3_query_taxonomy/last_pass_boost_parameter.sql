@@ -1,9 +1,3 @@
-select sum(queryLevelMetrics_gms)
-from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-10-01`
-where queryTaxoDemandFeatures_purchaseTopTaxonomyPaths is not null
-and queryTaxoDemandFeatures_purchaseTopTaxonomyPaths.list[0] is not null
-
-
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
     with rpc_data as (
         SELECT
@@ -17,8 +11,8 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
             UNNEST(response.listingIds) AS listingId  WITH OFFSET position
         WHERE request.options.searchPlacement = "wsg"
-        AND DATE(queryTime) >= DATE('2023-09-28')
-        AND DATE(queryTime) <= DATE('2023-09-30')
+        AND DATE(queryTime) >= DATE('2023-10-21')
+        AND DATE(queryTime) <= DATE('2023-10-23')
         AND request.options.csrOrganic = TRUE
         AND (request.offset + request.limit) < 144
         AND request.options.mmxBehavior.matching IS NOT NULL
@@ -34,7 +28,8 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
             queryTaxoDemandFeatures_purchaseLevel2TaxonomyCounts as purchase_level2_counts,
         from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
         where queryTaxoDemandFeatures_purchaseTopTaxonomyPaths is not null
-        and queryTaxoDemandFeatures_purchaseTopTaxonomyPaths.list[0] is not null
+        and array_length(queryTaxoDemandFeatures_purchaseTopTaxonomyPaths.list) > 0
+        and queryTaxoDemandFeatures_purchaseTopTaxonomyPaths.list[0].element != ""
     ),
     user_data as (
         select `key` as user_id, 
@@ -56,8 +51,8 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         select * 
         from `etsy-data-warehouse-prod.propensity.adjusted_query_listing_pairs`
         where platform = 'web' and region = 'US' and language = 'en-US'
-        and _date >= DATE('2023-09-28')
-        and _date <= DATE('2023-09-30')
+        and _date >= DATE('2023-10-21')
+        and _date <= DATE('2023-10-23')
     )
     select 
         rpc_data.*,
