@@ -11,8 +11,8 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
             UNNEST(response.listingIds) AS listingId  WITH OFFSET position
         WHERE request.options.searchPlacement = "wsg"
-        AND DATE(queryTime) >= DATE('2023-10-21')
-        AND DATE(queryTime) <= DATE('2023-10-23')
+        AND DATE(queryTime) >= DATE('2023-10-16')
+        AND DATE(queryTime) <= DATE('2023-10-18')
         AND request.options.csrOrganic = TRUE
         AND (request.offset + request.limit) < 144
         AND request.options.mmxBehavior.matching IS NOT NULL
@@ -26,7 +26,7 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
             queryTaxoDemandFeatures_purchaseTopTaxonomyCounts as purchase_top_counts,
             queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths as purchase_level2_paths,
             queryTaxoDemandFeatures_purchaseLevel2TaxonomyCounts as purchase_level2_counts,
-        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-10-18`
         where queryTaxoDemandFeatures_purchaseTopTaxonomyPaths is not null
         and array_length(queryTaxoDemandFeatures_purchaseTopTaxonomyPaths.list) > 0
         and queryTaxoDemandFeatures_purchaseTopTaxonomyPaths.list[0].element != ""
@@ -34,7 +34,7 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
     user_data as (
         select `key` as user_id, 
             userSegmentFeatures_buyerSegment as buyer_segment
-        from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_most_recent`
+        from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_2023-10-18`
     ),
     listing_data as (
         select 
@@ -48,11 +48,11 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
         and alb.taxonomy_id = lt.taxonomy_id
     ),
     query_listing_gms as (
-        select * 
+        select *
         from `etsy-data-warehouse-prod.propensity.adjusted_query_listing_pairs`
         where platform = 'web' and region = 'US' and language = 'en-US'
-        and _date >= DATE('2023-10-21')
-        and _date <= DATE('2023-10-23')
+        and _date >= DATE('2023-10-16')
+        and _date <= DATE('2023-10-18')
     )
     select 
         rpc_data.*,
@@ -82,11 +82,12 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
 
 -- sanity check
 select 
+    new_tb.query,
     old.purchase_top_paths,
     old.purchase_top_counts,
     old.listing_top_taxo,
-    new_tb.top0
-from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_analysis` new_tb
+    new_tb.top25
+from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0` new_tb
 join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` old
 on new_tb.mmxRequestUUID = old.mmxRequestUUID
 and new_tb.query = old.query
@@ -98,5 +99,5 @@ and new_tb.winsorized_gms = old.winsorized_gms
 
 
 SELECT sum(winsorized_gms) 
-FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_analysis`
+FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0`
 where top40 = 'remove'

@@ -12,43 +12,43 @@ from google.cloud import bigquery
 
 DISTRIB_THRESHOLD = np.arange(0, 0.55, 0.05)
 DISTRIB_THRESHOLD_LABEL = [str(int(x * 100)) for x in DISTRIB_THRESHOLD]
-PURCHASE_COUNT_THRESHOLD = 0
+PURCHASE_COUNT_THRESHOLD = 5
 
-row = {
-    "mmxRequestUUID": "6ff08a13-87fc-49b7-bde3-4b9dd7166fc2",
-    "query": "tattoo font",
-    "userId": 16585734,
-    "page_no": 1,
-    "listingId": 1482660131,
-    "position": 7,
-    "query_date": datetime.date(2023, 9, 30),
-    "query_bin": "top.1",
-    "buyer_segment": "Habitual",
-    "purchase_top_paths": {
-        "list": [
-            {"element": "art_and_collectibles"},
-            {"element": "craft_supplies_and_tools"},
-        ]
-    },
-    "purchase_top_counts": {"list": [{"element": 60}, {"element": 1}]},
-    "purchase_level2_paths": {
-        "list": [
-            {"element": "art_and_collectibles.drawing_and_illustration"},
-            {"element": "art_and_collectibles.prints"},
-        ]
-    },
-    "purchase_level2_counts": {"list": [{"element": 57}, {"element": 3}]},
-    "listing_top_taxo": "art_and_collectibles",
-    "listing_second_taxo": "art_and_collectibles.drawing_and_illustration",
-    "winsorized_gms": "2146.09",
-}
-purchase_top_paths = ["art_and_collectibles", "craft_supplies_and_tools"]
-purchase_top_distrib = [60.0 / 61.0, 1.0 / 61.0]
-purchase_level2_paths = [
-    "art_and_collectibles.prints",
-    "art_and_collectibles.drawing_and_illustration",
-]
-purchase_level2_distrib = [57.0 / 60.0, 3.0 / 60.0]
+# row = {
+#     "mmxRequestUUID": "6ff08a13-87fc-49b7-bde3-4b9dd7166fc2",
+#     "query": "tattoo font",
+#     "userId": 16585734,
+#     "page_no": 1,
+#     "listingId": 1482660131,
+#     "position": 7,
+#     "query_date": datetime.date(2023, 9, 30),
+#     "query_bin": "top.1",
+#     "buyer_segment": "Habitual",
+#     "purchase_top_paths": {
+#         "list": [
+#             {"element": "art_and_collectibles"},
+#             {"element": "craft_supplies_and_tools"},
+#         ]
+#     },
+#     "purchase_top_counts": {"list": [{"element": 60}, {"element": 1}]},
+#     "purchase_level2_paths": {
+#         "list": [
+#             {"element": "art_and_collectibles.drawing_and_illustration"},
+#             {"element": "art_and_collectibles.prints"},
+#         ]
+#     },
+#     "purchase_level2_counts": {"list": [{"element": 57}, {"element": 3}]},
+#     "listing_top_taxo": "art_and_collectibles",
+#     "listing_second_taxo": "art_and_collectibles.drawing_and_illustration",
+#     "winsorized_gms": "2146.09",
+# }
+# purchase_top_paths = ["art_and_collectibles", "craft_supplies_and_tools"]
+# purchase_top_distrib = [60.0 / 61.0, 1.0 / 61.0]
+# purchase_level2_paths = [
+#     "art_and_collectibles.prints",
+#     "art_and_collectibles.drawing_and_illustration",
+# ]
+# purchase_level2_distrib = [57.0 / 60.0, 3.0 / 60.0]
 
 
 class QueryTaxoListingProcess(beam.DoFn):
