@@ -56,8 +56,8 @@ python -m last_pass_boost_parameter \
 
 
 python -m upload_query_bert_az_dataset_to_bq \
-    --input_path gs://etldata-prod-prolist-data-hkwv8r/data/outgoing/arizona/query_classifier_prolist_3mo/20231016 \
-    --output_table etsy-sr-etl-prod:yzhang.query_bert_taxo_2023_10_16 \
+    --input_path gs://etldata-prod-prolist-data-hkwv8r/data/outgoing/arizona/query_classifier_prolist_3mo/20231028 \
+    --output_table etsy-sr-etl-prod:yzhang.query_bert_taxo_2023_10_28 \
     --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \
