@@ -8,7 +8,7 @@ join (
 on fb.key = bert_taxo.query
 
 
--- 3 day of rpc data
+-- 2 day of rpc data
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_qdata` as (
     select `key` as query_str, 
         queryLevelMetrics_bin as query_bin,
@@ -22,7 +22,7 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_qdata` as 
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_udata` as (
     select `key` as user_id, 
         userSegmentFeatures_buyerSegment as buyer_segment
-    from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_2023-10-18`
+    from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_2023-10-16`
 )
 
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_ldata` as (
@@ -40,52 +40,76 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_qlgms` as 
     from `etsy-data-warehouse-prod.propensity.adjusted_query_listing_pairs`
     where platform = 'web' and region = 'US' and language = 'en-US'
     and _date >= DATE('2023-10-16')
-    and _date <= DATE('2023-10-18')
+    and _date <= DATE('2023-10-17')
 )
 
-CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` AS (
-    with rpc_data as (
-        SELECT
-            response.mmxRequestUUID,
-            request.query,
-            request.options.personalizationOptions.userId,
-            CAST(request.offset / request.limit + 1 AS INTEGER) page_no,
-            listingId,
-            position,
-            DATE(queryTime) as query_date
-        FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
-            UNNEST(response.listingIds) AS listingId  WITH OFFSET position
-        WHERE request.options.searchPlacement = "wsg"
-        AND DATE(queryTime) >= DATE('2023-10-16')
-        AND DATE(queryTime) <= DATE('2023-10-18')
-        AND request.options.csrOrganic = TRUE
-        AND (request.offset + request.limit) < 144
-        AND request.options.mmxBehavior.matching IS NOT NULL
-        AND request.options.mmxBehavior.ranking IS NOT NULL
-        AND request.options.mmxBehavior.marketOptimization IS NOT NULL
-    )
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_rpc` AS (
+    SELECT
+        response.mmxRequestUUID,
+        request.query,
+        request.options.personalizationOptions.userId,
+        CAST(request.offset / request.limit + 1 AS INTEGER) page_no,
+        listingId,
+        position,
+        DATE(queryTime) as query_date
+    FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
+        UNNEST(response.listingIds) AS listingId  WITH OFFSET position
+    WHERE request.options.searchPlacement = "wsg"
+    AND DATE(queryTime) >= DATE('2023-10-16')
+    AND DATE(queryTime) <= DATE('2023-10-17')
+    AND request.options.csrOrganic = TRUE
+    AND (request.offset + request.limit) < 144
+    AND request.options.mmxBehavior.matching IS NOT NULL
+    AND request.options.mmxBehavior.ranking IS NOT NULL
+    AND request.options.mmxBehavior.marketOptimization IS NOT NULL
+)
+
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_step1` AS (
     select
         rpc_data.*,
         q.query_bin,
-        if (rpc_data.userId > 0, u.buyer_segment, "Signed Out") as buyer_segment,
         q.paths,
         q.predicted_prob,
-        l.full_path,
-        qlg.total_winsorized_gms as winsorized_gms
-    from rpc_data
+    from `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_rpc` rpc_data
     left join `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_qdata` q
     on rpc_data.query = q.query_str
-    left join `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_ldata` l
-    on rpc_data.listingId = l.listing_id
+)
+
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_step2` AS (
+    select
+        step1.*,
+        if (step1.userId > 0, u.buyer_segment, "Signed Out") as buyer_segment,
+    from `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_step1` step1
     left join `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_udata` u
-    on rpc_data.userId = u.user_id
-    left join `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_qlgms` qlg
+    on step1.userId = u.user_id
+)
+
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_step3` AS (
+    select
+        step2.*,
+        l.full_path,
+    from `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_step2` step2
+    left join `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_ldata` l
+    on step2.listingId = l.listing_id
+)
+
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` AS (
+    with qlg as (
+        select _date, query, listingId, total_winsorized_gms as winsorized_gms
+        from `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_qlgms`
+    )
+    select
+        step3.*,
+        qlg.winsorized_gms,
+    from `etsy-sr-etl-prod.yzhang.query_taxo_bert_temp_step3` step3
+    left join qlg
     on (
-        qlg._date = rpc_data.query_date and 
-        qlg.query = rpc_data.query and
-        qlg.listingId = rpc_data.listingId
+        qlg._date = step3.query_date and 
+        qlg.query = step3.query and
+        qlg.listingId = step3.listingId
     )
 )
+
 
 -- sanity check
 select 
