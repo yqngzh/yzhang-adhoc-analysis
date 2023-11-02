@@ -6,125 +6,86 @@ import datetime
 import copy
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.io.gcp.internal.clients.bigquery import TableSchema
-from apache_beam.io.gcp.internal.clients.bigquery import TableFieldSchema
+from apache_beam.io.gcp.internal.clients.bigquery import TableSchema, TableFieldSchema
 from google.cloud import bigquery
 
 DISTRIB_THRESHOLD = np.arange(0, 1.05, 0.05)
 DISTRIB_THRESHOLD_LABEL = [str(int(x * 100)) for x in DISTRIB_THRESHOLD]
 
 # row = {
-#     "mmxRequestUUID": "6ff08a13-87fc-49b7-bde3-4b9dd7166fc2",
-#     "query": "tattoo font",
-#     "userId": 16585734,
+#     "mmxRequestUUID": "4c063d81-41ea-4717-9c62-4c4a1aa22198",
+#     "query": "shopify website template beauty boutique asthetic",
+#     "userId": 846323386,
 #     "page_no": 1,
-#     "listingId": 1482660131,
-#     "position": 7,
-#     "query_date": datetime.date(2023, 9, 30),
-#     "query_bin": "top.1",
-#     "buyer_segment": "Habitual",
-#     "purchase_top_paths": {
-#         "list": [
-#             {"element": "art_and_collectibles"},
-#             {"element": "craft_supplies_and_tools"},
-#         ]
-#     },
-#     "purchase_top_counts": {"list": [{"element": 60}, {"element": 1}]},
-#     "purchase_level2_paths": {
-#         "list": [
-#             {"element": "art_and_collectibles.drawing_and_illustration"},
-#             {"element": "art_and_collectibles.prints"},
-#         ]
-#     },
-#     "purchase_level2_counts": {"list": [{"element": 57}, {"element": 3}]},
-#     "listing_top_taxo": "art_and_collectibles",
-#     "listing_second_taxo": "art_and_collectibles.drawing_and_illustration",
-#     "winsorized_gms": "2146.09",
+#     "listingId": 1202070399,
+#     "position": 42,
+#     "query_date": datetime.date(2023, 10, 17),
+#     "query_bin": None,
+#     "paths": [
+#         "paper_and_party_supplies.paper.stationery.design_and_templates.templates.planner_templates",
+#         "paper_and_party_supplies.paper.calendars_and_planners",
+#         "books_movies_and_music.books.blank_books.journals_and_notebooks",
+#     ],
+#     "predicted_prob": [0.9664, 0.0198, 0.0065],
+#     "buyer_segment": None,
+#     "full_path": "paper_and_party_supplies.paper.stationery.design_and_templates.templates",
+#     "winsorized_gms": None,
 # }
-# purchase_top_paths = ["art_and_collectibles", "craft_supplies_and_tools"]
-# purchase_top_distrib = [60.0 / 61.0, 1.0 / 61.0]
-# purchase_level2_paths = [
-#     "art_and_collectibles.prints",
-#     "art_and_collectibles.drawing_and_illustration",
+# query_taxo_paths = [
+#     "paper_and_party_supplies.paper.stationery.design_and_templates.templates.planner_templates",
+#     "paper_and_party_supplies.paper.calendars_and_planners",
+#     "books_movies_and_music.books.blank_books.journals_and_notebooks",
 # ]
-# purchase_level2_distrib = [57.0 / 60.0, 3.0 / 60.0]
+# query_taxo_prob = [0.9664, 0.0198, 0.0065]
 
 
 class QueryTaxoBertListingProcess(beam.DoFn):
-    def _process_single_feature(self, x, is_count=False):
-        x_out = [y["element"] for y in x["list"]]
-        if is_count:
-            count_sum = np.sum(x_out).astype(np.float32)
-            if count_sum > 0:
-                x_out = [y / count_sum for y in x_out]
-            else:
-                logging.warning(x["list"])
-                x_out = [float(y) for y in x_out]
-        return x_out
+    def __init__(self, norm_prob=False):
+        self.norm_prob = norm_prob
 
     def process(self, row):
-        out_data = {
-            k: v
-            for k, v in row.items()
-            if k
-            not in [
-                "paths",
-                "purchase_top_counts",
-            ]
-        }
-        if (
-            row["purchase_top_paths"] is not None
-            and row["purchase_level2_paths"] is not None
-        ):
-            purchase_top_paths = self._process_single_feature(row["purchase_top_paths"])
-            purchase_top_distrib = self._process_single_feature(
-                row["purchase_top_counts"], is_count=True
+        out_data = copy.deepcopy(row)
+        if len(row["paths"]) > 0:
+            query_taxo_paths, query_taxo_prob = row["paths"], row["predicted_prob"]
+            # sort both paths and probs by descending probs
+            path_score_sorted = sorted(
+                list(zip(query_taxo_prob, query_taxo_paths)), reverse=True
             )
-            purchase_level2_paths = self._process_single_feature(
-                row["purchase_level2_paths"]
-            )
-            purchase_level2_distrib = self._process_single_feature(
-                row["purchase_level2_counts"], is_count=True
-            )
-            listing_top_taxo = row["listing_top_taxo"]
-            listing_level2_taxo = row["listing_second_taxo"]
-            ## remove listings if not overlap with purchased taxonomy
-            ## remove listings if overlaps and puchase likelihood < threshold
-            ## top taxo
-            if listing_top_taxo is not None:
-                if listing_top_taxo in purchase_top_paths:
-                    out_data["top0"] = "keep"
-                    idx = purchase_top_paths.index(listing_top_taxo)
-                    ptop = purchase_top_distrib[idx]
+            query_taxo_prob = [item[0] for item in path_score_sorted]
+            query_taxo_paths = [item[1] for item in path_score_sorted]
+            # normalize score to sum to 1 if specified
+            if self.norm_prob:
+                distrib_sum = np.sum(query_taxo_prob)
+                query_taxo_distrib = [x / distrib_sum for x in query_taxo_prob]
+                query_taxo_prob = query_taxo_distrib
+
+            listing_taxo = row["full_path"]
+            ## remove listings if not overlap, or (overlaps and prob < threshold)
+            if listing_taxo is not None:
+                if listing_taxo in query_taxo_paths:
+                    # listing overlaps with query taxo
+                    idx = query_taxo_paths.index(listing_taxo)
+                    prob_score = query_taxo_prob[idx]
+                    if prob_score == 0:
+                        out_data["th0"] = "remove"
+                    else:
+                        out_data["th0"] = "keep"
+                    # threshold above 0
                     for i in range(1, len(DISTRIB_THRESHOLD)):
-                        if ptop < DISTRIB_THRESHOLD[i]:
-                            out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
+                        if prob_score < DISTRIB_THRESHOLD[i]:
+                            out_data[f"th{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
                         else:
-                            out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
+                            out_data[f"th{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
                 else:
+                    # listing does not overlap with query taxo
                     for i in range(len(DISTRIB_THRESHOLD)):
-                        out_data[f"top{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
-            ## level2 taxo
-            if listing_level2_taxo is not None:
-                if listing_level2_taxo in purchase_level2_paths:
-                    out_data["second0"] = "keep"
-                    idx = purchase_level2_paths.index(listing_level2_taxo)
-                    plevel2 = purchase_level2_distrib[idx]
-                    for i in range(1, len(DISTRIB_THRESHOLD)):
-                        if plevel2 < DISTRIB_THRESHOLD[i]:
-                            out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
-                        else:
-                            out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "keep"
-                else:
-                    for i in range(len(DISTRIB_THRESHOLD)):
-                        out_data[f"second{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
+                        out_data[f"th{DISTRIB_THRESHOLD_LABEL[i]}"] = "remove"
+
         ## if missing query or listing taxo info, default keep listing
         for th in DISTRIB_THRESHOLD_LABEL:
-            if f"top{th}" not in out_data:
-                out_data[f"top{th}"] = "keep"
-        for th in DISTRIB_THRESHOLD_LABEL:
-            if f"second{th}" not in out_data:
-                out_data[f"second{th}"] = "keep"
+            if f"th{th}" not in out_data:
+                out_data[f"th{th}"] = "keep"
+
         return [out_data]
 
 
@@ -157,26 +118,13 @@ def run(argv=None):
     client = bigquery.Client(project=pipeline_options.get_all_options()["project"])
     in_table = client.get_table(args.input_table)
     in_schema_bq = in_table.schema
-    in_schema_bq_reduced = [
-        item
-        for item in in_schema_bq
-        if item.name
-        not in [
-            "purchase_top_paths",
-            "purchase_top_counts",
-            "purchase_level2_paths",
-            "purchase_level2_counts",
-        ]
-    ]
-    output_schema_bq = copy.deepcopy(in_schema_bq_reduced)
+
+    output_schema_bq = copy.deepcopy(in_schema_bq)
     for th in DISTRIB_THRESHOLD_LABEL:
         output_schema_bq.append(
-            bigquery.SchemaField(f"top{th}", bigquery.enums.SqlTypeNames.STRING)
+            bigquery.SchemaField(f"th{th}", bigquery.enums.SqlTypeNames.STRING)
         )
-    for th in DISTRIB_THRESHOLD_LABEL:
-        output_schema_bq.append(
-            bigquery.SchemaField(f"second{th}", bigquery.enums.SqlTypeNames.STRING)
-        )
+
     out_table = bigquery.Table(
         args.output_table.replace(":", "."), schema=output_schema_bq
     )
@@ -197,12 +145,13 @@ def run(argv=None):
             # | "Create" >> beam.Create(input_data)
             | "Read input data"
             >> beam.io.ReadFromBigQuery(
-                # query=f"select * from `{args.input_table}`",
-                query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` limit 100",
+                query=f"select * from `{args.input_table}`",
+                # query="select * from `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` where array_length(paths) > 0 limit 100",
                 use_standard_sql=True,
                 gcs_location=f"gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp",
             )
-            | "Query taxo listing process" >> beam.ParDo(QueryTaxoBertListingProcess())
+            | "Query taxo listing process"
+            >> beam.ParDo(QueryTaxoBertListingProcess(norm_prob=True))
             | "Write results to BigQuery"
             >> beam.io.WriteToBigQuery(
                 args.output_table,

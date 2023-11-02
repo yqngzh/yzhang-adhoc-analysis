@@ -76,7 +76,7 @@ python -m upload_query_bert_az_dataset_to_bq \
 
 python -m last_pass_boost_parameter_bert \
     --input_table etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc \
-    --output_table etsy-sr-etl-prod:yzhang.query_taxo_bert_lastpass_rpc_analysis \
+    --output_table etsy-sr-etl-prod:yzhang.query_taxo_bert_lastpass_rpc_analysis_normalized \
     --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \

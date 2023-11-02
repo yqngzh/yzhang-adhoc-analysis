@@ -111,24 +111,46 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` A
 )
 
 
--- sanity check
+-- coverage
+select count(distinct query)
+from `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc`
+where array_length(paths) > 0
+
+
+with rpc_query as (
+  select distinct query
+  from `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` rpc
+  where array_length(paths) > 0
+),
+qgms as (
+  select query, q.gms
+  from rpc_query
+  left join `etsy-data-warehouse-prod.rollups.query_level_metrics_raw` q
+  on rpc_query.query = q.query_raw
+)
+select sum(gms) from qgms
+
+
+-- sum of predicted probability
+with sum_prob as (
+  select sum(predicted_prob) as spp
+  from `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc` rpc,
+    unnest(predicted_prob) as predicted_prob
+  group by mmxRequestUUID, query, userId, listingId, query_date
+)
+select min(spp) as min_spp, max(spp) as max_spp
+from sum_prob
+-- min 0.795, max 1.98
+
+-- sanity check dataflow
 select 
-    new_tb.query,
-    old.purchase_top_paths,
-    old.purchase_top_counts,
-    old.listing_top_taxo,
-    new_tb.top25
-from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0` new_tb
-join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` old
-on new_tb.mmxRequestUUID = old.mmxRequestUUID
-and new_tb.query = old.query
-and new_tb.query_date = old.query_date
-and new_tb.listingId = old.listingId
-and new_tb.userId = old.userId
-and new_tb.page_no = old.page_no
-and new_tb.winsorized_gms = old.winsorized_gms
+    query, paths, predicted_prob, full_path,
+    th0, th10, th25, th50, th75, th90, th100,
+from `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc_analysis`
+where array_length(paths) between 1 and 5
+limit 100
 
-
+-- calculate gms at risk
 SELECT sum(winsorized_gms) 
-FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0`
-where top40 = 'remove'
+FROM `etsy-sr-etl-prod.yzhang.query_taxo_bert_lastpass_rpc_analysis_normalized`
+where th0 = 'remove'
