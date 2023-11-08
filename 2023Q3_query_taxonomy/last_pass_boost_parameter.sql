@@ -80,6 +80,8 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc` AS (
     )
 )
 
+
+---- % GMS at risk
 -- sanity check
 select 
     new_tb.query,
@@ -100,4 +102,73 @@ and new_tb.winsorized_gms = old.winsorized_gms
 
 SELECT sum(winsorized_gms) 
 FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0`
+where top40 = 'remove'
+
+
+---- maximum GMS gain
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` AS (
+    with tmp as (
+        select *
+        from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
+        where winsorized_gms is not null
+        and listing_second_taxo is not null
+    )
+    SELECT 
+        query, 
+        listing_second_taxo as level2_taxo, 
+        avg(winsorized_gms) as agg_gms
+    FROM tmp
+    group by query, listing_second_taxo
+)
+
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_taxo_ancenstor_raw` AS (
+    with fb_data as (
+        select 
+            `key` as query,
+            queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths as level2_path_raw
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+        where `key` in (
+            select query from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
+        )
+    )
+    select query, level2_path_raw, level2_path
+    from fb_data, unnest(level2_path_raw.list) as level2_path   
+)
+
+CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_gms_replacement` AS (
+    with query_taxo_ancestor_map as (
+        select 
+            ag.query, 
+            ag.level2_taxo,
+            anc.level2_ancestor as replace_taxo,
+        from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` ag
+        left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_taxo_ancenstor` anc
+        on ag.query = anc.query
+        and ag.level2_taxo = anc.level2_path
+    )
+    select 
+        qtam.query,
+        qtam.level2_taxo as listing_level2_taxo, 
+        ag2.agg_gms as gms_replacement
+    from query_taxo_ancestor_map qtam
+    left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` ag2
+    on qtam.query = ag2.query
+    and qtam.replace_taxo = ag2.level2_taxo
+)
+
+
+create or replace table `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0_amp` as (
+    select 
+        rpc.*,
+        gr.gms_replacement - rpc.winsorized_gms as net_gms_gain
+    from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0` rpc
+    left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_gms_replacement` gr
+    on rpc.query = gr.query
+    and rpc.listing_second_taxo = gr.listing_level2_taxo
+)
+-- same for cutoff 2 and cutoff 5
+
+
+SELECT sum(net_gms_gain) 
+FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0_amp`
 where top40 = 'remove'
