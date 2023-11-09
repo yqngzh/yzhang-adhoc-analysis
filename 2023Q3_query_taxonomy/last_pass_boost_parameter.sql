@@ -106,60 +106,93 @@ where top40 = 'remove'
 
 
 ---- maximum GMS gain
+-- aggregate gms on level 2 taxonomy
+-- CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` AS (
+--     with tmp as (
+--         select *
+--         from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
+--         where winsorized_gms is not null
+--         and listing_second_taxo is not null
+--         and query is not null
+--     ),
+--     agg_gms_data as (
+--         SELECT 
+--             query, 
+--             listing_second_taxo as level2_taxo, 
+--             avg(winsorized_gms) as agg_gms
+--             -- max(winsorized_gms)
+--             -- PERCENTILE_DISC(winsorized_gms, 0.5) OVER(partition by query, listing_second_taxo) as agg_gms
+--         FROM tmp
+--         group by query, listing_second_taxo
+--     )
+--     select distinct * from agg_gms_data
+-- )
+
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` AS (
-    with tmp as (
-        select *
-        from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
-        where winsorized_gms is not null
+    with query_listing_gms as (
+        select 
+            p.query, p.listingId, p.total_winsorized_gms, 
+            lv.full_path,
+            split(lv.full_path, '.')[safe_offset(0)] as top_category, 
+            split(lv.full_path, '.')[safe_offset(1)] as second_category, 
+        from `etsy-data-warehouse-prod.propensity.adjusted_query_listing_pairs` p
+        join `etsy-data-warehouse-prod.listing_mart.listing_vw` lv
+        on p.listingId = lv.listing_id
+        where platform = 'web' and region = 'US' and language = 'en-US'
+        and _date >= DATE('2023-10-16')
+        and _date <= DATE('2023-10-18')
+    ),
+    qlg_taxo as (
+        select 
+            query, listingId, total_winsorized_gms, 
+            if (top_category is not null and second_category is not null, concat(top_category, '.', second_category), null) as listing_second_taxo
+        from query_listing_gms
+    ),
+    qlg_taxo_clean as (
+        select * from qlg_taxo
+        where query is not null
+        and total_winsorized_gms is not null
         and listing_second_taxo is not null
     )
-    SELECT 
-        query, 
-        listing_second_taxo as level2_taxo, 
-        avg(winsorized_gms) as agg_gms
-    FROM tmp
+    select query, listing_second_taxo as level2_taxo, max(total_winsorized_gms) as agg_gms
+    from qlg_taxo_clean
     group by query, listing_second_taxo
 )
+
 
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_taxo_ancenstor_raw` AS (
     with fb_data as (
         select 
             `key` as query,
             queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths as level2_path_raw
-        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-10-18`
         where `key` in (
             select query from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
         )
     )
     select query, level2_path_raw, level2_path
-    from fb_data, unnest(level2_path_raw.list) as level2_path   
+    from fb_data, unnest(level2_path_raw.list) as level2_path WITH OFFSET pos  
+    order by query, pos
 )
 
+-- run dataflow query_taxo_ancestor_generation
+
 CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_gms_replacement` AS (
-    with query_taxo_ancestor_map as (
-        select 
-            ag.query, 
-            ag.level2_taxo,
-            anc.level2_ancestor as replace_taxo,
-        from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` ag
-        left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_taxo_ancenstor` anc
-        on ag.query = anc.query
-        and ag.level2_taxo = anc.level2_path
-    )
     select 
-        qtam.query,
-        qtam.level2_taxo as listing_level2_taxo, 
-        ag2.agg_gms as gms_replacement
-    from query_taxo_ancestor_map qtam
-    left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` ag2
-    on qtam.query = ag2.query
-    and qtam.replace_taxo = ag2.level2_taxo
+        ancestor.query,
+        ancestor.level2_path as listing_level2_taxo, 
+        ag.agg_gms as gms_replacement
+    from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_taxo_ancenstor` ancestor
+    left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_agg_gms` ag
+    on ancestor.query = ag.query
+    and ancestor.level2_ancestor = ag.level2_taxo
 )
 
 
 create or replace table `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0_amp` as (
     select 
         rpc.*,
+        gr.gms_replacement,
         gr.gms_replacement - rpc.winsorized_gms as net_gms_gain
     from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0` rpc
     left join `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_gms_replacement` gr
@@ -168,7 +201,37 @@ create or replace table `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0
 )
 -- same for cutoff 2 and cutoff 5
 
+select winsorized_gms, gms_replacement, net_gms_gain
+from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0_amp`
+where net_gms_gain is not null
 
 SELECT sum(net_gms_gain) 
 FROM `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc_cutoff0_amp`
-where top40 = 'remove'
+where second0 = 'remove'
+
+
+with rpc_query as (
+    select distinct query
+    from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
+    where winsorized_gms is not null
+),
+rpc_qtd_feature as (
+    select rpc_query.query, queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths.list as purchase_level2_paths,
+    from rpc_query
+    join `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-10-18` fb_data
+    on rpc_query.query = fb_data.key
+)
+select count(distinct mmxRequestUUID)
+from `etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc`
+where query in (
+    select distinct query
+    from rpc_qtd_feature
+    where array_length(purchase_level2_paths) > 1
+)
+
+-- 10747169 distinct queries
+-- 1801948 queries with gms
+-- among that 84014 queries have > 1 taxos
+
+-- 42948231 requests
+-- 5565816 (13%) have query with > 1 taxos

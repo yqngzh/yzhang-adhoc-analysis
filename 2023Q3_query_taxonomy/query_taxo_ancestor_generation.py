@@ -10,12 +10,16 @@ from apache_beam.io.gcp.internal.clients.bigquery import TableSchema
 from apache_beam.io.gcp.internal.clients.bigquery import TableFieldSchema
 from google.cloud import bigquery
 
+
 row = {
-    "query": "custom dog patch velcro",
+    "query": "1 crown",
     "level2_path_raw": {
-        "list": [{"element": "pet_supplies.pet_clothing_accessories_and_shoes"}]
+        "list": [
+            {"element": "accessories.hair_accessories"},
+            {"element": "craft_supplies_and_tools.kitchen_supplies"},
+        ]
     },
-    "level2_path": {"element": "pet_supplies.pet_clothing_accessories_and_shoes"},
+    "level2_path": {"element": "craft_supplies_and_tools.kitchen_supplies"},
 }
 
 

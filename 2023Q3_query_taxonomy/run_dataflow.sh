@@ -38,7 +38,7 @@ python -m distrib_match_opp_sizing \
 
 python -m last_pass_boost_parameter \
     --input_table etsy-sr-etl-prod.yzhang.query_taxo_lastpass_rpc \
-    --output_table etsy-sr-etl-prod:yzhang.query_taxo_lastpass_rpc_cutoff5 \
+    --output_table etsy-sr-etl-prod:yzhang.query_taxo_lastpass_rpc_cutoff5\
     --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \

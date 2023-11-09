@@ -10,7 +10,7 @@ from apache_beam.io.gcp.internal.clients.bigquery import TableSchema
 from apache_beam.io.gcp.internal.clients.bigquery import TableFieldSchema
 from google.cloud import bigquery
 
-DISTRIB_THRESHOLD = np.arange(0, 0.55, 0.05)
+DISTRIB_THRESHOLD = np.arange(0, 1.05, 0.05)
 DISTRIB_THRESHOLD_LABEL = [str(int(x * 100)) for x in DISTRIB_THRESHOLD]
 PURCHASE_COUNT_THRESHOLD = 5
 
