@@ -61,3 +61,13 @@ group by behavior
 select behavior, avg(level2_overlap) as level2_match
 from `etsy-sr-etl-prod.yzhang.qtd_boosting_merge`
 group by behavior
+
+
+with tmp as (
+  select behavior,uuid, sum(top_overlap) as top_overlap, sum(level2_overlap) as level2_overlap
+  from `etsy-sr-etl-prod.yzhang.qtd_boosting_merge`
+  group by behavior, uuid
+)
+select behavior, avg(top_overlap) as avg_top_overlap_per_page, avg(level2_overlap) as avg_level2_
+from tmp
+group by behavior
