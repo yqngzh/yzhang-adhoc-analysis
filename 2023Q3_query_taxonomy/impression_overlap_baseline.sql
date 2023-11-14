@@ -51,6 +51,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_query_fb` as (
 -- -- limit 40
 
 
+
 ----  2. Create listing level2 purchased taxo features
 create or replace table `etsy-sr-etl-prod.yzhang.qtd_listing_fb` as (
     with fb_data as (
@@ -76,6 +77,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_listing_fb` as (
 -- join `etsy-sr-etl-prod.yzhang.qtd_listing_fb` qtd
 -- on tmp.listing_id = qtd.listing_id
 -- limit 200
+
 
 
 ----  3. Control impression match
@@ -139,6 +141,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_rpc_lqoverlap_web` as (
 -- ## spot check result for overlap = 1 or overlap = 0
 
 
+
 ----  4. Count overlap on first page on each request
 select mmxRequestUUID, sum(overlap) as QTD_match, count(*) as total_impression
 from `etsy-sr-etl-prod.yzhang.qtd_rpc_lqoverlap_web`
@@ -158,6 +161,7 @@ with tmp as (
 select count(distinct mmxRequestUUID)
 from tmp
 where total_impression = 48
+
 
 -- average n impression in top 10
 with subset_requests as (
@@ -186,6 +190,7 @@ tmp as (
 -- select avg(tmp.QTD_match)
 select count(distinct mmxRequestUUID)
 from tmp
+
 
 
 ----  5. Repeat for BoE
@@ -223,6 +228,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_rpc_lqoverlap_boe` as (
     on rpc_data.listingId = listing_fb.listing_id
 )
 
+
 -- average n impression match
 with tmp as (
     select mmxRequestUUID, sum(overlap) as QTD_match, count(*) as total_impression
@@ -236,6 +242,7 @@ with tmp as (
 select count(distinct mmxRequestUUID)
 from tmp
 where total_impression = 28
+
 
 -- average n impression in top 10
 with subset_requests as (
