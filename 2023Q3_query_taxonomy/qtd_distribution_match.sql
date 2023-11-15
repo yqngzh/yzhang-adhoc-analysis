@@ -110,6 +110,15 @@ select behavior, 2.0 - avg(distrib_distance) as avg_distrib_closeness
 from tmp
 group by behavior
 
+with tmp as (
+    SELECT *
+    FROM `etsy-sr-etl-prod.yzhang.qtd_distrib_match_qtdlevel2_full` 
+    where distrib_distance is not null
+    and query_bin = 'top.01'
+)
+select behavior, 2.0 - avg(distrib_distance) as avg_distrib_closeness
+from tmp
+group by behavior
 
 
 -------- BERT
