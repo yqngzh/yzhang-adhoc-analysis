@@ -129,3 +129,21 @@ python -m qtd_boost \
     --disk_size_gb 200 \
     --num_workers 16 \
     --max_num_workers 32
+
+
+python -m qtd_distribution_match \
+    --input_table etsy-sr-etl-prod.yzhang.qtd_distrib_match_qtdlevel2_raw \
+    --output_table etsy-sr-etl-prod:yzhang.qtd_distrib_match_qtdlevel2_processed \
+    --runner DataflowRunner \
+    --project etsy-sr-etl-prod \
+    --region us-central1 \
+    --service_account_email dataflow-worker@etsy-sr-etl-prod.iam.gserviceaccount.com \
+    --temp_location gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
+    --staging_location gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
+    --experiment use_runner_v2 \
+    --experiment upload_graph \
+    --experiment max_workflow_runtime_walltime_seconds=43200 \
+    --machine_type e2-standard-16 \
+    --disk_size_gb 200 \
+    --num_workers 16 \
+    --max_num_workers 32
