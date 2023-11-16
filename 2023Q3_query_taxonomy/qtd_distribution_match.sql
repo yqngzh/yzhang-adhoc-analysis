@@ -120,5 +120,3 @@ select behavior, 2.0 - avg(distrib_distance) as avg_distrib_closeness
 from tmp
 group by behavior
 
-
--------- BERT
