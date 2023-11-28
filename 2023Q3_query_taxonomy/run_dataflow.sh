@@ -132,8 +132,8 @@ python -m qtd_boost \
 
 
 python -m qtd_distribution_match \
-    --input_table etsy-sr-etl-prod.yzhang.qtd_distrib_match_lastab_raw \
-    --output_table etsy-sr-etl-prod:yzhang.qtd_distrib_match_lastab_processed \
+    --input_table etsy-sr-etl-prod.yzhang.qtd_level2_tire_raw \
+    --output_table etsy-sr-etl-prod:yzhang.qtd_level2_tire_processed \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \
     --region us-central1 \
@@ -149,6 +149,9 @@ python -m qtd_distribution_match \
     --max_num_workers 32
 #     --input_table etsy-sr-etl-prod.yzhang.qtd_distrib_match_qtdlevel2_raw \
 #     --output_table etsy-sr-etl-prod:yzhang.qtd_distrib_match_qtdlevel2_processed \
+
+#     --input_table etsy-sr-etl-prod.yzhang.qtd_distrib_match_lastab_raw \
+#     --output_table etsy-sr-etl-prod:yzhang.qtd_distrib_match_lastab_processed \
 
 
 python -m qtd_bert_distribution_match \
