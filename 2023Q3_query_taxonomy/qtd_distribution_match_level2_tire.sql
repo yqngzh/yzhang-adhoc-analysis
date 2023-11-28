@@ -50,7 +50,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2_tire_raw` as (
         where DATE(queryTime) = '2023-11-27'
         and tire_results.request.query != ""
         and tireRequestContext.tireTestv2Id = "acdQzCVLzfvTlab4mdMl"
-        and (request.offset + request.limit) < 48
+        and request.limit != 0
     ),
     selected_pages as (
         select uuid, behavior
