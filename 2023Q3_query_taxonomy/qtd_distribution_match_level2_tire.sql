@@ -158,85 +158,85 @@ from tmp
 
 
 --------   Sanity check
-create temp function getTaxoPaths(path STRING) 
-returns ARRAY<STRING> 
-LANGUAGE js AS r""" 
-  if (path == null) {
-    return []
-  }
-  var x = path.split(".")
-  var start = x[0]
-  var result = [start]
-  for (var i=1; i<x.length; i++) {
-    var a = result[result.length-1]
-    result.push(a + "." + x[i])
-  }
-  return result
-""";
+-- create temp function getTaxoPaths(path STRING) 
+-- returns ARRAY<STRING> 
+-- LANGUAGE js AS r""" 
+--   if (path == null) {
+--     return []
+--   }
+--   var x = path.split(".")
+--   var start = x[0]
+--   var result = [start]
+--   for (var i=1; i<x.length; i++) {
+--     var a = result[result.length-1]
+--     result.push(a + "." + x[i])
+--   }
+--   return result
+-- """;
 
-CREATE TEMP FUNCTION jsonObjectKeys(input STRING)
-RETURNS Array<Int64>
-LANGUAGE js AS """
-  return Object.keys(JSON.parse(input));
-""";
+-- CREATE TEMP FUNCTION jsonObjectKeys(input STRING)
+-- RETURNS Array<Int64>
+-- LANGUAGE js AS """
+--   return Object.keys(JSON.parse(input));
+-- """;
 
-with query_listings as (
-    select jsonObjectKeys(SAFE_CONVERT_BYTES_TO_STRING(FROM_BASE64(q.taxonomies))) as query_taxo_ids,
-        response.mmxRequestUUID as uuid,
-        listing_id, 
-        pos + 1 as position, 
-        div(pos, request.limit) + 1 as page,
-        request.query,
-        tireRequestContext.variant as behavior,
-        request.limit as lmt
-    from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*` as tire_results,
-        unnest(response.listingIds) as listing_id  with offset pos
-    left join `etsy-sr-etl-prod.kbekal_insights.query_taxo_demand_full_id_purchase_level2` as q
-    on tire_results.request.query = q.query
-    WHERE
-        DATE(queryTime) = '2023-11-27'
-        AND q.taxonomies is not null
-        AND tire_results.request.query != ""
-        AND tireRequestContext.tireTestv2Id = "acdQzCVLzfvTlab4mdMl"
-        AND request.limit != 0
-),
-listings_taxonomy_path as (
-  select query_listings.*, getTaxoPaths(listing_fb.verticaListings_taxonomyPath) as taxonomyPathArray 
-  from query_listings
-  LEFT JOIN `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2023-11-27` AS listing_fb
-  ON query_listings.listing_id = listing_fb.key
+-- with query_listings as (
+--     select jsonObjectKeys(SAFE_CONVERT_BYTES_TO_STRING(FROM_BASE64(q.taxonomies))) as query_taxo_ids,
+--         response.mmxRequestUUID as uuid,
+--         listing_id, 
+--         pos + 1 as position, 
+--         div(pos, request.limit) + 1 as page,
+--         request.query,
+--         tireRequestContext.variant as behavior,
+--         request.limit as lmt
+--     from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*` as tire_results,
+--         unnest(response.listingIds) as listing_id  with offset pos
+--     left join `etsy-sr-etl-prod.kbekal_insights.query_taxo_demand_full_id_purchase_level2` as q
+--     on tire_results.request.query = q.query
+--     WHERE
+--         DATE(queryTime) = '2023-11-27'
+--         AND q.taxonomies is not null
+--         AND tire_results.request.query != ""
+--         AND tireRequestContext.tireTestv2Id = "acdQzCVLzfvTlab4mdMl"
+--         AND request.limit != 0
+-- ),
+-- listings_taxonomy_path as (
+--   select query_listings.*, getTaxoPaths(listing_fb.verticaListings_taxonomyPath) as taxonomyPathArray 
+--   from query_listings
+--   LEFT JOIN `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2023-11-27` AS listing_fb
+--   ON query_listings.listing_id = listing_fb.key
 
-),
-listings_taxonomy_path_exploded as (
-  select uuid, listing_id, position, query, behavior, query_taxo_ids, taxopath
-  from listings_taxonomy_path, unnest(taxonomyPathArray) as taxopath
-),
-listings_taxonomy_ids as (
-  select listings_taxonomy_path_exploded.*, taxonomy.taxonomy_id from listings_taxonomy_path_exploded
-  left join `etsy-data-warehouse-prod.structured_data.taxonomy` as taxonomy
-  on listings_taxonomy_path_exploded.taxopath = taxonomy.full_path
-),
-listings_taxonomy_ids_grouped as (
-  select uuid, listing_id, position, query, behavior, array_agg(taxopath IGNORE NULLS) as taxopaths, array_agg(taxonomy_id IGNORE NULLS) as listing_taxo_ids
-  from listings_taxonomy_ids
-  group by uuid, listing_id, position, query, behavior
-),
-listings_taxos_query_taxos_intersect as (
-  select l.*, array(select * from l.listing_taxo_ids intersect distinct (select * from l.query_taxo_ids)) as listing_query_intersect
-  from listings_taxonomy_ids_grouped as l 
-),
-listings_query_intersect_count as (
-  select *, array_length(listing_query_intersect) as intersect_count from listings_taxos_query_taxos_intersect
-  ),
-listings_query_intersect_count_non_zero as (
-  select * from listings_query_intersect_count
-  where intersect_count > 0
-),
-listings_query_intersect_count_non_zero_grouped as (
-  select uuid, query, behavior, count(*) as non_zero_count
-  from listings_query_intersect_count_non_zero
-  group by uuid, query, behavior
-)
-select behavior, avg(non_zero_count) as average
-from listings_query_intersect_count_non_zero_grouped
-group by behavior
+-- ),
+-- listings_taxonomy_path_exploded as (
+--   select uuid, listing_id, position, query, behavior, query_taxo_ids, taxopath
+--   from listings_taxonomy_path, unnest(taxonomyPathArray) as taxopath
+-- ),
+-- listings_taxonomy_ids as (
+--   select listings_taxonomy_path_exploded.*, taxonomy.taxonomy_id from listings_taxonomy_path_exploded
+--   left join `etsy-data-warehouse-prod.structured_data.taxonomy` as taxonomy
+--   on listings_taxonomy_path_exploded.taxopath = taxonomy.full_path
+-- ),
+-- listings_taxonomy_ids_grouped as (
+--   select uuid, listing_id, position, query, behavior, array_agg(taxopath IGNORE NULLS) as taxopaths, array_agg(taxonomy_id IGNORE NULLS) as listing_taxo_ids
+--   from listings_taxonomy_ids
+--   group by uuid, listing_id, position, query, behavior
+-- ),
+-- listings_taxos_query_taxos_intersect as (
+--   select l.*, array(select * from l.listing_taxo_ids intersect distinct (select * from l.query_taxo_ids)) as listing_query_intersect
+--   from listings_taxonomy_ids_grouped as l 
+-- ),
+-- listings_query_intersect_count as (
+--   select *, array_length(listing_query_intersect) as intersect_count from listings_taxos_query_taxos_intersect
+--   ),
+-- listings_query_intersect_count_non_zero as (
+--   select * from listings_query_intersect_count
+--   where intersect_count > 0
+-- ),
+-- listings_query_intersect_count_non_zero_grouped as (
+--   select uuid, query, behavior, count(*) as non_zero_count
+--   from listings_query_intersect_count_non_zero
+--   group by uuid, query, behavior
+-- )
+-- select behavior, avg(non_zero_count) as average
+-- from listings_query_intersect_count_non_zero_grouped
+-- group by behavior
