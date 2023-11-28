@@ -12,6 +12,19 @@ from google.cloud import bigquery
 
 
 class DistribMatchAnalysis(beam.DoFn):
+    """Input table schema
+    uuid	STRING	NULLABLE
+    query	STRING	NULLABLE
+    listing_id	INTEGER	NULLABLE
+    position	INTEGER	NULLABLE
+    behavior	STRING	NULLABLE
+    query_bin	STRING	NULLABLE
+    query_intent	STRING	NULLABLE
+    ppaths	RECORD	NULLABLE
+    pcounts	RECORD	NULLABLE
+    listing_taxo_level2	STRING	NULLABLE
+    """
+
     def _process_single_feature(self, x, is_count=False):
         """QTD features are in the format {"list": [{"element": "val1"}, {"element": "val2"}, ...]}
         here we process features to normal list, and 0-1 standardize purchase counts
