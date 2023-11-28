@@ -50,7 +50,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2_tire_raw` as (
         where DATE(queryTime) = '2023-11-27'
         and tire_results.request.query != ""
         and tireRequestContext.tireTestv2Id = "acdQzCVLzfvTlab4mdMl"
-        and request.limit != 0
+        and (request.offset + request.limit) < 48
     ),
     selected_pages as (
         select uuid, behavior
@@ -92,18 +92,18 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` as (
 
 -- sanity check: same total number of rows, number of distinct requests as raw
 -- spot check if distribution makes sense
--- SELECT ppaths, pcounts, qtd_distrib
--- FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
--- where distrib_distance is not null
--- -- spot check if distance calculation is as expected
--- SELECT qtd_distrib, listing_taxo_distrib, distrib_distance
--- FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
--- where distrib_distance is not null
--- -- check dist range
--- SELECT min(distrib_distance), max(distrib_distance)
--- FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
--- where distrib_distance is not null
--- -- 0, 2, as expected
+SELECT ppaths, pcounts, qtd_distrib
+FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
+where distrib_distance is not null
+-- spot check if distance calculation is as expected
+SELECT qtd_distrib, listing_taxo_distrib, distrib_distance
+FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
+where distrib_distance is not null
+-- check dist range
+SELECT min(distrib_distance), max(distrib_distance)
+FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
+where distrib_distance is not null
+-- 0, 2, as expected
 
 
 
@@ -111,7 +111,9 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` as (
 with tmp as (
     SELECT *
     FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
-    where distrib_distance is not null
+    where page_no = 1
+    and array_length(ppaths.list) > 0
+    and distrib_distance is not null
     and query_bin = 'top.01'
 )
 select behavior, 2.0 - avg(distrib_distance) as avg_distrib_closeness
