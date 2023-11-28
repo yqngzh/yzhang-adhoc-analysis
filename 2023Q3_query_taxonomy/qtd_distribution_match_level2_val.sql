@@ -120,3 +120,36 @@ select behavior, 2.0 - avg(distrib_distance) as avg_distrib_closeness
 from tmp
 group by behavior
 
+
+---- Impression overlap
+create or replace table `etsy-sr-etl-prod.yzhang.qtd_boosting_level2_val` as (
+    with fb_data as (
+        select `key` as query, ppaths.element as ppaths
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-11-09`,
+            unnest(queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths.list) as ppaths
+    ),
+    fb_data_agg as (
+        select query, array_agg(ppaths) as ppath_level2
+        from fb_data
+        group by query
+    ),
+    qtd_table as (
+        select uuid, behavior, query, query_bin, query_intent, listing_taxo_level2
+        from `etsy-sr-etl-prod.yzhang.qtd_distrib_match_qtdlevel2_full`
+    )
+    select qtd_table.*, ppath_level2, if (listing_taxo_level2 in unnest(ppath_level2), 1, 0) as overlap
+    from qtd_table
+    left join fb_data_agg
+    on qtd_table.query = fb_data_agg.query
+) 
+
+with tmp as (
+    select uuid, sum(overlap) as QTD_match, count(*) as total_impression
+    from `etsy-sr-etl-prod.yzhang.qtd_boosting_level2_val`
+    where array_length(ppath_level2) > 0
+    and behavior = 'control'
+    -- and query_bin = 'top.01'
+    group by uuid
+)
+select avg(QTD_match)
+from tmp
