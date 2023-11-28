@@ -46,24 +46,24 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2_tire_raw` as (
             tireRequestContext.variant as behavior,
             CAST(request.offset / request.limit + 1 AS INTEGER) page_no,
         from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*` as tire_results,
-          unnest(response.listingIds) as listing_id  with offset position
+          UNNEST(response.listingIds) AS listing_id  WITH OFFSET position
         where DATE(queryTime) = '2023-11-27'
         and tire_results.request.query != ""
         and tireRequestContext.tireTestv2Id = "acdQzCVLzfvTlab4mdMl"
         and request.limit != 0
     ),
     selected_pages as (
-        select uuid, behavior
+        select distinct uuid
         from tire_output_all
-        group by uuid, behavior
+        where page_no = 1 and position < 48
+        group by uuid
         having count(distinct listing_id) = 48
     ),
     tire_output as (
-        select tire_output_all.*
+        select *
         from tire_output_all
-        join selected_pages
-        on tire_output_all.uuid = selected_pages.uuid
-        and tire_output_all.behavior = selected_pages.behavior
+        where page_no = 1 and position < 48
+        and uuid in (select uuid from selected_pages)
     )
     select 
         tire_output.*,
@@ -111,8 +111,7 @@ where distrib_distance is not null
 with tmp as (
     SELECT *
     FROM `etsy-sr-etl-prod.yzhang.qtd_level2_tire_full` 
-    where page_no = 1
-    and array_length(ppaths.list) > 0
+    where array_length(ppaths.list) > 0
     and distrib_distance is not null
     and query_bin = 'top.01'
 )
@@ -148,8 +147,8 @@ with tmp as (
     select uuid, sum(overlap) as QTD_match, count(*) as total_impression
     from `etsy-sr-etl-prod.yzhang.qtd_level2_tire_match`
     where array_length(ppath_level2) > 0
-    and behavior = 'off'
-    -- and query_bin = 'top.01'
+    and behavior = 'variant'
+    and query_bin = 'top.01'
     group by uuid
 )
 -- select avg(tmp.QTD_match)
