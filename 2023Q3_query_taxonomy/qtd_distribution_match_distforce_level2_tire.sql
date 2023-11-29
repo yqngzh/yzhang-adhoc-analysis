@@ -185,4 +185,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2_tire_dforce_sanity` 
     on tire_output.listing_id = ldata.listing_id
 )
 
-select 
+select * 
+from `etsy-sr-etl-prod.yzhang.qtd_level2_tire_dforce_sanity` 
+where array_length(ppaths.list) > 0
+order by uuid, page_no, position
