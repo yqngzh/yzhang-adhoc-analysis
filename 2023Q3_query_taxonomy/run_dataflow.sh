@@ -132,8 +132,8 @@ python -m qtd_boost \
 
 
 python -m qtd_distribution_match \
-    --input_table etsy-sr-etl-prod.yzhang.qtd_level2_tire_dforce_raw \
-    --output_table etsy-sr-etl-prod:yzhang.qtd_level2_tire_dforce_processed \
+    --input_table etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_raw \
+    --output_table etsy-sr-etl-prod:yzhang.qtd_level2full_tire_sanity_processed \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \
     --region us-central1 \
@@ -153,8 +153,21 @@ python -m qtd_distribution_match \
 #     --input_table etsy-sr-etl-prod.yzhang.qtd_distrib_match_lastab_raw \
 #     --output_table etsy-sr-etl-prod:yzhang.qtd_distrib_match_lastab_processed \
 
-#     --input_table etsy-sr-etl-prod.yzhang.qtd_level2_tire_raw \
-#     --output_table etsy-sr-etl-prod:yzhang.qtd_level2_tire_processed \
+# filter5 downweight
+#     --input_table etsy-sr-etl-prod.yzhang.qtd_level2_tire_v2_raw \
+#     --output_table etsy-sr-etl-prod:yzhang.qtd_level2_tire_v2_processed \
+
+# filter5 dist force
+#     --input_table etsy-sr-etl-prod.yzhang.qtd_level2_tire_dforce_raw \
+#     --output_table etsy-sr-etl-prod:yzhang.qtd_level2_tire_dforce_processed \
+
+# full data downweight
+#     --input_table etsy-sr-etl-prod.yzhang.qtd_level2full_tire_raw \
+#     --output_table etsy-sr-etl-prod:yzhang.qtd_level2full_tire_processed \
+
+# full data dist force
+#     --input_table etsy-sr-etl-prod.yzhang.qtd_level2full_tire_dforce_raw \
+#     --output_table etsy-sr-etl-prod:yzhang.qtd_level2full_tire_dforce_processed \
 
 
 python -m qtd_bert_distribution_match \
