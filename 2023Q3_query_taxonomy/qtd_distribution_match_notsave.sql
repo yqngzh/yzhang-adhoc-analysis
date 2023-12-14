@@ -1,12 +1,12 @@
 --------   Level2 full dataset boost first page TIRE result
 -- query data
-create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_query_data` as (
+create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_qdata` as (
     with query_fb_data as (
         select 
             `key` as query, queryLevelMetrics_bin as query_bin,
             queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths as ppaths,
             queryTaxoDemandFeatures_purchaseLevel2TaxonomyCounts as pcounts
-        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-11-30`
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-12-06`
         where queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths is not null
     ),
     query_intent_data as (
@@ -21,13 +21,13 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_query_data`
 )
 
 -- listing data
-create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_listing_data` as (
+create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_ldata` as (
     with fb_data as (
         select 
             `key` as listing_id, 
             split(verticaListings_taxonomyPath, ".")[SAFE_OFFSET(0)] as top_node,
             split(verticaListings_taxonomyPath, ".")[SAFE_OFFSET(1)] as second_node,
-        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2023-11-30`
+        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2023-12-06`
     )
     select 
         listing_id,
@@ -47,22 +47,22 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_raw`
             CAST(request.offset / request.limit + 1 AS INTEGER) page_no,
         from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*` as tire_results,
           UNNEST(response.listingIds) AS listing_id  WITH OFFSET position
-        where DATE(queryTime) = '2023-11-30'
+        where DATE(queryTime) = '2023-12-06'
         and tire_results.request.query != ""
-        and tireRequestContext.tireTestv2Id = "I5fTJx5k9dypUDzPM7gV"
+        and tireRequestContext.tireTestv2Id = "FVD5ggbUL9CXTOmzsXai"
         and request.limit != 0
     ),
     selected_pages as (
         select distinct uuid
         from tire_output_all
-        where page_no = 1 and position < 48
+        where page_no = 1 and position < 28
         group by uuid
-        having count(distinct listing_id) = 48
+        having count(distinct listing_id) = 28
     ),
     tire_output as (
         select *
         from tire_output_all
-        where page_no = 1 and position < 48
+        where page_no = 1 and position < 28
         and uuid in (select uuid from selected_pages)
     )
     select 
@@ -70,9 +70,9 @@ create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_raw`
         qdata.query_bin, qdata.query_intent, qdata.ppaths, qdata.pcounts,
         ldata.listing_taxo_level2
     from tire_output
-    left join `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_query_data` qdata
+    left join `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_qdata` qdata
     on tire_output.query = qdata.query
-    left join `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_listing_data` ldata
+    left join `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_ldata` ldata
     on tire_output.listing_id = ldata.listing_id
 )
 
@@ -125,7 +125,7 @@ group by behavior
 create or replace table `etsy-sr-etl-prod.yzhang.qtd_level2full_tire_sanity_match` as (
     with fb_data as (
         select `key` as query, ppaths.element as ppaths
-        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-11-30`,
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2023-12-06`,
             unnest(queryTaxoDemandFeatures_purchaseLevel2TaxonomyPaths.list) as ppaths
     ),
     fb_data_agg as (
