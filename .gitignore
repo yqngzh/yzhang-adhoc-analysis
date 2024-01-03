@@ -9,5 +9,6 @@ venv*
 *.png
 *.jpeg
 *.csv
+*.json
 
 jfrog*
