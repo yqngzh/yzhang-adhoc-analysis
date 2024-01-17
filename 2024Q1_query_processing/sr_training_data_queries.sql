@@ -17,36 +17,43 @@ create or replace table `etsy-sr-etl-prod.yzhang.attributed_instance_queries_122
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2024-01-04" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2024_01_04`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   ),
   data_0103 as (
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2024-01-03" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2024_01_03`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   ),
   data_0102 as (
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2024-01-02" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2024_01_02`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   ),
   data_0101 as (
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2024-01-01" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2024_01_01`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   ),
   data_1231 as (
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2023-12-31" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_12_31`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   ),
   data_1230 as (
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2023-12-30" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_12_30`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   ),
   data_1229 as (
     select distinct requestUUID, ctx.docInfo.queryInfo.query as context_query, clientProvidedInfo.query.query as client_query, "2023-12-29" as data_date
     from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_12_29`, unnest(contextualInfo) as ctx
     where "purchase" in unnest(attributions)
+    and userCountry = 'US'
   )
   select * from data_1229
   union all
@@ -71,7 +78,7 @@ with requests_by_date as (
 select data_date, count(*)
 from requests_by_date
 group by data_date
--- 76267-96922, slightly less than json / parquet data
+-- 49524-62348, less than json / parquet data
 
 select count(*) from `etsy-sr-etl-prod.yzhang.attributed_instance_queries_1229_0104`
 where client_query is null
@@ -82,4 +89,4 @@ with requests_with_raw_query as (
   from `etsy-sr-etl-prod.yzhang.attributed_instance_queries_1229_0104`
 )
 select count(*) from requests_with_raw_query
--- 608425 rows & distinct requests
+-- 407397 rows & distinct requests
