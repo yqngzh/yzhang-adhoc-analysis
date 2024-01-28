@@ -3,7 +3,7 @@ import gcsfs
 import pyarrow.parquet as pq
 from typing import Dict, Tuple, List
 
-FILEPATH = "gs://etldata-prod-ds-adhoc-data-hkwv8r/user/yzhang/search_training_data/listing_signals/test/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_purchase/_DATE=2024-01-11/parquet/part-*.parquet"
+FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/user/yzhang/listing_signals/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_purchase/_DATE=2024-01-20/parquet/part-*.parquet"
 
 
 def load_raw_data_from_parquet_file(
