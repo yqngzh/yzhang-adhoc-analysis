@@ -12,3 +12,5 @@ venv*
 *.json
 
 jfrog*
+
+part*
