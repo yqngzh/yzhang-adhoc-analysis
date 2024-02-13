@@ -1,17 +1,17 @@
-python -m analyze_taxo_boosting_ab \
-    --input_table etsy-sr-etl-prod.yzhang.query_taxo_boe_full \
-    --output_table etsy-sr-etl-prod:yzhang.query_taxo_boe_summary \
-    --output_dir gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
+python -m listing_signal_training_data \
+    --output_table etsy-sr-etl-prod:yzhang.listing_signal_0120 \
+    --job_name yz-listing-signal-train-data-0120 \
     --runner DataflowRunner \
     --project etsy-sr-etl-prod \
     --region us-central1 \
     --service_account_email dataflow-worker@etsy-sr-etl-prod.iam.gserviceaccount.com \
     --temp_location gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
     --staging_location gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/tmp \
+    --experiment use_avro \
     --experiment use_runner_v2 \
     --experiment upload_graph \
     --experiment max_workflow_runtime_walltime_seconds=43200 \
-    --machine_type e2-standard-16 \
-    --disk_size_gb 200 \
+    --machine_type c2d-highmem-8 \
+    --disk_size_gb 400 \
     --num_workers 16 \
     --max_num_workers 32
