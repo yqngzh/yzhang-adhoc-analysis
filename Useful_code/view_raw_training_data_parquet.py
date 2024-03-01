@@ -5,7 +5,7 @@ import pyarrow.parquet as pq
 from typing import Dict, Tuple, List
 from tqdm import tqdm
 
-FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/user/yzhang/listing_signals_v3/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase/_DATE=2024-01-12/results/part-*.parquet"
+FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/user/yzhang/listing_signals_test/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase/_DATE=2024-02-15/results/part-*.parquet"
 
 
 def load_raw_data_from_parquet_file(
@@ -30,27 +30,30 @@ def load_raw_data_from_parquet_file(
 paths = tf.io.gfile.glob(FILEPATH)
 
 columns = [
-    # "candidateInfo.docInfo.listingInfo.listingId",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.isBestseller",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.tags",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.isLimitedQuantity",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.hasVideo",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#keys",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#values",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.quantity",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.isEtsyPick",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.price#keys",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.price#values",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#keys",
-    # "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#values",
+    "candidateInfo.docInfo.listingInfo.listingWeb.hasVideo",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#keys",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#values",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isBestseller",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isLimitedQuantity",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isEtsyPick",
+    "candidateInfo.docInfo.listingInfo.listingWeb.price#keys",
+    "candidateInfo.docInfo.listingInfo.listingWeb.price#values",
+    "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#keys",
+    "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#values",
+    "candidateInfo.docInfo.listingInfo.listingWeb.quantity",
+    "candidateInfo.docInfo.listingInfo.listingWeb.tags",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isDigital",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isActive",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isBlockedZeroReccos",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isSearchable",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isAvailable",
+    "candidateInfo.docInfo.listingInfo.listingWeb.isDisplayable",
     "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyVideoPlayedListingIds50FV1#listingId",
-    "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyVideoPlayedListingIds50FV1#timestamp",
-    "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingIds50FV1#listingId",
 ]
 
 # requests is a List[Dict] where each dictionary represents the features for a request.
 requests = load_raw_data_from_parquet_file(
-    filepath=paths[1],
+    filepath=paths[0],
     columns=columns,
 )
 
@@ -66,28 +69,12 @@ for feature_name, feature_values in first_request.items():
         print(feature_name)
     # print(feature_values)
 
-
+print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.isDigital"])
 print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.isBestseller"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.tags"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.isLimitedQuantity"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.hasVideo"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#keys"])
-print(
-    first_request["candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#values"]
-)
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.quantity"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.isEtsyPick"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.price#keys"])
-print(first_request["candidateInfo.docInfo.listingInfo.listingWeb.price#values"])
 print(
     first_request["candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#keys"]
 )
-print(
-    first_request[
-        "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#values"
-    ]
-)
-print(first_request["candidateInfo.docInfo.listingInfo.listingId"][6])
+
 
 for j in tqdm(range(len(paths))):
     requests = load_raw_data_from_parquet_file(
@@ -95,13 +82,6 @@ for j in tqdm(range(len(paths))):
         columns=columns,
     )
     for i in range(len(requests)):
-        feature = requests[i][
-            "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyVideoPlayedListingIds50FV1#listingId"
-        ]
+        feature = requests[i]["candidateInfo.docInfo.listingInfo.listingWeb.isDigital"]
         if feature is not None:
-            if len(np.unique(feature)) > 0 and len(np.unique(feature)[0]) > 0:
-                print(feature)
-
-requests[0][
-    "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingIds50FV1#listingId"
-]
+            print(feature)

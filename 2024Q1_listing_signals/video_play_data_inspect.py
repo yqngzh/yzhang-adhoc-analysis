@@ -5,7 +5,7 @@ import pyarrow.parquet as pq
 from typing import Dict, List
 from tqdm import tqdm
 
-FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/user/yzhang/listing_signals_v3/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase/_DATE=2024-01-12/results/part-*.parquet"
+FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/user/yzhang/listing_signals_v4/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_purchase/_DATE=2024-01-12/results/part-*.parquet"
 
 
 def load_raw_data_from_parquet_file(
@@ -31,7 +31,7 @@ paths = tf.io.gfile.glob(FILEPATH)
 
 columns = [
     "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyVideoPlayedListingIds50FV1#listingId",
-    "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingIds50FV1#listingId",
+    # "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingIds50FV1#listingId",
 ]
 
 for j in tqdm(range(len(paths))):
