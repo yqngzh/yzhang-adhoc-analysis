@@ -67,3 +67,28 @@ and listingWeb_isFreeShipping is True
 -- 132810489 have both fields
 -- 21003275 isFreeShipping True, usShipCost > 0
 -- 14743020 isFreeShipping False, usShipCost = 0
+
+
+
+---- More about price
+select 
+    activeListingBasics_priceUsd, 
+    activeListingBasics_maxPriceUsd,
+    activeListingBasics_minPriceUsd,
+    cast(listingWeb_price.key_value[array_length(listingWeb_price.key_value)-1].value as float64) / 100.0 as listing_web_price
+-- select count(*)
+from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-03-05`
+where activeListingBasics_priceUsd is not null
+and activeListingBasics_minPriceUsd is not null and activeListingBasics_maxPriceUsd is not null 
+and activeListingBasics_minPriceUsd != activeListingBasics_maxPriceUsd
+and activeListingBasics_priceUsd > activeListingBasics_maxPriceUsd
+-- 978285316 listings
+-- 492049301 has basics price usd
+-- 190619636 have basic, min and max price
+-- 114659462 (60% of those available) max price != min price (base)
+
+-- 113487413 (99%) price = min price
+-- 68649 price = max price
+-- 436085 price > min and < max
+-- 412760 price < min price
+-- 254555 price > max price
