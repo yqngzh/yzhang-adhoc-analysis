@@ -30,25 +30,7 @@ def load_raw_data_from_parquet_file(
 paths = tf.io.gfile.glob(FILEPATH)
 
 columns = [
-    "candidateInfo.docInfo.listingInfo.listingWeb.hasVideo",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#keys",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isFreeShipping#values",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isBestseller",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isLimitedQuantity",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isEtsyPick",
-    "candidateInfo.docInfo.listingInfo.listingWeb.price#keys",
-    "candidateInfo.docInfo.listingInfo.listingWeb.price#values",
-    "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#keys",
-    "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#values",
-    "candidateInfo.docInfo.listingInfo.listingWeb.quantity",
-    "candidateInfo.docInfo.listingInfo.listingWeb.tags",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isDigital",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isActive",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isBlockedZeroReccos",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isSearchable",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isAvailable",
-    "candidateInfo.docInfo.listingInfo.listingWeb.isDisplayable",
-    "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyVideoPlayedListingIds50FV1#listingId",
+    "attributions",
 ]
 
 # requests is a List[Dict] where each dictionary represents the features for a request.
