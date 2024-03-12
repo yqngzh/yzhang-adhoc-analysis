@@ -71,17 +71,27 @@ and listingWeb_isFreeShipping is True
 
 
 ---- More about price
-select 
-    activeListingBasics_priceUsd, 
-    activeListingBasics_maxPriceUsd,
-    activeListingBasics_minPriceUsd,
-    cast(listingWeb_price.key_value[array_length(listingWeb_price.key_value)-1].value as float64) / 100.0 as listing_web_price
--- select count(*)
-from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-03-05`
-where activeListingBasics_priceUsd is not null
-and activeListingBasics_minPriceUsd is not null and activeListingBasics_maxPriceUsd is not null 
-and activeListingBasics_minPriceUsd != activeListingBasics_maxPriceUsd
-and activeListingBasics_priceUsd > activeListingBasics_maxPriceUsd
+with tmp as (
+    select 
+        key as listing_id,
+        activeListingBasics_priceUsd, 
+        activeListingBasics_maxPriceUsd,
+        activeListingBasics_minPriceUsd,
+        cast(listingWeb_price.key_value[array_length(listingWeb_price.key_value)-1].value as float64) / 100.0 as listing_web_price,
+        case
+          when array_length(listingWeb_promotionalPrice.key_value) > 0 then cast(listingWeb_promotionalPrice.key_value[array_length(listingWeb_promotionalPrice.key_value)-1].value as float64) / 100.0
+          else null
+        end as promo_price
+    -- select count(*)
+    from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-03-05`
+    where activeListingBasics_priceUsd is not null
+    and activeListingBasics_minPriceUsd is not null and activeListingBasics_maxPriceUsd is not null 
+    and activeListingBasics_minPriceUsd != activeListingBasics_maxPriceUsd
+    and activeListingBasics_priceUsd > activeListingBasics_maxPriceUsd
+)
+select count(*) from tmp
+where promo_price is not null
+and listing_web_price - promo_price < 0
 -- 978285316 listings
 -- 492049301 has basics price usd
 -- 190619636 have basic, min and max price
@@ -92,3 +102,9 @@ and activeListingBasics_priceUsd > activeListingBasics_maxPriceUsd
 -- 436085 price > min and < max
 -- 412760 price < min price
 -- 254555 price > max price
+
+-- 254555 listings
+-- 26161 promo not null
+-- average price diff 57.08
+-- min price diff -146.5
+-- max price diff 12830.5
