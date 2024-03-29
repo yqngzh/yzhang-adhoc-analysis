@@ -1,4 +1,4 @@
-create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_web_pow0506` as (
+create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_web_075abcd` as (
     select
         response.mmxRequestUUID as tireRequestUUID,
         request.OPTIONS.personalizationOptions.userId,
@@ -9,24 +9,24 @@ create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_web_pow0506` as (
         position
     from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*`,
         UNNEST(response.listingIds) AS listing_id  WITH OFFSET position
-    where tireRequestContext.tireTestv2Id = "KpktT68edxTCSZTlKD1M"
+    where tireRequestContext.tireTestv2Id = "7r0USYC2HOgTEcw3Tb7E"
     and request.query != ""
     and response.mmxRequestUUID is not null
     and request.limit != 0
 )
 
-create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_pow0506` as (
+create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_075abcd` as (
     with query_data as (
         select 
             `key` as query_str,
             queryLevelMetrics_bin as query_bin,
             queryLevelMetrics_isDigital as query_is_digital
-        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2024-03-18`
+        from `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_2024-03-20`
     ),
     user_data as (
         select `key` as user_id, 
             userSegmentFeatures_buyerSegment as buyer_segment
-        from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_2024-03-18`
+        from `etsy-ml-systems-prod.feature_bank_v2.user_feature_bank_2024-03-20`
     ),
     listing_data as (
         select `key` as listing_id, 
@@ -37,7 +37,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_pow0506`
                 when array_length(listingWeb_promotionalPrice.key_value) > 0 then cast(listingWeb_promotionalPrice.key_value[array_length(listingWeb_promotionalPrice.key_value)-1].value as float64) / 100.0
                 else null
             end as promo_price
-        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-03-18`
+        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-03-20`
     )
     select
         tire_res.*,
@@ -47,7 +47,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_pow0506`
         ldata.listing_is_digital,
         if (ldata.promo_price is not null, ldata.promo_price, ldata.listing_web_price) as lweb_real_price,
         ldata.alb_price
-    from `etsy-sr-etl-prod.yzhang.lsig_tire_web_pow0506` tire_res
+    from `etsy-sr-etl-prod.yzhang.lsig_tire_web_075abcd` tire_res
     left join query_data qdata
     on tire_res.query = qdata.query_str
     left join listing_data ldata
@@ -66,13 +66,29 @@ with tmp as (
         buyer_segment,
         query_is_digital,
         listing_is_digital
-    from `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_pow0506`
-    -- where page_no = 1
+    from `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_075abcd`
 )
 select variant, buyer_segment, avg(realPriceUsd) as avg_realPriceUsd
 from tmp
 group by variant, buyer_segment
 order by variant, buyer_segment
+
+
+with tmp as (
+    select 
+        if (lweb_real_price is not null, lweb_real_price, alb_price) as realPriceUsd,
+        variant,
+        query_bin,
+        buyer_segment,
+        query_is_digital,
+        listing_is_digital
+    from `etsy-sr-etl-prod.yzhang.lsig_tire_analysis_web_075abcd`
+)
+select variant, avg(realPriceUsd) as avg_realPriceUsd
+from tmp
+group by variant
+order by variant
+
 
 
 select count(*)
