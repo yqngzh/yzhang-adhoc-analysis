@@ -19,6 +19,7 @@ with tmp as (
 select queryBin, count(*) as numQuery
 from tmp
 group by queryBin
+order by queryBin
 
 with tmp as (
     select distinct etsyUUID, platform
