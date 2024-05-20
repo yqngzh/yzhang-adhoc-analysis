@@ -423,9 +423,26 @@ order by date, variant_id
 
 
 
--- after NDCG is calculated by pipeline
+-- after metrics are calculated by vertex pipeline
+-- NDCG changes
 select date, variant_id, count(distinct guid) as n_guid, avg(relevanceNDCG10) as avg_relevanceNDCG10
 from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web_request-metrics` 
+group by date, variant_id
+order by date, variant_id
+
+-- percent of irrelevant listings
+with irr_table as (
+    select date, guid, variant_id, if(classId = 1, 1.0, 0.0) as irr_listing
+    from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web_query-listing-metrics_vw`
+    where pageNum is not NULL
+),
+percent_irr as (
+    select date, guid, variant_id, sum(irr_listing) / count(*) as percent_irr_listing
+    from irr_table
+    group by date, guid, variant_id
+)
+select date, variant_id, count(*) as n_guid, avg(percent_irr_listing) as avg_percent_irr
+from percent_irr
 group by date, variant_id
 order by date, variant_id
 
@@ -435,3 +452,17 @@ from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-boe_request-metrics`
 group by date, variant_id
 order by date, variant_id
 
+with irr_table as (
+    select date, guid, variant_id, if(classId = 1, 1.0, 0.0) as irr_listing
+    from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-boe_query-listing-metrics_vw`
+    where pageNum is not NULL
+),
+percent_irr as (
+    select date, guid, variant_id, sum(irr_listing) / count(*) as percent_irr_listing
+    from irr_table
+    group by date, guid, variant_id
+)
+select date, variant_id, count(*) as n_guid, avg(percent_irr_listing) as avg_percent_irr
+from percent_irr
+group by date, variant_id
+order by date, variant_id
