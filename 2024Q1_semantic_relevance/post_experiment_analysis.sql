@@ -1,7 +1,7 @@
 DECLARE start_date DATE DEFAULT '2024-05-08';
-DECLARE end_date DATE DEFAULT '2024-05-15';
+DECLARE end_date DATE DEFAULT '2024-05-20';
 DECLARE sample_rate FLOAT64 DEFAULT 0.01;
-DECLARE listingPerPage INT64 DEFAULT 10;
+DECLARE listingPerPage INT64 DEFAULT 48;
 
 
 -- sample request over experiment window
@@ -237,6 +237,11 @@ order by date, variant_id
 
 
 -- boe
+DECLARE start_date DATE DEFAULT '2024-05-08';
+DECLARE end_date DATE DEFAULT '2024-05-20';
+DECLARE sample_rate FLOAT64 DEFAULT 0.01;
+DECLARE listingPerPage INT64 DEFAULT 28;
+
 create or replace table `etsy-data-warehouse-dev.search.sr-sem-rel-v1-boe-ab` as (
     with bucketing as (
         select
