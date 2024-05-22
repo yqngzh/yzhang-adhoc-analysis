@@ -475,27 +475,6 @@ from ndcg_table
 group by queryBin, date, variant_id
 order by queryBin, date, variant_id
 
--- percent irrelevant
-with results_table as (
-    select tableUUID, guid, variant_id, query, date, queryBin, qisClass
-    from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web-results`
-),
-metrics_table as (
-    select metrics.*, guid, queryBin, qisClass, if(classId = 1, 1.0, 0.0) as irr_listing
-    from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web_query-listing-metrics` metrics
-    join results_table
-    on metrics.tableUUID = results_table.tableUUID
-),
-percent_irr as (
-    select date, guid, variant_id, queryBin, sum(irr_listing) / count(*) as percent_irr_listing
-    from metrics_table
-    group by date, guid, variant_id, queryBin
-)
-select date, variant_id, queryBin, count(*) as n_guid, avg(percent_irr_listing) as avg_percent_irr
-from percent_irr
-group by queryBin, date, variant_id
-order by queryBin, date, variant_id
-
 
 
 
