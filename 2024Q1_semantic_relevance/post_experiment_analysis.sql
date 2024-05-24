@@ -454,7 +454,7 @@ order by date, variant_id
 
 
 
--- by query bin
+-- by query bin & query intent
 -- ndcg
 with results_table as (
     select distinct guid, variant_id, query, date, queryBin, qisClass
@@ -479,3 +479,7 @@ order by queryBin, date, variant_id
 
 
 -- sign-in / sign-out
+
+
+
+
