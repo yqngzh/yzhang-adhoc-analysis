@@ -70,7 +70,7 @@ where query in (
 with tmp as (
     select query, bin, listingId, listingTitle, relevance_value
     from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
-    where relevance_value like 'not_sure%'
+    where relevance_value not like 'not_sure%'
     and rand() < 0.1
 )
 select * from tmp
