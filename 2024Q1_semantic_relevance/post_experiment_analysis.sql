@@ -479,7 +479,144 @@ order by queryBin, date, variant_id
 
 
 -- sign-in / sign-out
+with rpc_data as (
+    SELECT
+        
+        request.query AS query,
+        DATE(queryTime) date,
+        RequestIdentifiers.etsyRequestUUID as etsyUUID,
+        response.mmxRequestUUID as mmxRequestUUID,
+    FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+    WHERE request.OPTIONS.cacheBucketId LIKE "live%"
+    AND request.options.csrOrganic
+    AND request.query <> ''
+    AND request.offset = 0
+    AND DATE(queryTime) between start_date and end_date
+    AND request.options.interleavingConfig IS NULL
+    AND response.count >= 88
+), 
 
 
 
+with irr_table as (
+    select date, guid, variant_id, if(classId = 1, 1.0, 0.0) as irr_listing
+    from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web_query-listing-metrics_vw`
+    where pageNum is not NULL
+),
+percent_irr as (
+    select date, guid, variant_id, sum(irr_listing) / count(*) as percent_irr_listing
+    from irr_table
+    group by date, guid, variant_id
+)
+select date, variant_id, count(*) as n_guid, avg(percent_irr_listing) as avg_percent_irr
+from percent_irr
+group by date, variant_id
+order by date, variant_id
 
+
+
+---- Segmented CVR
+DECLARE start_date DATE DEFAULT '2024-05-08';
+DECLARE end_date DATE DEFAULT '2024-05-20';
+DECLARE my_experiment STRING DEFAULT 'ranking/search.mmx.2024_q2.nrv2_sem_rel_v1_web_try2';
+
+create or replace table `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web-ab-aggevent` as (
+    with bucketing as (
+        select distinct
+            bucketing_id, variant_id, bucketing_ts,
+        from `etsy-data-warehouse-prod.catapult_unified.bucketing_period`
+        where _date = end_date
+        and experiment_id = my_experiment
+    ),
+    -- all bucketed units during experiment
+    unit_with_event as (
+        SELECT distinct
+            bucketing_id, variant_id, sum(event_value) as sum_event_value
+        FROM `etsy-data-warehouse-prod.catapult_unified.aggregated_event_daily`
+        WHERE experiment_id = my_experiment
+        and _date BETWEEN start_date AND end_date
+        AND event_id = "backend_cart_payment"
+        group by bucketing_id, variant_id
+    ),    
+    --- aggregate CVR event during the experiment group by each unit
+    exp_agg_events as (
+        select 
+            b.bucketing_id,
+            b.variant_id,
+            b.bucketing_ts,
+            ue.sum_event_value,
+        from bucketing b
+        left join unit_with_event ue
+        on (
+            b.bucketing_id = ue.bucketing_id
+            and b.variant_id = ue.variant_id
+        )
+    ),
+    --- keep all bucketed units, add event value for units for which the event happened
+    exp_visits as (
+        select
+            e.*,
+            v.visit_id,
+        from exp_agg_events e
+        join `etsy-data-warehouse-prod.weblog.visits` v
+            on e.bucketing_id = v.browser_id
+            and TIMESTAMP_TRUNC(bucketing_ts, SECOND) <= v.end_datetime
+        where v._date between start_date and end_date
+    ),
+    --- get visit_id for bucketed units
+    beacon AS (
+        select distinct
+            beacon.guid,
+            visit_id,
+            date(_PARTITIONTIME) as date,
+            (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'mmx_request_uuid') AS mmxRequestUUID,
+            (select value from unnest(beacon.properties.key_value) where key = 'query') as beacon_query
+        from `etsy-visit-pipe-prod.canonical.visit_id_beacons`
+        where date(_PARTITIONTIME) between start_date and end_date
+        and beacon.event_name = 'search'
+    )
+    --- get beacon id and query
+    select
+        ev.*,
+        beacon.guid,
+        beacon.mmxRequestUUID,
+        beacon.beacon_query,
+        beacon.date
+    from exp_visits ev
+    join beacon
+    on ev.visit_id = beacon.visit_id
+);
+
+--- append query bin and intent
+create or replace table `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web-ab-qseg` as (
+    with qis AS (
+        SELECT 
+            query_raw query,
+            CASE 
+                WHEN class_id = 0 THEN 'broad' 
+                WHEN class_id = 1 THEN 'direct_unspecified'
+                WHEN class_id = 2 THEN 'direct_specified' 
+            END AS qisClass
+        FROM `etsy-search-ml-prod.mission_understanding.qis_scores`
+    ),
+    qlm AS (
+        SELECT query_raw query, _date date, bin 
+        FROM `etsy-batchjobs-prod.snapshots.query_level_metrics_raw`
+        WHERE _date = end_date
+    )
+    select 
+        ab.*, 
+        qisClass, bin as queryBin
+    from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web-ab-aggevent` ab
+    left join qis
+    on qis.query = ab.beacon_query
+    left join qlm
+    on qlm.query = ab.beacon_query
+)
+
+
+select variant_id, queryBin, count(distinct guid)
+from `etsy-data-warehouse-dev.search.sr-sem-rel-v1-web-ab-qseg`
+where sum_event_value is not null
+group by variant_id, queryBin
+order by variant_id, queryBin
