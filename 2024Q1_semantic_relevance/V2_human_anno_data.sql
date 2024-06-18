@@ -1,11 +1,14 @@
--- 29990 distinct query, listing pairs
-
 select distinct query, listingId
 from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
+-- 29990 distinct query, listing pairs
+
+select relevance_value, count(*)
+from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
+group by relevance_value
 -- 3 labels
--- relevant: 16622
--- partial: 9358
--- not relevant: 3976
+---- relevant: 16622
+---- partial: 9358
+---- not_relevant: 3976
 -- not_sure_q1: 16
 -- not_sure_broad: 18
 
@@ -14,11 +17,6 @@ from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
 where relevance_value not like 'not_sure%'
 -- 29956 pairs with a label judgement
 -- 21706 distinct queries
-
-select query, listingTitle, listingId, relevance_value
-from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
-where relevance_value like 'not_sure%'
-order by relevance_value
 
 with tmp as (
     select distinct query, isGift
@@ -42,11 +40,6 @@ group by isGift
 -- tail 653
 -- novel 3141
 
-select relevance_value, count(*)
-from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
-where relevance_value like 'not_sure%'
-group by relevance_value
-
 
 -- queries mapped to multiple bins
 with tmp as (
@@ -66,7 +59,8 @@ where query in (
     'coaches gifts basketball'
 )
 
--- sample 100 random  pairs
+
+-- sample 100 random pairs
 with tmp as (
     select query, bin, listingId, listingTitle, relevance_value
     from `etsy-search-ml-dev.human_annotation.survey2_examples_w_labels`
