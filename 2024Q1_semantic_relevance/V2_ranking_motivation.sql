@@ -193,3 +193,56 @@ from web_reqs_purchase
 group by qisClass, has_purchase
 order by qisClass, has_purchase
 
+
+
+
+------  Purchase requests
+------ 
+-- Using jg-sem-rel-bq branch, write out 1 day of eval data (tight attribution)
+-- Branch yzhang/relv2-data-analysis (modified output path from jg-sem-rel-bq)
+CREATE OR REPLACE EXTERNAL TABLE `etsy-sr-etl-prod.yzhang.sem_rel_purchase_reqs_2024-07-08`
+OPTIONS (
+    format = 'parquet',
+    uris = ['gs://training-dev-search-data-jtzn/user/yzhang/semantic_relevance/purchase_reqs/2024_07_08*.parquet']
+)
+-- total 4134729 query listing pairs 
+
+with purchased_pairs as (
+    select 
+        query, title, listing_id, attributions, sem_rel_softmax_0, sem_rel_softmax_3,
+        CASE
+            WHEN (sem_rel_softmax_3 > sem_rel_softmax_2 AND sem_rel_softmax_3 > sem_rel_softmax_1 AND sem_rel_softmax_3 > sem_rel_softmax_0) THEN 'Relevant'
+            WHEN (sem_rel_softmax_2 > sem_rel_softmax_0 AND sem_rel_softmax_2 > sem_rel_softmax_3) THEN 'Partial'
+            WHEN (sem_rel_softmax_1 > sem_rel_softmax_0 AND sem_rel_softmax_1 > sem_rel_softmax_3) THEN 'Partial'
+            WHEN (sem_rel_softmax_0 > sem_rel_softmax_3 AND sem_rel_softmax_0 > sem_rel_softmax_2 AND sem_rel_softmax_0 > sem_rel_softmax_1) THEN 'Irrelevant'
+            ELSE "Missing"
+        END AS sem_rel_label
+    from `etsy-sr-etl-prod.yzhang.sem_rel_purchase_reqs_2024-07-08`,
+        unnest(attributions.list) as attr
+    where attr.item = "purchase"
+),
+qis as (
+    select 
+        query_raw query,
+        CASE 
+            WHEN class_id = 0 THEN 'broad' 
+            WHEN class_id = 1 THEN 'direct_unspecified'
+            WHEN class_id = 2 THEN 'direct_specified'
+        END AS qisClass
+    from `etsy-search-ml-prod.mission_understanding.qis_scores`
+),
+purchased_pairs_qis as (
+    select p.*, qisClass
+    from purchased_pairs p
+    left join qis
+    using (query)
+)
+select sem_rel_label, count(*) 
+from purchased_pairs_qis
+where qisClass = 'broad' 
+group by sem_rel_label
+-- 120701 pairs purchased 
+
+select qisClass, count(*) 
+from purchased_pairs_qis
+group by qisClass
