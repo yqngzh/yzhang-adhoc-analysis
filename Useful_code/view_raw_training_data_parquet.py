@@ -5,7 +5,7 @@ import pyarrow.parquet as pq
 from typing import Dict, Tuple, List
 from tqdm import tqdm
 
-FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/user/yzhang/listing_signals_v5/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase/_DATE=2024-01-15/results/part-*.parquet"
+FILEPATH = "gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase/_DATE=2024-07-07/results/part-*.parquet"
 
 
 def load_raw_data_from_parquet_file(
@@ -31,6 +31,8 @@ paths = tf.io.gfile.glob(FILEPATH)
 
 columns = [
     "attributions",
+    "clientProvidedInfo.query.query",
+    "contextualInfo[name=target].docInfo.queryInfo.query"
 ]
 
 # requests is a List[Dict] where each dictionary represents the features for a request.
