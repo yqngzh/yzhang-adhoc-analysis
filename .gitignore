@@ -11,6 +11,7 @@ venv*
 *.csv
 *.json
 *.xlsx
+*.pq
 
 jfrog*
 
