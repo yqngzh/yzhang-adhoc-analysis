@@ -44,6 +44,8 @@ create or replace table `etsy-sr-etl-prod.yzhang.semrel-v2-tire-si-swap-only` as
     group by tireRequestUUID, variant, page_no, buyer_segment, query_bin
 );
 ---- si-swap-only: YqkKh1Mc32mASwJK1owS
+---- si-swap-only-run2: Z5rUKcHdGQtlL4aR2iiE
+---- so-swap-only: p57DjJwFVmsLUpVn4jOA
 
 
 with grouped as (
