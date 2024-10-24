@@ -1,0 +1,52 @@
+sem_rel_filtering: &sem_rel_filtering
+  <<: *multitask
+  feature_processors:
+    - ProcessInputs
+    - SimpleFeatures
+    - ConfiguredFeatures
+    - RivuletFeatures
+    - ListingTopQueryFeatures
+    - TaxonomyFeatures
+    - EddFeatures
+    - CoarseGrainFeatures
+    - NeuralIrFeatures
+    - SecondOrderFeatures
+    - PriceWeight
+    - SRSemRelWeight
+    - ProcessOutputs
+  input_configs:
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_scores/query_pipeline_web_organic/loose_purchase
+      num_of_days: 100
+      tm_experimental_base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet_rank_fx/query_pipeline_web_organic/loose_purchase
+      tm_experimental_start_date: "2024-09-15"
+      tm_experimental_end_date: "2025-09-15"
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_scores/query_pipeline_boe_organic/loose_purchase
+      num_of_days: 100
+      tm_experimental_base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet_rank_fx/query_pipeline_boe_organic/loose_purchase
+      tm_experimental_start_date: "2024-09-15"
+      tm_experimental_end_date: "2025-09-15"
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_scores/query_pipeline_web_organic/tight_cartadd
+      num_of_days: 60
+      tm_experimental_base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet_rank_fx/query_pipeline_web_organic/tight_cartadd
+      tm_experimental_start_date: "2024-09-15"
+      tm_experimental_end_date: "2025-09-15"
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_scores/query_pipeline_boe_organic/tight_cartadd
+      num_of_days: 60
+      tm_experimental_base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet_rank_fx/query_pipeline_boe_organic/tight_cartadd
+      tm_experimental_start_date: "2024-09-15"
+      tm_experimental_end_date: "2025-09-15"
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_scores/query_pipeline_web_organic/tight_click
+      num_of_days: 7
+      tm_experimental_base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet_rank_fx/query_pipeline_web_organic/tight_click
+      tm_experimental_start_date: "2024-09-15"
+      tm_experimental_end_date: "2025-09-15"
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_scores/query_pipeline_boe_organic/tight_click
+      num_of_days: 7
+      tm_experimental_base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet_rank_fx/query_pipeline_boe_organic/tight_click
+      tm_experimental_start_date: "2024-09-15"
+      tm_experimental_end_date: "2025-09-15"
+  sem_rel:
+    inference_model_path: ""
+  features: !include features/sem_rel_filtering_boe.yaml
+  engineered: !include features/multitask_engineered_boe.yaml
+  pruned_features: []
