@@ -1,4 +1,4 @@
-create or replace table `etsy-sr-etl-prod.yzhang.semrel-v2-tire-si-swap-only` as (
+create or replace table `etsy-sr-etl-prod.yzhang.semrel-v2-tire-so` as (
     with tire_requests as (
         select
             response.mmxRequestUUID as tireRequestUUID,
@@ -12,7 +12,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.semrel-v2-tire-si-swap-only` as
             pos as tire_position
         from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*`,
             UNNEST(response.solrScores) as solrScore WITH OFFSET pos
-        where tireRequestContext.tireTestv2Id = "YqkKh1Mc32mASwJK1owS"
+        where tireRequestContext.tireTestv2Id = "mlLsz71yM662W43skvQc"
         and request.query != ""
         and response.mmxRequestUUID is not null
         and request.limit != 0
@@ -46,6 +46,8 @@ create or replace table `etsy-sr-etl-prod.yzhang.semrel-v2-tire-si-swap-only` as
 ---- si-swap-only: YqkKh1Mc32mASwJK1owS
 ---- si-swap-only-run2: Z5rUKcHdGQtlL4aR2iiE
 ---- so-swap-only: p57DjJwFVmsLUpVn4jOA
+---- semrel-v2-tire-si: aF36atn00oeg6NnTtXr0
+---- semrel-v2-tire-so: mlLsz71yM662W43skvQc
 
 
 with grouped as (
@@ -55,7 +57,7 @@ with grouped as (
         variant,
         SUM(count_uuid) AS num_request,
         AVG(avg_price_per_uuid) as avg_price,
-    from `etsy-sr-etl-prod.yzhang.semrel-v2-tire-si-swap-only`
+    from `etsy-sr-etl-prod.yzhang.semrel-v2-tire-so`
     where page_no = 1
     group by variant, segment, page_no
 )
@@ -69,7 +71,7 @@ with grouped as (
         variant,
         SUM(count_uuid) AS num_request,
         AVG(avg_price_per_uuid) as avg_price,
-    from `etsy-sr-etl-prod.yzhang.semrel-v2-tire-si-swap-only`
+    from `etsy-sr-etl-prod.yzhang.semrel-v2-tire-so`
     where page_no = 1
     group by variant, page_no
 )
