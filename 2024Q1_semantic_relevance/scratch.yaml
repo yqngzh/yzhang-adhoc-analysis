@@ -177,6 +177,7 @@
 - contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.totalPurchases_log1p
 - candidateInfo.docInfo.listingInfo.activeListingLocation.originCountryId:is_GB
 - contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.totalPurchases:10.0
+- candidateInfo.docInfo.listingInfo.semantic_relevance.softmax_scores
 - candidateInfo.candidateInfo.pastWeekTotalDwellMs:scaled_favoriteCountPT24hFV1:ratio_nan_log1p
 - contextualInfo[name=user].candidateInfo.countryId:is_US_countryName:is_US:is_identical
 - contextualInfo[name=user].candidateInfo.tfIdf.allTimeFavoritesTfIdfVector.tfidf.vector:overlap_size_log1p
