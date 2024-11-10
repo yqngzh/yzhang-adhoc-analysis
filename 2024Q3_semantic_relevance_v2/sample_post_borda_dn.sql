@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE FUNCTION `etsy-search-ml-dev.yzhang.sample_post_borda`(
+CREATE OR REPLACE TABLE FUNCTION `etsy-search-ml-dev.yzhang.sample_post_borda_dn`(
     sampleDate DATE,
     minResults INT64,
     samplingRate FLOAT64,
@@ -52,11 +52,12 @@ lfb AS (
         key AS listingId,
         COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')) listingTitle,
         IFNULL(verticaListings_description, "") listingDescription,
+        (SELECT STRING_AGG(element, ';') FROM UNNEST(descNgrams_ngrams.list)) AS listingDescNgrams,
         IFNULL(verticaListings_taxonomyPath, "") listingTaxo,
         (SELECT STRING_AGG(element, ';') FROM UNNEST(kbAttributesV2_sellerAttributesV2.list)) AS listingAttributes,
         IFNULL(verticaListings_tags, "") listingTags,
         IFNULL(verticaSellerBasics_shopName, "") shopName,
-    FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-09-15`
+    FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2024-11-05`
 ),
 queryHydratedRequests AS (
     SELECT
@@ -86,6 +87,7 @@ SELECT
     flatQueryHydratedRequests.*,
     lfb.listingTitle,
     lfb.listingDescription,
+    lfb.listingDescNgrams,
     lfb.listingTaxo,
     lfb.listingTags,
     lfb.listingAttributes,
@@ -93,7 +95,6 @@ SELECT
 FROM flatQueryHydratedRequests
 LEFT JOIN lfb USING(listingId)
 WHERE listingTitle != ''
-AND listingDescription != ''
-AND listingAttributes != ''
+AND listingDescNgrams != ''
 AND shopName != ''
 AND query != '';
