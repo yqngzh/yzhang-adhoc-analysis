@@ -1,519 +1,371 @@
-"""
-This module re-implements a subset of NIR's modeling code: https://github.com/etsy/neural_ir/blob/main/neural_ir/neural_ir/models.py
-
-It is designed to work with NIR models whose config settings are exactly `_REQUIRED_NIR_CONFIG`. Because NIR config
-is backwards compatible, any model which matches this configuration will be consistent with the modeling code implemented below.
-
-Currently, _REQUIRED_NIR_CONFIG matches NIR+T+HQI, the production web model for NIR as of 7/24/2024.
-
-The reason we re-implement rather than simply using signatures is due to flexibility... this allows us for example
-to tell NIR to ignore HQI features (which it wouldn't do by default), or to freeze specific layers while fine tuning
-others
-"""
-
+import click
+from typing import Literal
 import os
-import tempfile
-from typing import Dict, List, Literal, Optional, TypedDict
-
+from datetime import timedelta
+import pandas as pd
 import tensorflow as tf
-import tensorflow_text as text
-import tensorflow_transform as tft
-from transformers import TFAutoModel
 
-from semantic_relevance.utils import paths
-
-EntityType = Literal["query", "listing"]
-FeatureType = Literal["TOKEN_IDS", "RAW_TEXT"]
-NIR_HQI_FEATURES = ("clickTopQuery", "cartTopQuery", "purchaseTopQuery")
-
-
-class RawListingFeatures(TypedDict):
-    title: tf.Tensor  # 1-d string tensor
-    tags: tf.Tensor  # 1-d string tensor
-    taxonomyPath: tf.Tensor  # 1-d string tensor
-    clickTopQuery: tf.RaggedTensor | None  # 2-d, n_examples by n_queries_per_listings
-    cartTopQuery: tf.RaggedTensor | None
-    purchaseTopQuery: tf.RaggedTensor | None
-
-
-NIR_LISTING_FEATURES = frozenset(RawListingFeatures.__annotations__)
-
-
-_COMMON_SP_BERT_PADDING_ID = 0
-_SP_TOKENIZER = "sp_tokenizer"
-_REQUIRED_NIR_CONFIG = {
-    "embedding_dim": 256,
-    "embedding_vocab_size": 988000,
-    "features": [
-        {"name": "query_char_3grams", "source_field": "query", "feature_type": "TOKEN_IDS"},
-        {"name": "query_word_1grams", "source_field": "query", "feature_type": "TOKEN_IDS"},
-        {"name": "query_word_2grams", "source_field": "query", "feature_type": "TOKEN_IDS"},
-        {"name": "title_char_3grams", "source_field": "title", "feature_type": "TOKEN_IDS"},
-        {"name": "title_word_1grams", "source_field": "title", "feature_type": "TOKEN_IDS"},
-        {"name": "title_word_2grams", "source_field": "title", "feature_type": "TOKEN_IDS"},
-        {"name": "tags_char_3grams", "source_field": "tags", "feature_type": "TOKEN_IDS"},
-        {"name": "tags_word_1grams", "source_field": "tags", "feature_type": "TOKEN_IDS"},
-        {"name": "tags_word_2grams", "source_field": "tags", "feature_type": "TOKEN_IDS"},
-        {
-            "name": "clickTopQuery_char_3grams",
-            "source_field": "clickTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "clickTopQuery_word_1grams",
-            "source_field": "clickTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "clickTopQuery_word_2grams",
-            "source_field": "clickTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "cartTopQuery_char_3grams",
-            "source_field": "cartTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "cartTopQuery_word_1grams",
-            "source_field": "cartTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "cartTopQuery_word_2grams",
-            "source_field": "cartTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "purchaseTopQuery_char_3grams",
-            "source_field": "purchaseTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "purchaseTopQuery_word_1grams",
-            "source_field": "purchaseTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {
-            "name": "purchaseTopQuery_word_2grams",
-            "source_field": "purchaseTopQuery",
-            "feature_type": "TOKEN_IDS",
-        },
-        {"name": "taxonomyPath", "source_field": "taxonomyPath", "feature_type": "TOKEN_IDS"},
-        {"name": "title", "source_field": "title", "feature_type": "RAW_TEXT"},
-    ],
-    "metric_space": "COSINE",
-    "norm_layer_type": "LAYER_NORM",
-    "hidden_layer_sizes": [8192, 256],
-    "hidden_layer_doc_only": False,
-    "hidden_layer_activation": "relu",
-    "share_hidden_layer_params": False,
-    "token_composition_grouping": "TAXO_TEXT_HQI_OTHER",
-    "token_composition_method": "CONCAT",
-    "tfhub_model_urls": [],
-    "shop_embedding_dim": None,
-    "shop_embedding_vocab_size": None,
-    "tokenfeat2dropout": {},
-    "no_learning_token_groups": [],
-    "transformer_config": {
-        "base_model_name": "gs://etldata-prod-search-ranking-data-hkwv8r/t-gen/saved_models/t5-small/",
-        "tokenizer_name": "sp_tokenizer",
-        "tokenizer_files_path": None,
-        "output_dim": None,
-        "max_listing_seq_len": 48,
-        "max_query_seq_len": 12,
-        "trainable": True,
-        "query_transformer": False,
-        "listing_transformer": True,
-        "share_base_model": False,
-        "from_pt": False,
-        "final_layer_dropout": 0.1,
-        "pooling_type": "mean",
-        "only_embeddings": False,
-        "concat_raw_text": False,
-    },
-}
+from semantic_relevance.training.train_semrel_filter import TrainingLabel, SemrelModel
+from semantic_relevance.utils.nir import get_latest_nir_metadata
+from semantic_relevance.training.tensorflow_models.nirt_prod_model import NirWrapper
+from semantic_relevance.utils.configs import load_model_dev_config
+from semantic_relevance.utils.data_loading import load_data_list, combine_dfs
+from semantic_relevance.utils.logs import logger
+from semantic_relevance.utils.constants import (
+    QUERY_KEY,
+    LISTING_ID_KEY,
+    LISTING_TITLE_KEY,
+    LISTING_DESCRIPTION_KEY,
+    LISTING_DESCRIPTION_KEYWORDS_KEY,
+    LISTING_TAXO_KEY,
+    LISTING_TAGS_KEY,
+    LISTING_ATTRIBUTES_CLEAN_KEY,
+    SHOP_NAME_KEY,
+    LABEL_KEY,
+    LABEL_PROBA_KEY,
+)
 
 
-class AverageEmbeddingLayer(tf.keras.layers.Layer):
-    """This layer forms a [num_embeddings x embedding_dim] trainable embedding matrix.
-    At activation time using a Tensor or SparseTensor of size N x M (where N is
-    typically batch_size) M embeddings columns are picked from the weights matrix
-    and are average together to form a [N x embedding_dim] averaged embeddings
-    """
-
-    def __init__(self, num_embeddings: int, embedding_dim: int, **kwargs):
-        super(AverageEmbeddingLayer, self).__init__(**kwargs)
-        self.num_embeddings = num_embeddings
-        self.embedding_dim = embedding_dim
-        self.embedding = tf.keras.layers.Embedding(num_embeddings, embedding_dim)
-        self._supports_ragged_inputs = True
-
-    @staticmethod
-    def average_ragged_embeddings_per_instance(embeddings: tf.RaggedTensor) -> tf.Tensor:
-        """
-        :param embeddings: A ragged tensor of dimension BATCH_SIZE X (nested dims) X EMBEDDING_DIM,
-            corresponding to embeddings for each instance, for each token/text instance
-        :return: BATCH_SIZE X (all but last nested dim) X EMBEDDING_DIM tf.Tensor, the average embedding for each instance
-            across tokens/text instances
-        """
-
-        # embeddings.ragged_rank corresponds to the last nested dim before the embeddings
-        #  which we will average out and eliminate
-        average = tf.reduce_mean(embeddings, axis=embeddings.ragged_rank)
-        # In the case where there are zero tokens, zero out the embeddings
-        average = tf.where(tf.math.is_nan(average), tf.zeros_like(average), average)
-        return average
-
-    def call(self, inputs: tf.RaggedTensor):
-        looked_up_embeddings = self.embedding(inputs)
-        return self.average_ragged_embeddings_per_instance(looked_up_embeddings)
+V2_LISTING_STRING_COLUMNS = [
+    LISTING_TITLE_KEY,
+    LISTING_DESCRIPTION_KEY,
+    LISTING_DESCRIPTION_KEYWORDS_KEY,
+    LISTING_TAXO_KEY,
+    LISTING_TAGS_KEY,
+    LISTING_ATTRIBUTES_CLEAN_KEY,
+    SHOP_NAME_KEY,
+]
+V2_SERVING_DF_COLUMNS = (
+    [QUERY_KEY, LISTING_ID_KEY] + V2_LISTING_STRING_COLUMNS + [LABEL_KEY, LABEL_PROBA_KEY]
+)
 
 
-class TransformerFeaturizer(tf.keras.Model):
+class SemrelModelServingV2(SemrelModel):
     def __init__(
         self,
+        nir_wrapper: NirWrapper,
+        n_classes,
+        hidden_sizes=(256,),
+        activation="relu",
+        call_fn_use_logits=True,
+        nir_emb_key="final",
+        nir_emb_proj=None,
+        nir_emb_fusion="lth",
     ):
-        super(TransformerFeaturizer, self).__init__()
-
-        transformer_config: Dict = _REQUIRED_NIR_CONFIG["transformer_config"]
-        self.max_seq_len = transformer_config["max_listing_seq_len"]
-
-        self.only_embeddings = transformer_config["only_embeddings"]
-        self.concat_raw_text = transformer_config["concat_raw_text"]
-
-        base_model_name = transformer_config["base_model_name"]
-
-        assert "gs://" in base_model_name, "Only support GCS base models"
-        # Assume that `base_model_name` is a GCS path to a saved huggingface model
-        with tempfile.TemporaryDirectory() as tempdir:
-            paths.copy_gcs_path_recursive(base_model_name, dest_path=tempdir)
-            base_model = TFAutoModel.from_pretrained(tempdir)
-
-        # NOTE: this line appears useless, but is needed to make keras model serialization work
-        # when we only use a sub-part of the model
-        # (otherwise it complains about untracked resources)
-        self.full_base_model = base_model
-        assert "t5" in base_model_name, "Only support T5 models"
-        # T5 is encoder/decoder, we just use the encoder
-        self.base_model = base_model.encoder
-
-        self.base_model.trainable = transformer_config["trainable"]
-        self.dropout = tf.keras.layers.Dropout(rate=transformer_config["final_layer_dropout"])
-        self.pooler = None
-        self.pooling_type = transformer_config["pooling_type"]
-        if transformer_config["output_dim"] is not None:
-            raise ValueError("Not supported with these NIR settings")
-
-    def call(self, tokens: tf.RaggedTensor, training=False):
-        """
-        :param tokens: A tf.RaggedTensor with tokens, no padding
-        :return:
-        """
-        input_ids = tokens[:, : self.max_seq_len].to_tensor(_COMMON_SP_BERT_PADDING_ID)
-        input_mask = tf.cast(input_ids != _COMMON_SP_BERT_PADDING_ID, input_ids.dtype)
-
-        assert not self.only_embeddings, "Don't support embedding-only mode"
-        bert_output = self.base_model.call(input_ids=input_ids, attention_mask=input_mask)
-        last_hidden_state = bert_output.last_hidden_state
-
-        assert self.pooling_type == "mean", "Only support mean pooling"
-        ragged_input_mask = tf.RaggedTensor.from_tensor(input_mask)
-        masked_last_hidden_state = tf.ragged.boolean_mask(
-            last_hidden_state, tf.equal(ragged_input_mask, 1)
-        )
-        embedding = tf.reduce_mean(masked_last_hidden_state, axis=1)
-
-        embedding = self.dropout(embedding, training=training)
-        if self.pooler is not None:
-            embedding = self.pooler(embedding)
-
-        return embedding
-
-
-def create_transformer_tokenizer():
-    transformer_config: Dict = _REQUIRED_NIR_CONFIG["transformer_config"]
-    assert (
-        transformer_config["tokenizer_name"] == _SP_TOKENIZER
-    ), "Only support sentencepiece tokenizer"
-    sp_model_path = "gs://etldata-prod-search-ranking-data-hkwv8r/user/rjha/query-rewriting/saved_model_files/spiece.model"
-
-    model_name = "spiece.model"
-    with tempfile.TemporaryDirectory() as tempdir:
-        local_model_path = os.path.join(tempdir, model_name)
-        tf.io.gfile.copy(sp_model_path, local_model_path)
-        spiece_model = open(local_model_path, "rb").read()
-    return text.SentencepieceTokenizer(model=spiece_model, name="sp_tokenizer", add_eos=True)
-
-
-class NirModelWrapper(tf.keras.Model):
-    def __init__(self):
-        super(NirModelWrapper, self).__init__()
-        self.hidden_layer_sizes = _REQUIRED_NIR_CONFIG["hidden_layer_sizes"]
-
-        self.token_embeddings = AverageEmbeddingLayer(
-            _REQUIRED_NIR_CONFIG["embedding_vocab_size"], _REQUIRED_NIR_CONFIG["embedding_dim"]
+        super().__init__(
+            nir_wrapper=nir_wrapper,
+            n_classes=n_classes,
+            hidden_sizes=hidden_sizes,
+            activation=activation,
+            call_fn_use_logits=call_fn_use_logits,
+            nir_emb_key=nir_emb_key,
+            nir_emb_proj=nir_emb_proj,
+            nir_emb_fusion=nir_emb_fusion,
         )
 
-        def create_norm_layer(name):
-            return tf.keras.layers.LayerNormalization(name=name)
+        if self.use_nir_emb_proj:
 
-        self.query_embedding_norm_layer = create_norm_layer("query_norm")
-        self.doc_embedding_norm_layer = create_norm_layer("doc_norm")
+            def create_proj_layer():
+                return tf.keras.Sequential(
+                    [
+                        tf.keras.layers.Dense(nir_emb_proj, activation=activation),
+                        tf.keras.layers.LayerNormalization(),
+                    ]
+                )
 
-        def create_dense_layers():
-            return [
-                tf.keras.layers.Dense(s, _REQUIRED_NIR_CONFIG["hidden_layer_activation"])
-                for s in self.hidden_layer_sizes
-            ]
-
-        self.doc_dense_layers = create_dense_layers()
-        self.query_dense_layers = create_dense_layers()
-        self.doc_dense_norm_layers = [
-            create_norm_layer(f"doc_norm_{i}") for i, _ in enumerate(self.doc_dense_layers)
-        ]
-        self.query_dense_norm_layers = [
-            create_norm_layer(f"query_norm_{i}") for i, _ in enumerate(self.query_dense_layers)
-        ]
-
-        self.listing_transformer = TransformerFeaturizer()
-        self.query_transformer = None
-        self.transformer_tokenizer = create_transformer_tokenizer()
-
-    def _get_embedding(
-        self,
-        inputs: Dict,
-        entity_type: EntityType,
-        input_norm_layer: tf.keras.layers.Layer,
-        dense_layers: List[tf.keras.layers.Dense],
-        dense_norm_layers: List[tf.keras.layers.Layer],
-        training=None,
-        normalize=False,
-        transformer_featurizer: Optional["TransformerFeaturizer"] = None,
-        use_hqi=True,
-    ):
-        embs_dict = {}
-        # Get one embedding per group, each of dimension batch_size X emb_dim
-        group_token_embeddings = []
-        token_types = ["word_1grams", "word_2grams", "char_3grams"]
-        if entity_type == "query":
-            token_id_tensor_groups = {"text": [inputs[f"query_{tt}"] for tt in token_types]}
-            raw_text_feature_names = []
-        elif entity_type == "listing":
-            token_id_tensor_groups = {
-                "taxo": [inputs["taxonomyPath"]],
-                "text": [
-                    inputs[f"{feat}_{tt}"] for feat in ["tags", "title"] for tt in token_types
-                ],
-                "hqi": [
-                    inputs[f"{int}TopQuery_{tt}"]
-                    for int in ["click", "cart", "purchase"]
-                    for tt in token_types
-                ],
+            self.nir_proj_layers: Dict | None = {
+                k: create_proj_layer() for k in ("query", "listing", "title", "shop")
             }
-            raw_text_feature_names = ["title"]
         else:
-            raise ValueError(f"Invalid entity type {entity_type}")
+            self.nir_proj_layers = None
 
-        for group_name in sorted(token_id_tensor_groups):
-            if not use_hqi and group_name == "hqi":
-                n_rows = tf.shape(inputs["title"])[0]
-                avg_token_embeddings = tf.zeros([n_rows, self.token_embeddings.embedding_dim])
-            else:
-                token_tensors = token_id_tensor_groups[group_name]
-                full_token_id_tensor = tf.concat(token_tensors, axis=1)
-                avg_token_embeddings = self.token_embeddings(full_token_id_tensor)
-                avg_token_embeddings = tf.ensure_shape(avg_token_embeddings, (None, None))
-
-            group_token_embeddings.append(avg_token_embeddings)
-
-        x = None
-
-        if len(group_token_embeddings) > 0:
-            final_tokens_embedding = tf.concat(group_token_embeddings, axis=1)
-            x = final_tokens_embedding
-
-        if transformer_featurizer is not None and len(raw_text_feature_names) > 0:
-            if len(raw_text_feature_names) != 1:
-                raise ValueError("For now, don't support more than 1 raw text feature")
-            text_feature_name = raw_text_feature_names[0]
-            text_tokens_feature_name = f"{text_feature_name}_tokens"
-
-            if text_tokens_feature_name in inputs:
-                transformer_input = inputs[text_tokens_feature_name]
-            else:
-                raw_text = tf.squeeze(inputs[text_feature_name])
-                raw_text = tf.ensure_shape(raw_text, [None])
-                transformer_input = self.transformer_tokenizer.tokenize(raw_text)
-            embedded_text_tensor = transformer_featurizer(transformer_input, training=training)
-
-            if x is None:
-                x = embedded_text_tensor
-            else:
-                x = tf.concat([x, embedded_text_tensor], axis=1)
-
-        x = input_norm_layer(x, training=training)
-
-        for i, (dense_layer, norm_layer) in enumerate(zip(dense_layers, dense_norm_layers)):
-            x = dense_layer(x)
-            x = norm_layer(x, training=training)
-            embs_dict[f"hidden_{i}"] = x
-
-        post_activation = tf.nn.tanh(x)
-        embs_dict["pre_norm"] = post_activation
-        if normalize:
-            post_activation = tf.math.l2_normalize(post_activation, axis=1)
-
-        embs_dict["final"] = post_activation
-        return embs_dict
-
-    def get_query_embedding(self, inputs: Dict, training=None, normalize=True):
-        return self._get_embedding(
-            inputs,
-            "query",
-            self.query_embedding_norm_layer,
-            self.query_dense_layers,
-            self.query_dense_norm_layers,
-            training=training,
-            normalize=normalize,
-            transformer_featurizer=self.query_transformer,
-        )
-
-    def get_doc_embedding(self, inputs: Dict, training=None, normalize=True, use_hqi=True):
-        return self._get_embedding(
-            inputs,
-            "listing",
-            self.doc_embedding_norm_layer,
-            self.doc_dense_layers,
-            self.doc_dense_norm_layers,
-            training=training,
-            normalize=normalize,
-            transformer_featurizer=self.listing_transformer,
-            use_hqi=use_hqi,
-        )
-
-    @classmethod
-    def from_config(cls, config_dict: Dict, **kwargs):
-        assert (
-            config_dict == _REQUIRED_NIR_CONFIG
-        ), "Config must exactly conform to _REQUIRED_NIR_CONFIG"
-        model = NirModelWrapper()
-        return model
-
-    @staticmethod
-    def load_from_checkpoint(checkpoint_path):
-        return tf.keras.models.load_model(
-            checkpoint_path,
-            compile=False,
-            options=tf.saved_model.LoadOptions(allow_partial_checkpoint=True),
-            custom_objects={
-                "SemanticProductSearch": NirModelWrapper,
-                "AverageEmbeddingLayer": AverageEmbeddingLayer,
-                "TransformerFeaturizer": TransformerFeaturizer,
-            },
-        )
-        # not supported in API in tf 2.17
-
-    def call(self, x, training=False):
-        # This dummy method is added only because when this instance is attached to other models,
-        # it is needed for saving
-        return x
-
-
-class NirWrapper(tf.keras.layers.Layer):
-    """
-    This wraps both the NIR model itself, and NIR preprocessing from NIR prod models
-    """
-
-    def __init__(
+    def score_query_listing(
         self,
-        nir_model: NirModelWrapper,
-        nir_tft: tf.keras.layers.Layer,
-        nir_model_path,
-        nir_tft_path,
+        query_emb: tf.Tensor,
+        listing_emb: tf.Tensor,
+        title_emb: tf.Tensor,
+        shop_emb: tf.Tensor,
+        output_logits: bool,
     ):
-        super().__init__()
-        self.nir_model = nir_model
-        self.nir_tft = nir_tft
-        self.nir_model_path = nir_model_path
-        self.nir_tft_path = nir_tft_path
+        hadamard = query_emb * listing_emb
+        hadamard_title = query_emb * title_emb
+        hadamard_shop = query_emb * shop_emb
 
-    @staticmethod
-    def from_model_paths(saved_model_path: str, tft_model_path: str):
-        nir_model = NirModelWrapper.load_from_checkpoint(saved_model_path)
-        nir_tft_layer = tft.TFTransformOutput(tft_model_path).transform_features_layer()
-        return NirWrapper(
-            nir_model, nir_tft_layer, nir_model_path=saved_model_path, nir_tft_path=tft_model_path
+        if self.nir_emb_fusion == "lth":
+            # Use both the hadamard product of <query,listing>
+            # and <query, title>
+            mlp_input = tf.concat([hadamard_title, hadamard], axis=1)
+        elif self.nir_emb_fusion == "lh":
+            # Use the hadamard product of <query,listing>
+            mlp_input = hadamard
+        elif self.nir_emb_fusion == "tslh":
+            mlp_input = tf.concat([hadamard_title, hadamard_shop, hadamard], axis=1)
+        elif self.nir_emb_fusion == "alibaba":
+            # Use embedding fusion similar to described in Alibaba's ReprBERT, section 3.2:
+            # https://drive.google.com/file/d/1hvxPNZ1zx9H6TJZjHnnXP1kA--uI4yGX/view?usp=sharing
+            mlp_input = tf.concat(
+                [
+                    tf.maximum(query_emb, listing_emb),
+                    query_emb - listing_emb,
+                    query_emb + listing_emb,
+                    tf.maximum(query_emb, title_emb),
+                    query_emb - title_emb,
+                    query_emb + title_emb,
+                    tf.maximum(query_emb, shop_emb),
+                    query_emb - shop_emb,
+                    query_emb + shop_emb,
+                ],
+                axis=1,
+            )
+        elif self.nir_emb_fusion == "qlt":
+            mlp_input = tf.concat([query_emb, listing_emb, title_emb], axis=1)
+        elif self.nir_emb_fusion == "qtsl":
+            mlp_input = tf.concat([query_emb, title_emb, shop_emb, listing_emb], axis=1)
+        else:
+            raise ValueError(f"Unsupported emb fusion {self.nir_emb_fusion}")
+
+        logits = self.mlp(mlp_input)
+        if output_logits:
+            return logits
+        else:
+            return tf.nn.softmax(logits, axis=1)
+
+    def get_input_emb(
+        self, x, entity: Literal["query", "listing", "title", "shop"], training=False
+    ):
+        if entity == "query":
+            embs = self.nir_wrapper.embed_query_features(x, training=training)
+        elif entity == "listing":
+            embs = self.nir_wrapper.embed_listing_features(x, training=training, use_hqi=False)
+        elif entity == "title":
+            embs = self.nir_wrapper.embed_title_features_as_query(x, training=training)
+        elif entity == "shop":
+            embs = self.nir_wrapper.embed_shop_features_as_query(x, training=training)
+        else:
+            raise ValueError(f"Unsupported entity {entity}")
+
+        emb = embs[self.nir_emb_key]
+
+        proj_layer = (self.nir_proj_layers or {}).get(entity)
+        if proj_layer is not None:
+            emb = proj_layer(emb)
+        return emb
+
+    def call(self, query_listing_features, training=False):
+        listing_emb = self.get_input_emb(query_listing_features, "listing", training)
+        listing_title_emb = self.get_input_emb(query_listing_features, "title", training)
+        query_emb = self.get_input_emb(query_listing_features, "query", training)
+        shop_emb = self.get_input_emb(query_listing_features, "shop", training)
+        return self.score_query_listing(
+            query_emb, listing_emb, listing_title_emb, shop_emb, self.call_fn_use_logits
         )
 
-    @staticmethod
-    def _sparse_to_ragged(tensor_dict):
-        new_dict = dict(tensor_dict)
-        for k, v in tensor_dict.items():
-            if isinstance(v, tf.SparseTensor):
-                new_dict[k] = tf.RaggedTensor.from_sparse(v)
-        return new_dict
+    def export_model(self, export_path):
+        embedding_dim = self.get_embedding_dim()
 
-    def preproc_query(self, query: tf.Tensor) -> Dict[str, tf.Tensor]:
-        """
-        :param query: 1-d string tensor
-        :return: Dict tensor of preprocessed query features, suitable for input to query tower
-        """
-        return self._sparse_to_ragged(self.nir_tft({"query": query}))
+        @tf.function(
+            input_signature=[
+                tf.TensorSpec(shape=[None, embedding_dim], dtype=tf.float32),
+                tf.TensorSpec(shape=[None, embedding_dim], dtype=tf.float32),
+                tf.TensorSpec(shape=[None, embedding_dim], dtype=tf.float32),
+                tf.TensorSpec(shape=[None, embedding_dim], dtype=tf.float32),
+            ]
+        )
+        def score_query_listing_proba(query_emb, listing_emb, title_emb, shop_emb):
+            probas = self.score_query_listing(
+                query_emb, listing_emb, title_emb, shop_emb, output_logits=False
+            )
+            return {"probas": probas}
 
-    def embed_query_features(self, query_features: Dict[str, tf.Tensor], training=False):
-        emb = self.nir_model.get_query_embedding(query_features, training=training)
-        return emb
-
-    def embed_shop_features_as_query(self, shop_features: Dict[str, tf.Tensor], training=False):
-        query_features = {
-            f"query_{postfix}": shop_features[f"shop_{postfix}"]
-            for postfix in ("word_1grams", "word_2grams", "char_3grams")
+        signatures = {
+            "embed_listings": self.embed_listings.get_concrete_function(),
+            "embed_queries": self.embed_queries.get_concrete_function(),
+            "score_query_listing_proba": score_query_listing_proba.get_concrete_function(),
         }
-        emb = self.nir_model.get_query_embedding(query_features, training=training)
-        return emb
+        self.save(export_path, signatures=signatures, include_optimizer=False)
 
-    def embed_title_features_as_query(self, title_features: Dict[str, tf.Tensor], training=False):
-        query_features = {
-            f"query_{postfix}": title_features[f"title_{postfix}"]
-            for postfix in ("word_1grams", "word_2grams", "char_3grams")
-        }
-        emb = self.nir_model.get_query_embedding(query_features, training=training)
-        return emb
 
-    def embed_query(self, query: tf.Tensor):
-        model_input = self.preproc_query(query)
-        emb = self.nir_model.get_query_embedding(model_input)
-        return emb
+def v2_rep_dataframe_to_tf_dataset(
+    dataframe: pd.DataFrame,
+    label_key: str,
+    nir_model: NirWrapper,
+    batch_size=128,
+    include_eval_columns=False,
+) -> tf.data.Dataset:
+    all_features = {QUERY_KEY} | set(V2_LISTING_STRING_COLUMNS)
+    for f in list(all_features):
+        # fill missing with empty string
+        dataframe[f] = dataframe[f].fillna("")
 
-    def preproc_listing(self, raw_listing_features: RawListingFeatures):
-        tft_listing_features = dict(raw_listing_features)
+    tensors = {
+        f: tf.constant(dataframe[f], dtype=tf.string)
+        for f in [
+            QUERY_KEY,
+            SHOP_NAME_KEY,
+            LISTING_TITLE_KEY,
+            LISTING_DESCRIPTION_KEYWORDS_KEY,
+            LISTING_TAXO_KEY,
+        ]
+    }
+    # in dataframe, we use 1-index relevance classes, here uses 0-index
+    labels_3 = dataframe[LABEL_KEY].astype("int") - 1
+    tensors["labels_3"] = tf.constant(labels_3)
+    tensors["probas_3"] = tf.constant(list(dataframe[LABEL_PROBA_KEY]))
+    tensors["source"] = tf.constant(dataframe["source"])
+    features_to_copy = ["source", "labels_3", "probas_3"]
 
-        # If hqi queries are not passed in, impute them as empty
-        title = raw_listing_features["title"]
-        for hqi_feature in ("clickTopQuery", "cartTopQuery", "purchaseTopQuery"):
-            hqi_value: tf.RaggedTensor = raw_listing_features.get(hqi_feature, None)
-            if hqi_value is None:
-                n_rows = tf.shape(title)[0]
-                empty_hqi = tf.zeros([n_rows, 0], tf.string)
-                hqi_value = tf.RaggedTensor.from_tensor(empty_hqi)
+    if include_eval_columns:
+        tensors[LISTING_ID_KEY] = tf.constant(dataframe[LISTING_ID_KEY].astype("int"))
+        features_to_copy += [QUERY_KEY, LISTING_ID_KEY, SHOP_NAME_KEY]
 
-            hqi_value = hqi_value.to_sparse()
-            tft_listing_features[hqi_feature] = hqi_value
+    raw_dataset = tf.data.Dataset.from_tensor_slices(tensors).batch(batch_size)
 
-        tft_features = self._sparse_to_ragged(self.nir_tft(tft_listing_features))
-        title_transformer_tokens = self.nir_model.transformer_tokenizer.tokenize(title)
+    def preproc_batch(b):
+        query_features = nir_model.preproc_query(b["query"])
+        shop_features = nir_model.preproc_query(b["shopName"])
+        shop_features = {k.replace("query", "shop"): v for k, v in shop_features.items()}
+        listing_features = nir_model.preproc_listing(
+            {"title": b["title"], "tags": b["descNgrams"], "taxonomyPath": b["taxonomyPath"]}
+        )
+        copied_features = {f: b[f] for f in features_to_copy}
+        res = {**copied_features, **query_features, **listing_features, **shop_features}
+        # res = {**copied_features, **shop_features}
+        return (res, res[label_key])
 
-        all_features = {**tft_features, "title_tokens": title_transformer_tokens}
-        return all_features
+    dataset = raw_dataset.map(preproc_batch, num_parallel_calls=tf.data.AUTOTUNE).prefetch(
+        tf.data.AUTOTUNE
+    )
+    return dataset
 
-    def embed_listing_features(
-        self, listing_features: Dict[str, tf.Tensor], training=False, use_hqi=True
-    ):
-        emb = self.nir_model.get_doc_embedding(listing_features, training=training, use_hqi=use_hqi)
-        return emb
 
-    def embed_raw_listing(self, raw_listing_features: RawListingFeatures):
-        model_input = self.preproc_listing(raw_listing_features)
-        emb = self.nir_model.get_doc_embedding(model_input)
-        return emb
+@click.command()
+@click.option("--config-path", type=str, required=True)
+@click.option("--output-dir", type=str, required=True)
+def main(config_path, output_dir):
+    #  Load config
+    # config_path = "kubeflow/configs/v2_serving_rep.yaml"
+    # from semantic_relevance.training.v2_serving.rep_nirt import v2_rep_dataframe_to_tf_dataset, SemrelModelServingV2
+    cfg = load_model_dev_config(config_path)
+
+    #  Create output dir if not exists
+    if not output_dir.startswith("gs://"):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            os.makedirs(os.path.join(output_dir, "model"))
+            logger.info(f"Created {output_dir}")
+        else:
+            logger.info(f"{output_dir} already exists")
+
+    #  Load NIR-T as backbone
+    nir_metadata = get_latest_nir_metadata(
+        force_model_path="gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/neural_ir/transformers_hqi_loose/models/2024-11-04/checkpoints/saved_model_04"
+    )
+    nir_model = NirWrapper.from_model_paths(nir_metadata.model_path, nir_metadata.tft_model_path)
+    nir_model_date = nir_metadata.model_date
+    logger.info(f"Done loading NIR-T as base. Metadata: {nir_metadata}")
+
+    #  Establish dates
+    end_date = cfg.data_end_date
+    if end_date == "":
+        # if end date is not specified in config, use the NIR model date
+        end_date = nir_model_date
+    eval_date = max(end_date, nir_model_date) + timedelta(days=1)
+    logger.info(f"{end_date=}, {eval_date=}, {nir_model_date=}")
+    logger.info(cfg)
+
+    #  Build data for training and eval
+    logger.info("Building training data")
+    train_dfs = load_data_list(
+        cfg.train_data,
+        end_date=end_date,
+        eval_date=eval_date,
+        final_columns=V2_SERVING_DF_COLUMNS,
+        mode="train",
+    )
+    logger.info("Building test data")
+    test_dfs = load_data_list(
+        cfg.eval_data,
+        end_date=end_date,
+        eval_date=eval_date,
+        final_columns=V2_SERVING_DF_COLUMNS,
+        mode="eval",
+    )
+    train_joint_df = combine_dfs(train_dfs)
+    test_joint_df = combine_dfs(test_dfs)
+
+    logger.info(f"Data columns = {list(train_joint_df.columns)}")
+    logger.info(f"Train sample size = {train_joint_df.shape[0]}")
+    logger.info(f"Test sample size = {test_joint_df.shape[0]}")
+    logger.info(f"Train label distribution = \n {train_joint_df[LABEL_KEY].value_counts()}")
+    logger.info(f"Test label distribution = \n {test_joint_df[LABEL_KEY].value_counts()}")
+    logger.info("Done data loading")
+
+    #  Convert to TF datasets
+    logger.info("Convert pandas dataframe to TF datasets")
+    if cfg.objective == "kl":
+        label: TrainingLabel = "probas_3"
+    elif cfg.objective == "crossent":
+        label: TrainingLabel = "labels_3"
+    else:
+        raise ValueError(f"Unsupported model objective {cfg.objective}")
+
+    train_dataset = v2_rep_dataframe_to_tf_dataset(
+        train_joint_df, label_key=label, nir_model=nir_model, batch_size=cfg.batch_size
+    )
+    test_dataset = v2_rep_dataframe_to_tf_dataset(
+        test_joint_df,
+        label_key=label,
+        nir_model=nir_model,
+        batch_size=cfg.batch_size,
+        include_eval_columns=True,
+    )
+
+    #  Train
+    logger.info("Start training")
+    optimizer = tf.keras.optimizers.Adam(learning_rate=cfg.learning_rate)
+
+    if label == "labels_3":
+        # Loss/metrics for classification
+        loss = tf.keras.losses.SparseCategoricalCrossentropy(
+            from_logits=True,
+        )
+        metrics = [
+            tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
+            AUCMultiClassToBinary(name="auc_1vrest", positive_ids=[1, 2], num_classes=3),
+        ]
+        output_logits = True
+    elif label == "probas_3":
+        loss = tf.keras.losses.KLDivergence()
+        metrics = [tf.keras.metrics.KLDivergence()]
+        output_logits = False
+    else:
+        raise ValueError(f"Unsupported label {label}")
+
+    nir_model.trainable = not cfg.freeze_backbone
+    semrel_model = SemrelModelServingV2(
+        nir_wrapper=nir_model,
+        n_classes=3,
+        hidden_sizes=cfg.hidden_sizes,
+        call_fn_use_logits=output_logits,
+        nir_emb_key=cfg.embed_key,
+        nir_emb_proj=cfg.embed_proj,
+        nir_emb_fusion=cfg.embed_fusion,
+    )
+
+    semrel_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+
+    semrel_model.fit(
+        x=train_dataset,
+        validation_data=test_dataset,
+        batch_size=cfg.batch_size,
+        epochs=cfg.num_epochs,
+        callbacks=[],
+    )
+
+    model_dir = os.path.join(output_dir, "model")
+    semrel_model.export_model(model_dir)
+    logger.info(f"Wrote model to: {model_dir}")
+
+
+if __name__ == "__main__":
+    main()
