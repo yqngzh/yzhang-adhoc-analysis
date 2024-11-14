@@ -197,6 +197,10 @@ def v2_rep_dataframe_to_tf_dataset(
         # fill missing with empty string
         dataframe[f] = dataframe[f].fillna("")
 
+    if LISTING_DESCRIPTION_KEYWORDS_KEY in dataframe.columns:
+        dataframe[LISTING_DESCRIPTION_KEYWORDS_KEY] = dataframe[LISTING_DESCRIPTION_KEYWORDS_KEY].str.replace(";", ".")
+        logger.info(dataframe[LISTING_DESCRIPTION_KEYWORDS_KEY].head(5))
+
     tensors = {
         f: tf.constant(dataframe[f], dtype=tf.string)
         for f in [
