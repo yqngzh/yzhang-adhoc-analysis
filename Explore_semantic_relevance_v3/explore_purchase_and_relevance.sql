@@ -1,0 +1,1 @@
+---- Sample organic query listing pairs and their impressions, clicks, purchases
