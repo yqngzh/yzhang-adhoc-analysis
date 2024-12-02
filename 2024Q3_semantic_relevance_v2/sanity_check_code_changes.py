@@ -8,8 +8,6 @@ import pyarrow.dataset as ds
 from pyarrow.fs import GcsFileSystem
 from google.cloud import bigquery
 
-_TEMP_PARQUET_DIR= "gs://training-dev-search-data-jtzn/semantic_relevance/temp/teacher_scores_parquet"
-
 import semantic_relevance.data.listing_feature_bank as data_lfb
 from semantic_relevance.utils.bigquery import create_bq_client
 from semantic_relevance.utils.logs import logger
@@ -24,6 +22,10 @@ from semantic_relevance.utils.constants import (
     LISTING_TAXO_KEY,
 )
 
+_TEMP_PARQUET_DIR = (
+    "gs://training-dev-search-data-jtzn/semantic_relevance/temp/yz_teacher_scores_parquet"
+)
+
 
 def get_hydrated_teacher_scores(
     start_date: date,
@@ -34,7 +36,7 @@ def get_hydrated_teacher_scores(
     order_by_uuid=True,
     limit_postborda=False,
     sample_size=None,
-    use_temp_gcs_parquet=False
+    use_temp_gcs_parquet=False,
 ) -> pd.DataFrame:
     """
     :param start_date: Start date of teacher scores, inclusive
@@ -84,7 +86,7 @@ def get_hydrated_teacher_scores(
 
     query = f"""
     WITH modelLabels AS (
-        SELECT 
+        SELECT
           ROW_NUMBER() OVER (ORDER BY qlm.tableUUID DESC) as rowNum,
           qlm.date,
           qlm.tableUUID,
@@ -104,6 +106,7 @@ def get_hydrated_teacher_scores(
     {final_select}
     {order_by}
     """
+
     logger.info(f"Query for hydrated model labels: {query}")
 
     client: bigquery.Client = create_bq_client()
@@ -125,9 +128,9 @@ def get_hydrated_teacher_scores(
         client.query(export_query).result()
         logger.info(f"Took {time.time() - start} seconds to save results to parquet")
 
-        pa_dset = ds.dataset(temp_parquet_path.removeprefix("gs://"),
-          filesystem=GcsFileSystem(),
-          format='parquet')
+        pa_dset = ds.dataset(
+            temp_parquet_path.removeprefix("gs://"), filesystem=GcsFileSystem(), format="parquet"
+        )
         start = time.time()
         pa_table = pa_dset.to_table()
         # pyarrow dataset can't be directly saved to pandas
@@ -141,10 +144,7 @@ def get_hydrated_teacher_scores(
     start_time = time.time()
     client: bigquery.Client = create_bq_client()
     df = client.query(query).to_dataframe()
-    # if sample_size is not None:
-    #     if sample_size > len(df):
-    #         logger.warn(f"Sample size {sample_size} more than size of teacher scores {len(df)}")
-    #         sample_size = len(df)
-    #     df = df.sample(n=sample_size, random_state=42)
+
     logger.info(f"Took {time.time() - start_time} seconds to get hydrated model labels")
+
     return df
