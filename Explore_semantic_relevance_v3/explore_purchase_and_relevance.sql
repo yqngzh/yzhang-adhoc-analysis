@@ -74,7 +74,7 @@ group by retrieval_engine
 
 
 ---- how much semrel filters
-declare date_string default "2024-12-01";
+declare date_string default "2024-11-01";
 declare min_results default 88;
 declare platform default "web";
 
@@ -179,17 +179,31 @@ from n_candidates_diff
 -- from n_candidates_diff
 -- where n_semrel_filtered > 0
 
+
+-- date 2024-12-01 (with no borda exp)
 -- web
 -- 3119087 valid requests (99.8% of US web requests)
 -- 3118692 nPostSemrel >= 1,  3114863 nPostBorda >= 1
 -- 2277136 (73%) n_semrel_filtered > 0 (some listings were filtered)
--- median 20, average 75.7, 75% 83, max 2111
+-- median: 20, average: 75.7, 75p: 83, 90p: 229, max 2111
 -- boe
 -- 6547834 valid requests (99.8% of US BOE requests)
 -- 6546958 nPostSemrel >= 1, 6544290 nPostBorda >= 1
 -- 5332460 (81.4%) n_semrel_filtered > 0 (some listings were filtered)
--- median 28, average 80.4, 75% 101, max 1982
+-- median: 28, average: 80.4, 75p: 101, 90p: 232, max: 1982
 
+
+-- date 2024-11-01 (prior to no borda)
+-- web
+-- 2010851 valid requests (99.8% of US web requests)
+-- 1860407 nPostSemrel >= 1,  2009099 nPostBorda >= 1
+-- 1498167 (74.5%) n_semrel_filtered > 0 (some listings were filtered)
+-- median: 25, average: 153.6, 75p: 131, 90p: 576, max: 1000
+-- boe
+-- 3425367 valid requests (99.8% of US boe requests)
+-- 3163654 nPostSemrel >= 1, 3422722 nPostBorda >= 1
+-- 2830534 (82.6%) n_semrel_filtered > 0 (some listings were filtered)
+-- median: 30, average: 145.5, 75p: 132, 90p: 457, max: 1000
 
 
 
