@@ -115,6 +115,7 @@ with allRequests as (
       WHERE key = "req_source" AND value = "bot"
     )
 ),
+-- web US 3124507, boe US 6558547
 validRequests AS (
     SELECT *
     FROM allRequests
@@ -179,12 +180,12 @@ from n_candidates_diff
 -- where n_semrel_filtered > 0
 
 -- web
--- 3119087 requests
+-- 3119087 valid requests (99.8% of US web requests)
 -- 3118692 nPostSemrel >= 1,  3114863 nPostBorda >= 1
 -- 2277136 (73%) n_semrel_filtered > 0 (some listings were filtered)
 -- median 20, average 75.7, 75% 83, max 2111
 -- boe
--- 6547834 requests
+-- 6547834 valid requests (99.8% of US BOE requests)
 -- 6546958 nPostSemrel >= 1, 6544290 nPostBorda >= 1
 -- 5332460 (81.4%) n_semrel_filtered > 0 (some listings were filtered)
 -- median 28, average 80.4, 75% 101, max 1982
