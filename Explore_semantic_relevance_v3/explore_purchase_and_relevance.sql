@@ -7,7 +7,6 @@ with allRequests as (
     select
         RequestIdentifiers.etsyRequestUUID as etsyUUID,
         response.mmxRequestUUID as mmxRequestUUID,
-        RequestIdentifiers.etsyRootUUID as rootUUID,
         DATE(queryTime) query_date,
         (SELECT COUNTIF(stage='POST_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostFilterSources,
         (SELECT COUNTIF(stage='POST_BORDA') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostBordaSources,
@@ -83,7 +82,6 @@ with allRequests as (
     select
         RequestIdentifiers.etsyRequestUUID as etsyUUID,
         response.mmxRequestUUID as mmxRequestUUID,
-        RequestIdentifiers.etsyRootUUID as rootUUID,
         DATE(queryTime) query_date,
         (SELECT COUNTIF(stage='POST_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostFilterSources,
         (SELECT COUNTIF(stage='POST_BORDA') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostBordaSources,
@@ -156,10 +154,8 @@ reqCandidateSizes AS (
             )
         ) as post_semrel_n_listings,
     FROM validRequests
-)
--- select count(*)
--- from reqCandidateSizes
-, n_candidates_diff as (
+), 
+n_candidates_diff as (
   select post_borda_n_listings - post_semrel_n_listings as n_semrel_filtered
   from reqCandidateSizes
   where post_borda_n_listings > post_semrel_n_listings
@@ -173,14 +169,24 @@ select
   APPROX_QUANTILES(n_semrel_filtered, 100)[OFFSET(90)] AS percentile_90,
   max(n_semrel_filtered) as max_n,
 from n_candidates_diff
+
+-- select count(*)
+-- from reqCandidateSizes
+-- where post_borda_n_listings > 0
+
+-- select count(*)
+-- from n_candidates_diff
+-- where n_semrel_filtered > 0
+
 -- web
 -- 3119087 requests
--- 2277136 (73%) numbers diff
+-- 3118692 nPostSemrel >= 1,  3114863 nPostBorda >= 1
+-- 2277136 (73%) n_semrel_filtered > 0 (some listings were filtered)
 -- median 20, average 75.7, 75% 83, max 2111
 -- boe
--- requests
 -- 6547834 requests
--- 5332460 numbers (81.4%) diff
+-- 6546958 nPostSemrel >= 1, 6544290 nPostBorda >= 1
+-- 5332460 (81.4%) n_semrel_filtered > 0 (some listings were filtered)
 -- median 28, average 80.4, 75% 101, max 1982
 
 
