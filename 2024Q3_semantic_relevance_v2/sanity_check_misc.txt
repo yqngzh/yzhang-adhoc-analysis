@@ -1,39 +1,35 @@
-no_borda_2400_boe: ${matching.default} {
-    owners: ["#search-matching", "@swalecka"]
-    description: "Based off semrel_v2_boe but with no borda and 2400 candidates"
-    semrel_config {
+no_borda_1k_trunc_web: ${matching.default} {
+owners: ["#search-matching", "@ebenjamin"]
+description: "Based off nir_perso_lite_lqv_web but with no borda and 1k truncation"
+semrel_config {
         relevance_threshold: 0.34
         shop_score_threshold: 0.7
         tfserving:${services.tfserving.semrel-filter}
     }
-    dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
+dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
     blending_backend: seldon
-    blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
-    borda_params {
-        should_limit_solr_candidates: true
-    }
-    }
-    preretrieval: ${core-matching.common.preretrieval}
-    ann: ${core-matching.common.ann} {
+    blending_modelset:  ${services.blender_seldon.search_blender_truncate}
+}
+preretrieval: ${core-matching.common.preretrieval} {
+    ann_feature_set: "nir-perso-lite"
+}
+ann: ${core-matching.common.ann} {
     candidate_source: ann
     config: {
-        ann_threshold: 0.5
-        ann_ensemble: {
-        seldon: ${services.ann_seldon.ann_ensemble_nir_perso_loose_lqv_pq}
-        }
+    ann_ensemble: {
+        seldon: ${services.ann_seldon.ann_ensemble_nir_perso_lite}
     }
-    }
-    xwalk: ${core-matching.default.xwalk} {
-    xwalk_candidate_source: disabled
-    }
-    xml {
-    xml_candidate_source: "http"
-    request_config {
-        k: 400,
-        beam_size: 100
-    }
-    xml_http_service: ${services.xml.xml_v2.http}
     }
 }
-
-  
+xwalk: ${core-matching.default.xwalk} {
+    xwalk_candidate_source: disabled
+}
+xml {
+    xml_candidate_source: "http"
+    request_config {
+    k: 400,
+    beam_size: 100
+    }
+    xml_http_service: ${services.xml.xml_v2.http}
+}
+}
