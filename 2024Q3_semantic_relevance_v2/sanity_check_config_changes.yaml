@@ -170,6 +170,14 @@ semrel_uni_serve_v2: &semrel_uni_serve_v2
       graphite_suffix: market_cart.structured
       attribution_for_sample: cart_add
       us_only: True
+
+semrel_uni_serve_si: &semrel_uni_serve_si
+  <<: *semrel_uni_serve_v2
+  remove_web_sign_out: True
+
+semrel_uni_serve_so: &semrel_uni_serve_so
+  <<: *semrel_uni_serve_v2
+  remove_sign_in: True
       
 # Evaluate on all US
 prod: &prod
