@@ -1,0 +1,193 @@
+eval: &base
+  graphite_namespace: daily
+  eval_data:
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_purchase
+      attribution_for_sample: purchase
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: web_tight.structured
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase
+      attribution_for_sample: purchase
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: boe_tight.structured
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_market_web_organic/purchase_v1
+      attribution_for_sample: purchase
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: market.structured  
+      us_only: True
+  partitions:
+    - feature_name: contextualInfo[name=target].docInfo.queryInfo.query
+      feature_values:
+        - EMPTY_STRING
+    - feature_name: candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry
+      feature_values:
+        - US
+        - GB
+        - DE
+        - FR
+        - CA
+        - AU
+        - NL
+        - ES
+        - IT
+        - IN
+    - feature_name: clientProvidedInfo.user.userCountry
+      feature_values:
+        - US
+    - feature_name: primaryHardwareType
+    - feature_name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.bin
+    - feature_name: contextualInfo[name=user].userInfo.userId
+      feature_values:
+        - "0"
+    - feature_name: contextualInfo[name=user].userInfo.userSegmentFeatures.buyerSegment
+    - feature_name: clientProvidedInfo.browser.platform
+    - feature_name: contextualInfo[name=target].docInfo.queryInfo.queryIntentFeatures.queryIntentSpecScoreV2
+  price_average_metrics:
+    - 3
+    - 10
+    - 24
+  extra_purchase_ndcg_metrics:
+    - 1
+    - 2
+    - 4
+    - 6
+    - 48
+  click_recall_metrics:
+    - 1
+    - 10
+    - 48
+  include_price_metrics: True
+  include_borda_ndcg: False
+  remove_missing_context: True
+
+sem_rel: &sem_rel
+  <<: *base
+  sem_rel_config:
+    teacher_model_path: "gs://training-dev-search-data-jtzn/semantic_relevance/production_models/v2-deberta-v3-large-tad/export/saved_model"
+    ndcg_metrics:
+      - 10
+      - 24
+    recall_metrics:
+      - 3
+      - 10
+      - 24
+
+multitask: &multitask
+  <<: *sem_rel
+  eval_data:
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_purchase
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: web_tight.structured
+      attribution_for_sample: purchase
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_purchase
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: boe_tight.structured
+      attribution_for_sample: purchase
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_market_web_organic/purchase_v1
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: market.structured
+      attribution_for_sample: purchase
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_click
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: click_tight.structured
+      attribution_for_sample: click
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_click
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: click_tight.structured
+      attribution_for_sample: click
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_web_organic/tight_cartadd
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: cart_tight.structured
+      attribution_for_sample: cart_add
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_boe_organic/tight_cartadd
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: cart_tight.structured
+      attribution_for_sample: cart_add
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/feature_logging_training_data_parquet/query_pipeline_market_web_organic/cartadd_v1
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: market_cart.structured
+      attribution_for_sample: cart_add
+      us_only: True
+
+semrel_uni_serve_v2: &semrel_uni_serve_v2
+  <<: *multitask
+  eval_data:
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_web_organic/tight_purchase
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: web_tight.structured
+      attribution_for_sample: purchase
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_boe_organic/tight_purchase
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: boe_tight.structured
+      attribution_for_sample: purchase
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_market_web_organic/purchase_v1
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: market.structured
+      attribution_for_sample: purchase
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_web_organic/tight_click
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: click_tight.structured
+      attribution_for_sample: click
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_boe_organic/tight_click
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: click_tight.structured
+      attribution_for_sample: click
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_web_organic/tight_cartadd
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: cart_tight.structured
+      attribution_for_sample: cart_add
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_boe_organic/tight_cartadd
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: boe.metrics.ranking
+      graphite_suffix: cart_tight.structured
+      attribution_for_sample: cart_add
+      us_only: True
+    - base_path: gs://etldata-prod-search-ranking-data-hkwv8r/user/jgammack/data_with_sem_rel_filtering_v2_scores/query_pipeline_market_web_organic/cartadd_v1
+      eval_data_mode: "sampled_daily_500"
+      graphite_prefix: search.metrics.ranking.tensorflow_ranking_model
+      graphite_suffix: market_cart.structured
+      attribution_for_sample: cart_add
+      us_only: True
+      
+# Evaluate on all US
+prod: &prod
+  <<: *multitask
+  log_scores: True
+  apply_last_pass: True
+  mmr_lambda: 0.5
+
+# Evaluate on US x SI users
+prod_si: &prod_si 
+  <<: *prod
+  log_scores: False
+  apply_last_pass: False
+  remove_web_sign_out: True
+
+# Evaluate on US x SO users
+prod_so: &prod_so
+  <<: *prod
+  log_scores: False
+  apply_last_pass: False
+  remove_sign_in: True
