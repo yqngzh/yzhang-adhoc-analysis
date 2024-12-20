@@ -1,4 +1,4 @@
-create or replace table `etsy-sr-etl-prod.yzhang.semrel-uni-tire-so` as (
+create or replace table `etsy-sr-etl-prod.yzhang.semrel-uni-tire-si-no-weight` as (
     with tire_requests as (
         select
             response.mmxRequestUUID as tireRequestUUID,
@@ -12,7 +12,7 @@ create or replace table `etsy-sr-etl-prod.yzhang.semrel-uni-tire-so` as (
             pos as tire_position
         from `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs_*`,
             UNNEST(response.solrScores) as solrScore WITH OFFSET pos
-        where tireRequestContext.tireTestv2Id = "mlLsz71yM662W43skvQc"
+        where tireRequestContext.tireTestv2Id = "HPVlvRz4wgQTjr0UfQXv"
         and request.query != ""
         and response.mmxRequestUUID is not null
         and request.limit != 0
@@ -50,7 +50,7 @@ with grouped as (
         variant,
         SUM(count_uuid) AS num_request,
         AVG(avg_price_per_uuid) as avg_price,
-    from `etsy-sr-etl-prod.yzhang.semrel-v2-tire-so`
+    from `etsy-sr-etl-prod.yzhang.semrel-uni-tire-si-no-weight`
     where page_no = 1
     group by variant, page_no
 )
@@ -65,7 +65,7 @@ with grouped as (
         variant,
         SUM(count_uuid) AS num_request,
         AVG(avg_price_per_uuid) as avg_price,
-    from `etsy-sr-etl-prod.yzhang.semrel-v2-tire-so`
+    from `etsy-sr-etl-prod.yzhang.semrel-uni-tire-si-no-weight`
     where page_no = 1
     group by variant, segment, page_no
 )
