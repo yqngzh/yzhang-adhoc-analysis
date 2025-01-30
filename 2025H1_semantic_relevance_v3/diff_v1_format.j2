@@ -1,0 +1,104 @@
+Etsy is a global online marketplace, where people come together to make, sell, buy, and collect
+unique items. It is home to a universe of special, extraordinary items, from handcrafted pieces to
+vintage treasures.
+
+Etsy has a search function that allows users to enter their own ‘query’ (a list of keywords to
+indicate what they are looking for). Etsy does its best to return a list of products that we believe
+are of interest to the user, based on the query.
+
+your job is to to label how relevant is a product to a given query. You have 3 relevancy labels defined with examples as follows:
+
+1. Relevant
+Definition:
+- The product matches all parts of the query
+- if it's a gift query, then if its relevant if Addresses the recipient, occasion, or topic/interest specified in the query
+
+Examples:
+- Example 1
+    - Query: Personalized baby blanket
+    - Product: Baby Blanket, Baby gift, Newborn gift, Personalized Name, Stroller Blanket, Newborn Baby Gift, Soft Breathable Cotton Knit, baby shower Gift
+    - Label: Relevant
+    - Reason: This listing is for a personalized baby blanket. The product includes the word “baby,” which clarifies the purpose of this blanket. The product specifies that the item being sold is a blanket.the product includes the word “personalized”) confirm that the blanket can be made custom with the baby’s name.
+
+- Example 2
+    - Query: 70s pants sewing pattern
+    - Product: PDF - Vintage 1970s Sewing Pattern, Men’s Trousers - Waist: 30” (76cm) - Download
+    - Label: Relevant
+    - Reason: This product is for a sewing pattern that allows the buyer to follow instructions to sew a pair of men’s trousers in the 70s style. The product confirm this information.
+
+- Example 3
+    - Query: Dainty silver flower ring
+    - Product: Sterling Silver Flower Ring, Floral Ring for Women, Delicate Silver Ring, Dainty Nature Ring, Flower Blossom Ring, Simple Silver Rings
+    - Label: Relevant
+    - Reason: This product is for a ring. The ring is silver in color / material and has a floral motif in the design. The title has the word “dainty” in it, confirming that the ring is considered “dainty” in the context of jewelry.
+
+- Example 4
+    - Query: whiskey gift
+    - Product: Personalized whiskey decanter
+    - Label: Relevant
+    - Reason: This product a whiskey decanter, which would be appropriate for someone looking for a gift related to whiskey. The decanter is also personalized, and personalization often makes an item feel more special and thoughtful (a good gift!).
+
+2. Partial
+- the product is partially relevant if it matches part of the query, but not all of it.
+- if it's a gift, it may be an appropriate gift, but does not address every part of the query
+Examples: 
+
+- Example 1
+    - Query: Chunky gold necklace
+    - Product: Gold Bracelet Bangle, Chunky Gold Bangle Bracelet, Big Stacking Bracelet for Her, Thick Bangles for Women, Gold Irregular Stackable Bangle
+    - Label: Partial
+    - Reason: While the product is for gold and chunky jewelry, the item being sold is a bracelet – not a necklace.
+
+- Example 2
+    - Query: 70s pants sewing pattern
+    - Product: Lenox Pajamas - PDF Sewing Pattern - Pajama Pants Pattern - Easy Pajama Pattern for Women + Teens - Sizes 0-18
+    - Label: Partial
+    - Reason: While the listing is for a sewing pattern for pants, the pants are not in the 70s style. The 70s style can be characterized by bell-bottom, flare, or harem pants, among other styles of pants. The listing title and description do not indicate that the pants are in the 70s style.
+
+- Example 3
+    - Query: 70s pants sewing pattern
+    - Product: Party! Disco Ball Hand Embroidery Kit
+    - Label: Partial
+    - Reason:The product for an embroidery kit, with which the buyer can follow instructions to stitch a colorful disco ball. The listing is not a sewing pattern (i.e., instructions to sew a garment), nor is it for 70s-style pants. However, disco balls are characteristic of the “disco era” in the 1970s, so one could reason that the listing matches the “70s” part of the query.
+
+- Example 3
+    - Query: valentines gift for boyfriend
+    - Product: Capy Valentine’s Day card
+    - Label: Partial
+    - Reason: A card is likely not considered to be a gift, though you might give a card alongside your actual gift. 
+
+3. Not Relevant
+- The product as you can tell from the information provided, has no connection to the query at all. Can be completely random
+
+Examples: 
+- Example 1
+    - Query: Mid century modern furniture
+    - Product: Psychic Reading Same Day from Three Witches, General Guidance Ritual, Psychic Predictions and Advice, Intuitive Spirituality, Personalized
+    - Label: Not Relevant
+    - Reason: The listing is for a psychic reading and has no connection to the query. It is not a piece of furniture and has nothing to do with the “mid century modern” style.
+
+- Example 2
+    - Query: Advent calendars
+    - Product: Charlie's Homemade Smoked Beef Jerky Bites FREE SHIPPING
+    - Label: Not Relevant
+    - Reason: The listing is for edible beef jerky bites. This food is not a type of advent calendar, and has seemingly no connection to the query at all.
+
+- Example 3
+    - Query: 70s pants sewing pattern
+    - Product: Charlie's Homemade Smoked Beef Jerky Bites FREE SHIPPING
+    - Label: Not Relevant
+    - Reason: This listing is for a vintage Turkish rug. The rug is not in the 70s style, and has nothing to do with pants or sewing patterns
+
+- Example 4
+    - Query: gift for couples
+    - Product: Personalized name necklace
+    - Label: Not Relevant
+    - Reason: looking for something that can be used and enjoyed by two people. Only one person wears a necklace, so this item does not address the specified recipient.
+
+given a query and a product.return the label only. Use `Relevant', 'Not Relevant', and 'Partial' for labels only
+Generate a confidence score (Low/Medium/High)
+Return the label and Confidence in the following format :(label, confidence)
+make sure the output format is (label, confidence) only !!
+
+Query: {{ query }}
+Product: {{ product }}
