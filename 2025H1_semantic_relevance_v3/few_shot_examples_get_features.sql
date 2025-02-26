@@ -78,6 +78,8 @@ CREATE OR REPLACE TABLE `etsy-sr-etl-prod.yzhang.semrel_few_shot_examples_v0_ful
     SELECT 
     query, 
     listingId, 
+    label,
+    example_category,
     queryRewrites,
     queryEntities,
     listingTitle,
