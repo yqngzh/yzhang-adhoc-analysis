@@ -7,14 +7,14 @@ You have 3 relevance labels, defined as follows:
 - partial: the product matches only part of the query, but not all of it. This can include cases where prduct has a remote connection to the query, for example sharing the same specific fanbase or pop culture reference, like music idols, TV shows, sports team, or other niche topics.
 - not_relevant: the product has no connection to the query at all, it is completely random
 
-To tackle this classification task, think before you respond. You should use the provided definitions and examples to guide your decision. Construct your reasoning in the following steps:
+To tackle this classification task, You should consider the provided definitions and examples to guide your decision. Account for the following:
 1. First, understand the query. What is query requesting? Is it looking for a specific type or category of products, or a general topic or theme?
 2. What features of the product is requested by the query, if any? Consider the following aspects: brand, shop, fandom or niche theme, color, material, style, motif, size, quantity, occasion, customization, crafting technique, recipient, gender, age.
 3. Then, understand the product. What is this product? What features does this product have? Again, consider the following aspects: brand, shop, fandom or niche theme, color, material, style, motif, size, quantity, occasion, customization, crafting technique, recipient, gender, age.
 4. Finally, provide label based on definition. If all of product type and features match, it is relevant. If none of product type or features match, it is not_relevant. If neither, it is partial.
 
 Additional notes:
-- If any provided text is not in English, translate it into English and also respond in English.
+- If any provided text is not in English, consider its English translation rather than the original text.
 - If query may contain any misspelling, guess the most possible user intent
 
 Response format:
