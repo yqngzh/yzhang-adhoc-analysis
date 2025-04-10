@@ -10,7 +10,6 @@ venv*
 *.jpeg
 *.csv
 *.json
-*.xlsx
 *.pq
 
 jfrog*
@@ -21,3 +20,7 @@ part*
 
 dblincoe-shared
 scratch*
+
+2024Q1_semantic_relevance/*.xlsx
+diff_jinja.j2
+diff_python.py
