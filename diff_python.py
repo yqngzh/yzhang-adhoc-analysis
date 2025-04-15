@@ -1,1 +1,81 @@
-'<s>[SYSTEM_PROMPT]You are an expert in judging the Search Semantic Relevance relationships between search queries and products for Etsy, an e-commerce platform specialized in niche and unique products.\n\nYour task is to classify how relevant is a product to a given user search query.\n\nYou have 3 relevance labels, defined as follows:\n- relevant: the product matches perfectly to all parts of the query\n- partial: the product matches only part of the query, but not all of it. This can include cases where prduct has a remote connection to the query, for example sharing the same specific fanbase or pop culture reference, like music idols, TV shows, sports team, or other niche topics.\n- not_relevant: the product has no connection to the query at all, it is completely random\n\nTo tackle this classification task, You should consider the provided definitions and examples to guide your decision. Account for the following:\n1. First, understand the query. What is query requesting? Is it looking for a specific type or category of products, or a general topic or theme?\n2. What features of the product is requested by the query, if any? Consider the following aspects: brand, shop, fandom or niche theme, color, material, style, motif, size, quantity, occasion, customization, crafting technique, recipient, gender, age.\n3. Then, understand the product. What is this product? What features does this product have? Again, consider the following aspects: brand, shop, fandom or niche theme, color, material, style, motif, size, quantity, occasion, customization, crafting technique, recipient, gender, age.\n4. Finally, provide label based on definition. If all of product type and features match, it is relevant. If none of product type or features match, it is not_relevant. If neither, it is partial.\n\nAdditional notes:\n- If any provided text is not in English, consider its English translation rather than the original text.\n- If query may contain any misspelling, guess the most possible user intent\n\nResponse format:\n- Your response MUST BE EXACTLY ONE OF THESE WORDS: relevant, partial, not_relevant.\n- DO NOT include any extra text or explanation!!!\n[/SYSTEM_PROMPT][INST]{"query": "nautical baby shower favors", "product": {"title": "Nautical Party Water Bottle Labels, Sailboat Water Bottle Label, Ahoy It\'s a Boy Baby Shower Decor, Water Bottle Labels Editable Template#R9", "shop": "HoneyWildPaperie", "image": "not available", "description": "𝑴𝒂𝒕𝒄𝒉𝒊𝒏𝒈, bottle, ring 𝑴𝒂𝒕𝒄𝒉𝒊𝒏𝒈, tape, piece, water bottle, paper, ring, water, template, warp, dot, glue"}}[/INST]relevant</s>'
+class VLLMCompletionsModelHandler(ModelHandler[str,
+                                               PredictionResult,
+                                               _VLLMModelServer]):
+  def __init__(
+      self,
+      model_name: str,
+      vllm_server_kwargs: Optional[Dict[str, str]] = None):
+    """Implementation of the ModelHandler interface for vLLM using text as
+    input.
+
+    Example Usage::
+
+      pcoll | RunInference(VLLMModelHandler(model_name='facebook/opt-125m'))
+
+    Args:
+      model_name: The vLLM model. See
+        https://docs.vllm.ai/en/latest/models/supported_models.html for
+        supported models.
+      vllm_server_kwargs: Any additional kwargs to be passed into your vllm
+        server when it is being created. Will be invoked using
+        `python -m vllm.entrypoints.openai.api_serverv <beam provided args>
+        <vllm_server_kwargs>`. For example, you could pass
+        `{'echo': 'true'}` to prepend new messages with the previous message.
+        For a list of possible kwargs, see
+        https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#extra-parameters-for-completions-api
+    """
+    self._model_name = model_name
+    self._vllm_server_kwargs: Dict[str, str] = vllm_server_kwargs or {}
+    self._env_vars = {}
+
+  def load_model(self) -> _VLLMModelServer:
+    return _VLLMModelServer(self._model_name, self._vllm_server_kwargs)
+
+  async def _async_run_inference(
+      self,
+      batch: Sequence[str],
+      model: _VLLMModelServer,
+      inference_args: Optional[Dict[str, Any]] = None
+  ) -> Iterable[PredictionResult]:
+    client = getAsyncVLLMClient(model.get_server_port())
+    inference_args = inference_args or {}
+    async_predictions = []
+    for prompt in batch:
+      try:
+        completion = client.completions.create(
+            model=self._model_name, prompt=prompt, **inference_args)
+        async_predictions.append(completion)
+      except Exception as e:
+        model.check_connectivity()
+        raise e
+
+    predictions = []
+    for p in async_predictions:
+      try:
+        predictions.append(await p)
+      except Exception as e:
+        model.check_connectivity()
+        raise e
+
+    return [PredictionResult(x, y) for x, y in zip(batch, predictions)]
+
+  def run_inference(
+      self,
+      batch: Sequence[str],
+      model: _VLLMModelServer,
+      inference_args: Optional[Dict[str, Any]] = None
+  ) -> Iterable[PredictionResult]:
+    """Runs inferences on a batch of text strings.
+
+    Args:
+      batch: A sequence of examples as text strings.
+      model: A _VLLMModelServer containing info for connecting to the server.
+      inference_args: Any additional arguments for an inference.
+
+    Returns:
+      An Iterable of type PredictionResult.
+    """
+    return asyncio.run(self._async_run_inference(batch, model, inference_args))
+
+  def share_model_across_processes(self) -> bool:
+    return True
