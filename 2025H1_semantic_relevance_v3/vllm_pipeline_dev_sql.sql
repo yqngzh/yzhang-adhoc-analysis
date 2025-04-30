@@ -25,6 +25,7 @@ WITH lfb AS (
 merged AS (
     SELECT *
     FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
+    -- FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
     LEFT JOIN lfb USING (listingId)
     WHERE date = "2025-04-24"
 )
