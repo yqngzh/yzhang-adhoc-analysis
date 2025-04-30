@@ -51,3 +51,96 @@ SELECT avg(relevanceNDCG4)
 FROM `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment` 
 -- FROM  `etsy-search-ml-dev.yzhang.semrel_llm_test_request_metrics`
 WHERE date = "2025-04-24" 
+
+
+
+---------  FOR PAIRS TABLE
+select date, count(*)
+-- from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
+from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
+where date between date("2025-04-20") and date("2025-04-30")
+and guid is not null
+group by date
+order by date desc
+
+select date, modelName, count(*)
+-- from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics`
+from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
+where date between date("2025-04-20") and date("2025-04-30")
+group by date, modelName
+order by date desc, modelName
+
+
+-- DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics`
+DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
+WHERE date = date("2025-04-29") 
+AND modelName = ""
+
+CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_vw` AS
+-- CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment_vw` AS
+SELECT
+    dr.date,
+    ql.modelName,
+    dr.guid,
+    dr.visit_id,
+    ql.resultType,
+    dr.query,
+    dr.listingId,
+    dr.pageNum,
+    CASE
+        WHEN dr.retrievalRank IS NOT NULL THEN "pre-borda"
+        WHEN dr.bordaRank IS NOT NULL THEN "post-borda"
+        ELSE NULL
+    END AS retrievalStage,
+    ql.classId,
+    ql.softmaxScores
+-- FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests` dr
+-- JOIN `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics` ql
+FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` dr
+JOIN `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment` ql
+    USING (date, tableUUID);
+
+
+
+---------  FOR REQUEST TABLE
+with reqs as (
+    select distinct date, guid, resultType
+    -- from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
+    from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
+    where date between date("2025-04-20") and date("2025-04-30")
+    and pageNum = 1
+    and guid is not null
+)
+select date, count(*) from reqs
+group by date
+order by date desc
+
+select date, modelName, count(*)
+-- from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics`
+from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
+where date between date("2025-04-20") and date("2025-04-30")
+group by date, modelName
+order by date desc, modelName
+
+
+-- DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_requests_metrics`
+DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
+WHERE date = date("2025-04-29") 
+AND modelName = ""
+
+CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_vw` AS
+-- CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment_vw` AS
+SELECT DISTINCT
+    rm.date,
+    rm.modelName,
+    rm.guid,
+    rm.resultType,
+    dr.query,
+    rm.relevanceNDCG,
+    rm.relevanceNDCG4,
+    rm.relevanceNDCG10
+-- FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests` dr
+-- JOIN `etsy-data-warehouse-prod.search.sem_rel_requests_metrics` ql
+FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` dr
+JOIN `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment` ql
+    USING (date, guid);
