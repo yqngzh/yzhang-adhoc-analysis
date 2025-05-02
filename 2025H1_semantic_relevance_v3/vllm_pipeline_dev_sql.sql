@@ -58,7 +58,7 @@ WHERE date = "2025-04-24"
 select date, count(*)
 -- from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
 from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
-where date between date("2025-04-20") and date("2025-04-30")
+where date >= date("2025-04-24")
 and guid is not null
 group by date
 order by date desc
@@ -66,7 +66,7 @@ order by date desc
 select date, modelName, count(*)
 -- from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics`
 from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
-where date between date("2025-04-20") and date("2025-04-30")
+where date >= date("2025-04-24")
 group by date, modelName
 order by date desc, modelName
 
@@ -74,7 +74,7 @@ order by date desc, modelName
 -- DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics`
 DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
 WHERE date = date("2025-04-29") 
-AND modelName = ""
+AND modelName = "v3-finetuned-llama-8b"
 
 CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_vw` AS
 -- CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment_vw` AS
@@ -107,7 +107,7 @@ with reqs as (
     select distinct date, guid, resultType
     -- from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
     from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
-    where date between date("2025-04-20") and date("2025-04-30")
+    where date >= date("2025-04-24")
     and pageNum = 1
     and guid is not null
 )
@@ -118,7 +118,7 @@ order by date desc
 select date, modelName, count(*)
 -- from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics`
 from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
-where date between date("2025-04-20") and date("2025-04-30")
+where date >= date("2025-04-24")
 group by date, modelName
 order by date desc, modelName
 
@@ -126,7 +126,7 @@ order by date desc, modelName
 -- DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_requests_metrics`
 DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
 WHERE date = date("2025-04-29") 
-AND modelName = ""
+AND modelName = "v3-finetuned-llama-8b"
 
 CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_vw` AS
 -- CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment_vw` AS
