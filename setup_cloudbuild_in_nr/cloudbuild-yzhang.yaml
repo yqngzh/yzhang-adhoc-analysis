@@ -1,0 +1,71 @@
+steps:
+- id: build-ranker-docker-image
+  name: gcr.io/cloud-builders/docker:19.03.9
+  entrypoint: bash
+  args:
+      - -uxc
+      - |
+        # Enforce user to pass in ranker directory
+        if [ -z "${_RANKER}" ]; then
+            printf "Pass in the directory of the ranker to build eg. second_pass."
+            exit 0
+        fi
+
+        if [[ $_METHOD == "prod_tag" ]]; then
+            version_tag=$TAG_NAME
+            printf "Generated version tag: $version_tag.\n"
+            versioned_image=gcr.io/$_PROJECT_ID/$_IMAGE_NAME/$_RANKER:$version_tag
+
+        else
+            # Tag image with the branch name
+            if [[ -z "$_IMAGE_TAG" ]]; then
+                version_tag=$(echo $BRANCH_NAME | sed 's/[^[:alnum:]-]/_/g')-$(cat $_VERSION)
+            else
+                version_tag=$_IMAGE_TAG
+            fi
+            printf "Generated branch tag: $version_tag\n"
+            versioned_image=gcr.io/$_PROJECT_ID/$_IMAGE_NAME/$_RANKER:$version_tag
+        fi
+
+        # Build and push the image
+        docker build \
+            -t $versioned_image \
+            -f $_RANKER/Dockerfile \
+            .
+
+        docker push gcr.io/$_PROJECT_ID/$_IMAGE_NAME/$_RANKER
+
+- id: deploy-ranker-pipeline-spec
+  name: us-central1-docker.pkg.dev/etsy-mlinfra-prod/kubeflow/spec_deploy_op:main
+  args: [
+    "--module-path", "$_RANKER/pipeline/ranking_pipeline.py",
+    "--pipeline-fn", "pipeline",
+    "--output-path", "gs://training-dev-search-data-jtzn/kfp_pipeline_spec/neural_ranking/$_RANKER/$BRANCH_NAME/pipeline_spec.json",
+    "--target-branch", "$BRANCH_NAME"
+  ]
+  env:
+  - "BRANCH_NAME=$BRANCH_NAME"
+
+- id: copy-to-versioned-path
+  name: gcr.io/cloud-builders/gsutil
+  entrypoint: bash
+  args:
+    - -xc
+    - |
+      if [[ $_METHOD == "prod_tag" ]]; then
+          gsutil cp -n gs://training-dev-search-data-jtzn/kfp_pipeline_spec/neural_ranking/$_RANKER/$BRANCH_NAME/pipeline_spec.json gs://training-dev-search-data-jtzn/kfp_pipeline_spec/neural_ranking/$_RANKER/$TAG_NAME/pipeline_spec.json
+      else
+          exit 0
+      fi
+
+timeout: 1200s
+options:
+  machineType: "E2_HIGHCPU_8"
+
+substitutions:
+  _PROJECT_ID: etsy-gcr-dev
+  _IMAGE_NAME: ml-infra/vertex/pipelines/neural_ranking
+  _VERSION: ./VERSION
+  _IMAGE_TAG: ""
+  _RANKER:
+  _METHOD:

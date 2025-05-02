@@ -1,0 +1,4 @@
+Put both files under development/neural_ranking/
+Update VERSION & pipeline_image_version variable in config.py, 
+Set up trigger to detect change in VERSION, push to branch triggers build
+Can develop in one branch
