@@ -144,3 +144,18 @@ SELECT DISTINCT
 FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` dr
 JOIN `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment` ql
     USING (date, guid);
+
+
+
+
+-------------  To check backfill start date
+with tmp as (
+  select distinct date, guid, resultType
+  from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
+  where date >= date("2025-04-10")
+  and configFlag = "ranking/isearch.loc_no_xwalk_t2"
+)
+select date, count(*) 
+from tmp
+group by date
+order by date desc
