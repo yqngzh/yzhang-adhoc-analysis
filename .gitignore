@@ -19,7 +19,6 @@ part*
 *.onnx
 
 dblincoe-shared
-scratch*
 
 2024Q1_semantic_relevance/*.xlsx
 diff_jinja.j2
