@@ -19,7 +19,7 @@ model = tf.saved_model.load(saved_model_path)
 #     dtype=tf.string,
 # )
 query = [
-    "wedding dress",
+    "home decor",
 ]
 
 # title = tf.constant(
@@ -208,8 +208,8 @@ from google.cloud import bigquery
 
 # QUERY = ["heirloom gift", "harry potter", "motor", "taurus gift"]
 # LISTING_ID = [1237647786, 937073078, 1188722821, 1703022292]
-QUERY = ["tower of pizza earrings"]
-LISTING_ID = [1103572642]
+QUERY = ["home decor"]
+LISTING_ID = [1852687952]
 
 model_path = "gs://training-dev-search-data-jtzn/semantic_relevance/production_models/v2-deberta-v3-large-tad/export/saved_model/"
 v2_teacher = tf.saved_model.load(model_path)
