@@ -1,0 +1,1953 @@
+{
+    "count": 48219,
+    "mean": "0.4844",
+    "mean percent difference to base": "-10.2350",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.viewCountLoc",
+    "stddev": "0.2927"
+}
+{
+    "count": 48219,
+    "mean": "0.4896",
+    "mean percent difference to base": "-9.2785",
+    "name": "candidateInfo.docInfo.listingInfo.listingId",
+    "stddev": "0.2799"
+}
+{
+    "count": 48219,
+    "mean": "0.5181",
+    "mean percent difference to base": "-3.9906",
+    "name": "candidateInfo.docInfo.listingInfo.recsysBasic.clicksCount21d",
+    "stddev": "0.2987"
+}
+{
+    "count": 48219,
+    "mean": "0.5197",
+    "mean percent difference to base": "-3.6940",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.query",
+    "stddev": "0.2986"
+}
+{
+    "count": 48219,
+    "mean": "0.5232",
+    "mean percent difference to base": "-3.0511",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.totalViewCount",
+    "stddev": "0.2991"
+}
+{
+    "count": 48219,
+    "mean": "0.5248",
+    "mean percent difference to base": "-2.7458",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalGmsLoc",
+    "stddev": "0.2980"
+}
+{
+    "count": 48219,
+    "mean": "0.5262",
+    "mean percent difference to base": "-2.4831",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.numImpressions",
+    "stddev": "0.2985"
+}
+{
+    "count": 48219,
+    "mean": "0.5265",
+    "mean percent difference to base": "-2.4427",
+    "name": "candidateInfo.retrievalInfo.neuralIrRank",
+    "stddev": "0.3019"
+}
+{
+    "count": 48219,
+    "mean": "0.5269",
+    "mean percent difference to base": "-2.3705",
+    "name": "candidateInfo.retrievalInfo.solrRank",
+    "stddev": "0.2993"
+}
+{
+    "count": 48219,
+    "mean": "0.5269",
+    "mean percent difference to base": "-2.3543",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.favoriteCountLoc",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5294",
+    "mean percent difference to base": "-1.8945",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListings.shopId",
+    "stddev": "0.2993"
+}
+{
+    "count": 48219,
+    "mean": "0.5297",
+    "mean percent difference to base": "-1.8446",
+    "name": "candidateInfo.docInfo.listingInfo.listingProlistVisit30d.numImpressions",
+    "stddev": "0.2991"
+}
+{
+    "count": 48219,
+    "mean": "0.5310",
+    "mean percent difference to base": "-1.5991",
+    "name": "clientProvidedInfo.user.userCountry",
+    "stddev": "0.3000"
+}
+{
+    "count": 48219,
+    "mean": "0.5321",
+    "mean percent difference to base": "-1.3937",
+    "name": "contextualInfo[name=browser].rivuletBrowserInfo.timeseries.recentlyViewedListingIds50FV1",
+    "stddev": "0.2997"
+}
+{
+    "count": 48219,
+    "mean": "0.5323",
+    "mean percent difference to base": "-1.3542",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.counts.viewCountPT24hFV1",
+    "stddev": "0.2979"
+}
+{
+    "count": 48219,
+    "mean": "0.5326",
+    "mean percent difference to base": "-1.3141",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.pastYearOrders",
+    "stddev": "0.2993"
+}
+{
+    "count": 48219,
+    "mean": "0.5329",
+    "mean percent difference to base": "-1.2422",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalOrders",
+    "stddev": "0.2984"
+}
+{
+    "count": 48219,
+    "mean": "0.5331",
+    "mean percent difference to base": "-1.2210",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearGmsLoc",
+    "stddev": "0.3001"
+}
+{
+    "count": 48219,
+    "mean": "0.5334",
+    "mean percent difference to base": "-1.1659",
+    "name": "candidateInfo.docInfo.listingInfo.topQueryYear.clickTopQuery",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5336",
+    "mean percent difference to base": "-1.1211",
+    "name": "clientProvidedInfo.query.query",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5337",
+    "mean percent difference to base": "-1.0975",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.totalFavoriteCount",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5338",
+    "mean percent difference to base": "-1.0750",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyViewedUserIds50FV1",
+    "stddev": "0.2999"
+}
+{
+    "count": 48219,
+    "mean": "0.5339",
+    "mean percent difference to base": "-1.0686",
+    "name": "candidateInfo.retrievalInfo.xmlRank",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5340",
+    "mean percent difference to base": "-1.0487",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingIds50FV1",
+    "stddev": "0.2992"
+}
+{
+    "count": 48219,
+    "mean": "0.5343",
+    "mean percent difference to base": "-0.9916",
+    "name": "candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5343",
+    "mean percent difference to base": "-0.9848",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.listingViews",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5344",
+    "mean percent difference to base": "-0.9747",
+    "name": "clientProvidedInfo.browser.platform",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5345",
+    "mean percent difference to base": "-0.9628",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.counts.cartAddCountPT24hFV1",
+    "stddev": "0.2995"
+}
+{
+    "count": 48219,
+    "mean": "0.5345",
+    "mean percent difference to base": "-0.9530",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.totalQuantitySold",
+    "stddev": "0.3000"
+}
+{
+    "count": 48219,
+    "mean": "0.5348",
+    "mean percent difference to base": "-0.9000",
+    "name": "candidateInfo.docInfo.listingInfo.tfidf.vector",
+    "stddev": "0.3002"
+}
+{
+    "count": 48219,
+    "mean": "0.5348",
+    "mean percent difference to base": "-0.8972",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryVPCG.clickVPCG",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5354",
+    "mean percent difference to base": "-0.7954",
+    "name": "contextualInfo[name=user].userInfo.userId",
+    "stddev": "0.3000"
+}
+{
+    "count": 48219,
+    "mean": "0.5354",
+    "mean percent difference to base": "-0.7873",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListings.tags",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5355",
+    "mean percent difference to base": "-0.7725",
+    "name": "candidateInfo.docInfo.listingInfo.listingWeb.price",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5355",
+    "mean percent difference to base": "-0.7617",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlySearchedQueries50FV1",
+    "stddev": "0.3000"
+}
+{
+    "count": 48219,
+    "mean": "0.5356",
+    "mean percent difference to base": "-0.7420",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.numClicks",
+    "stddev": "0.3011"
+}
+{
+    "count": 48219,
+    "mean": "0.5357",
+    "mean percent difference to base": "-0.7406",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopImpressions",
+    "stddev": "0.2995"
+}
+{
+    "count": 48219,
+    "mean": "0.5360",
+    "mean percent difference to base": "-0.6850",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyCartaddedUserIds50FV1",
+    "stddev": "0.2995"
+}
+{
+    "count": 48219,
+    "mean": "0.5361",
+    "mean percent difference to base": "-0.6582",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalOrdersLoc",
+    "stddev": "0.3002"
+}
+{
+    "count": 48219,
+    "mean": "0.5361",
+    "mean percent difference to base": "-0.6539",
+    "name": "candidateInfo.docInfo.listingInfo.vpcg.clicksVPCG",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5363",
+    "mean percent difference to base": "-0.6121",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearOrdersLoc",
+    "stddev": "0.3016"
+}
+{
+    "count": 48219,
+    "mean": "0.5363",
+    "mean percent difference to base": "-0.6117",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListings.title",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5364",
+    "mean percent difference to base": "-0.6080",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.daysSinceOriginalCreate",
+    "stddev": "0.3004"
+}
+{
+    "count": 48219,
+    "mean": "0.5365",
+    "mean percent difference to base": "-0.5829",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopName",
+    "stddev": "0.2998"
+}
+{
+    "count": 48219,
+    "mean": "0.5366",
+    "mean percent difference to base": "-0.5695",
+    "name": "candidateInfo.docInfo.shopInfo.shopAvgRatings.count",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5368",
+    "mean percent difference to base": "-0.5210",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayOrdersLoc",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5369",
+    "mean percent difference to base": "-0.5156",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalQuantitySold",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5369",
+    "mean percent difference to base": "-0.5070",
+    "name": "candidateInfo.docInfo.listingInfo.recsysBasic.purchasesCount21d",
+    "stddev": "0.3004"
+}
+{
+    "count": 48219,
+    "mean": "0.5369",
+    "mean percent difference to base": "-0.5002",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.numCarts",
+    "stddev": "0.3002"
+}
+{
+    "count": 48219,
+    "mean": "0.5370",
+    "mean percent difference to base": "-0.4986",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopViews",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5370",
+    "mean percent difference to base": "-0.4854",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.totalGms",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5371",
+    "mean percent difference to base": "-0.4693",
+    "name": "candidateInfo.retrievalInfo.semrelPartialScore",
+    "stddev": "0.3001"
+}
+{
+    "count": 48219,
+    "mean": "0.5372",
+    "mean percent difference to base": "-0.4547",
+    "name": "candidateInfo.docInfo.listingInfo.listingProlistVisit30d.numCarts",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5373",
+    "mean percent difference to base": "-0.4376",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.taxonomyId",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5375",
+    "mean percent difference to base": "-0.4003",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.normalizedDailyGmsLoc",
+    "stddev": "0.3004"
+}
+{
+    "count": 48219,
+    "mean": "0.5377",
+    "mean percent difference to base": "-0.3549",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.counts.favoriteCountPT24hFV1",
+    "stddev": "0.3001"
+}
+{
+    "count": 48219,
+    "mean": "0.5379",
+    "mean percent difference to base": "-0.3313",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.numCartListings",
+    "stddev": "0.3002"
+}
+{
+    "count": 48219,
+    "mean": "0.5379",
+    "mean percent difference to base": "-0.3221",
+    "name": "candidateInfo.docInfo.listingInfo.coarseGrainedVpcg.listingIdCartsVPCG",
+    "stddev": "0.3004"
+}
+{
+    "count": 48219,
+    "mean": "0.5379",
+    "mean percent difference to base": "-0.3180",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalGms",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5380",
+    "mean percent difference to base": "-0.3114",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingShopIds50FV1",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5380",
+    "mean percent difference to base": "-0.2985",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyFavoritedUserIds50FV1",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5380",
+    "mean percent difference to base": "-0.2977",
+    "name": "contextualInfo[name=browser].rivuletBrowserInfo.timeseries.recentlyCartaddedListingIds50FV1",
+    "stddev": "0.3001"
+}
+{
+    "count": 48219,
+    "mean": "0.5382",
+    "mean percent difference to base": "-0.2725",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.maxPriceUsd",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5382",
+    "mean percent difference to base": "-0.2715",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.pastDayOrders",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5382",
+    "mean percent difference to base": "-0.2676",
+    "name": "candidateInfo.docInfo.listingInfo.listingProlistVisit30d.smoothCtr",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5383",
+    "mean percent difference to base": "-0.2524",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.numClickListings",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5383",
+    "mean percent difference to base": "-0.2507",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyCartaddedListingIds50FV1",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5383",
+    "mean percent difference to base": "-0.2481",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.totalOrders",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5383",
+    "mean percent difference to base": "-0.2462",
+    "name": "candidateInfo.docInfo.listingInfo.listingSmoothHistorical.smoothCtr",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5384",
+    "mean percent difference to base": "-0.2283",
+    "name": "contextualInfo[name=user].userInfo.visitStats.visitDays",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5385",
+    "mean percent difference to base": "-0.2105",
+    "name": "candidateInfo.docInfo.listingInfo.topQueryYear.cartTopQuery",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5385",
+    "mean percent difference to base": "-0.2097",
+    "name": "candidateInfo.retrievalInfo.semrelIrrelevantScore",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5386",
+    "mean percent difference to base": "-0.2019",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.pastYearGms",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5386",
+    "mean percent difference to base": "-0.1922",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.pastYearQuantitySold",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5386",
+    "mean percent difference to base": "-0.1869",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.numPurchListings",
+    "stddev": "0.3011"
+}
+{
+    "count": 48219,
+    "mean": "0.5386",
+    "mean percent difference to base": "-0.1865",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.counts.purchaseCountPT168hFV1",
+    "stddev": "0.3003"
+}
+{
+    "count": 48219,
+    "mean": "0.5387",
+    "mean percent difference to base": "-0.1775",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryVPCG.cartAddVPCG",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5387",
+    "mean percent difference to base": "-0.1751",
+    "name": "clientProvidedInfo.query.queryEn",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5387",
+    "mean percent difference to base": "-0.1742",
+    "name": "candidateInfo.docInfo.shopInfo.shopSmoothHistorical.smoothCartAdd",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5387",
+    "mean percent difference to base": "-0.1696",
+    "name": "candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyPurchasedUserIds50FV1",
+    "stddev": "0.3004"
+}
+{
+    "count": 48219,
+    "mean": "0.5388",
+    "mean percent difference to base": "-0.1556",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.avgPosition",
+    "stddev": "0.3004"
+}
+{
+    "count": 48219,
+    "mean": "0.5389",
+    "mean percent difference to base": "-0.1353",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.totalRatingsPast3Months",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5389",
+    "mean percent difference to base": "-0.1352",
+    "name": "candidateInfo.docInfo.listingInfo.listingWeb.isDigital",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5389",
+    "mean percent difference to base": "-0.1299",
+    "name": "candidateInfo.docInfo.listingInfo.dwellTime.pastWeekTotalDwellMs",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5390",
+    "mean percent difference to base": "-0.1249",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.activeListings",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5390",
+    "mean percent difference to base": "-0.1206",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalPurchases",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5390",
+    "mean percent difference to base": "-0.1197",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.pastYearQuantitySold",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5390",
+    "mean percent difference to base": "-0.1144",
+    "name": "contextualInfo[name=user].userInfo.purchaseLtd.avgOrderValue",
+    "stddev": "0.3013"
+}
+{
+    "count": 48219,
+    "mean": "0.5390",
+    "mean percent difference to base": "-0.1136",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.purchaseRate",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5391",
+    "mean percent difference to base": "-0.1098",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyFavoritedListingIds50FV1",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5391",
+    "mean percent difference to base": "-0.1074",
+    "name": "contextualInfo[name=user].userInfo.vpcg.allTimePurchasesVPCG",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5391",
+    "mean percent difference to base": "-0.1060",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logImpressionCount",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5391",
+    "mean percent difference to base": "-0.1015",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalClicksInVisit",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5391",
+    "mean percent difference to base": "-0.0951",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.daysSinceCreate",
+    "stddev": "0.3005"
+}
+{
+    "count": 48219,
+    "mean": "0.5391",
+    "mean percent difference to base": "-0.0931",
+    "name": "candidateInfo.docInfo.listingInfo.descriptionTfidf.vector",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5392",
+    "mean percent difference to base": "-0.0894",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyPurchasedListingIds50FV1",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5392",
+    "mean percent difference to base": "-0.0890",
+    "name": "candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5392",
+    "mean percent difference to base": "-0.0847",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingLocation.originCountryId",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5392",
+    "mean percent difference to base": "-0.0756",
+    "name": "contextualInfo[name=user].userInfo.descNgram.recentClicksDescVector",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0737",
+    "name": "contextualInfo[name=user].userInfo.tfIdf.recentClickTfIdfVector",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0729",
+    "name": "contextualInfo[name=browser].rivuletBrowserInfo.timeseries.recentlySearchedQueries50FV1",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0721",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.pastYearGms",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0709",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.normalizedDailyGms",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0688",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayQuantitySoldLoc",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0684",
+    "name": "contextualInfo[name=user].userInfo.tfIdf.allTimePurchasesTfIdfVector",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0668",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedShopIds50FV1",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0629",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedTaxoIds50FV1",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0620",
+    "name": "contextualInfo[name=user].userInfo.visitStat12m.visitDays",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0608",
+    "name": "candidateInfo.docInfo.listingInfo.topQuery.clickTopQuery",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0601",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.purchPriceP50",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0595",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.smoothCart",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0583",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.avgPropensity",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0580",
+    "name": "contextualInfo[name=user].userInfo.activeUserShipToLocations.countryId",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0562",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.totalPurchases",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5393",
+    "mean percent difference to base": "-0.0555",
+    "name": "candidateInfo.docInfo.listingInfo.listingSmoothHistorical.smoothCartAdd",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0526",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.minPriceUsd",
+    "stddev": "0.3011"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0523",
+    "name": "candidateInfo.docInfo.listingInfo.descNgrams.ngrams",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0510",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListingTags.machineTranslatedEnglishTags",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0486",
+    "name": "clientProvidedInfo.user.userPreferredLanguage",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0472",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.countryName",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0470",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListingTranslations.machineTranslatedEnglishTitle",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0451",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.impressionPriceP25",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0446",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalClicks",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0425",
+    "name": "clientProvidedInfo.user.locationZip",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0414",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyPurchasedFromShopIds50FV1",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0412",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.purchPriceP90",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0396",
+    "name": "candidateInfo.docInfo.listingInfo.topQuery.purchaseTopQuery",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5394",
+    "mean percent difference to base": "-0.0370",
+    "name": "candidateInfo.docInfo.listingInfo.listingSearchVisit14d.smoothCtr",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0335",
+    "name": "clientProvidedInfo.user.locationLongitude",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0322",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalRevenueInVisit",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0312",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingLocation.originPostalCode",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0309",
+    "name": "candidateInfo.docInfo.listingInfo.topQuery.cartTopQuery",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0302",
+    "name": "contextualInfo[name=user].userInfo.descTfIdf.recentClickTfIdfVector",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0279",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListingTranslations.primaryLanguageTitle",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0275",
+    "name": "contextualInfo[name=user].userInfo.coarseGrainedVpcg.listingIdClicksVPCG",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0273",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.maxPurchPrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0272",
+    "name": "candidateInfo.docInfo.listingInfo.listingSmoothHistorical.smoothPurchase",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0270",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.avgCartPrice",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0268",
+    "name": "contextualInfo[name=user].userInfo.tfIdf.allTimeFavoritesTfIdfVector",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0267",
+    "name": "candidateInfo.docInfo.listingInfo.listingWeb.isEtsyPick",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0265",
+    "name": "candidateInfo.docInfo.shopInfo.shopAvgRatings.avgRating",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0265",
+    "name": "candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0255",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.hasProcessingTime",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0244",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.cartPriceP90",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0240",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.orderTotal",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0214",
+    "name": "candidateInfo.docInfo.shopInfo.shopSmoothHistorical.smoothCtr",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0211",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.hasMetMinimums",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0203",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.purchaseCountLoc",
+    "stddev": "0.3006"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0201",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.avgDwellTime",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0199",
+    "name": "contextualInfo[name=user].userInfo.coarseGrained.topTagsList",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0195",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalDomesticGms",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0193",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListings.currencyCode",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5395",
+    "mean percent difference to base": "-0.0186",
+    "name": "clientProvidedInfo.user.locationLatitude",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0181",
+    "name": "candidateInfo.docInfo.listingInfo.bfpPriceOptimization.avgTopCatPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0181",
+    "name": "contextualInfo[name=user].userInfo.activeUserShipToLocations.zip",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0171",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.caShipCost",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0168",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.forumPosts",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0167",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.cartRate",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0155",
+    "name": "candidateInfo.docInfo.listingInfo.topQueryYear.purchaseTopQuery",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0152",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalPurchases",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0151",
+    "name": "candidateInfo.docInfo.shopInfo.shopProlistVisit30d.avgPosition",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0148",
+    "name": "contextualInfo[name=user].userInfo.coarseGrained.recentShopsList",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0142",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.impressionPriceP50",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0142",
+    "name": "contextualInfo[name=user].userInfo.vpcg.allTimeFavoritesVPCG",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0140",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayGmsLoc",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0139",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.ordersPerBuyerPast3Months",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0138",
+    "name": "contextualInfo[name=user].userInfo.coarseGrained.recentTagsList",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0131",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.avgRatingPast3Months",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0130",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.shippingScore",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0113",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToUk",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0105",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsEverywhere",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0104",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logImpressionCount",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0100",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.daysToHighPotentialSeller",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0099",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.avgClickPrice",
+    "stddev": "0.3011"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0098",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.avgClickPrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0093",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.avgPurchasePrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0091",
+    "name": "candidateInfo.docInfo.listingInfo.listingProlistVisit30d.avgPosition",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0088",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsFreeToUs",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0079",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.daysToTopSeller",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0075",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalCarts",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0069",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.deShipCost",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0069",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.clickRate",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0065",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.totalPurchases",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0060",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalPurchasesInVisit",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0056",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalPurchasesInVisit",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0052",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.avgPhotosPerListing",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0050",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.cartRate",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0047",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalClicks",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0044",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToAu",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0040",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.pctCompleteListings",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0036",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.gmsDecileLoc",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0032",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToUs",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0030",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.isStarSeller",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0028",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.maxProcessingDays",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0028",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.newListingFlag",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0026",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.onTimeShippingRatePast3Months",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0025",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.pctFreeShippingOrdersPast3Months",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0021",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalGmsInVisit",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0016",
+    "name": "candidateInfo.docInfo.shopInfo.shopProlistVisit30d.smoothCart",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0012",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.auShipCost",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0010",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.avgMessageResponseHrsPast3Months",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0009",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.ukShipCost",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0009",
+    "name": "contextualInfo[name=user].userInfo.coarseGrained.topShopsList",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0007",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.gmsQuintile",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0007",
+    "name": "candidateInfo.docInfo.listingInfo.listingProlistVisit30d.smoothCart",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0006",
+    "name": "clientProvidedInfo.browser.page",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "-0.0001",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.gmsQuintileLoc",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5396",
+    "mean percent difference to base": "0.0000",
+    "name": "base",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0005",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.everywhereElseShipCost",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0008",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.impressionPriceP90",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0011",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.avgImpressionPrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0012",
+    "name": "candidateInfo.docInfo.shopInfo.shopProlistVisit30d.smoothCtr",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0019",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.minProcessingDays",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0022",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.caseRatePast12Months",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0026",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.frShipCost",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0027",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.cancelRatePast12Months",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0028",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.domesticShipCost",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0030",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.minImpressionPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0039",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyFavoritedTaxoIds50FV1",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0044",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.stdClickPrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0044",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.gmsVigintile",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0045",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.stdPurchasePrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0046",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.isDigital",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0046",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListingTags.primaryLanguageTags",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0049",
+    "name": "contextualInfo[name=user].userInfo.tfIdf.recentCartTfIdfVector",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0067",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.daysToPowerSeller",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0069",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.maxImpressionPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0069",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearQuantitySoldLoc",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0072",
+    "name": "contextualInfo[name=user].userInfo.descNgram.recentCartsDescVector",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0080",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.maxCartPrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0081",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.clickPriceP90",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0082",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.maxClickPrice",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0089",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.ratingsScore",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0103",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.validTrackingRatePast3Months",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0106",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.cartPriceP50",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0106",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.pastDayQuantitySold",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0113",
+    "name": "candidateInfo.docInfo.shopInfo.shopProlistVisit30d.avgPropensity",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0114",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.stdClickPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0115",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logNoListingsDwelled",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0116",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalCarts",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0118",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsFreeDomestic",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0118",
+    "name": "candidateInfo.docInfo.listingInfo.estimatedDeliveryFeatures.maxCalendarDaysIntlOrders",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0123",
+    "name": "candidateInfo.docInfo.listingInfo.listingProlistVisit30d.avgPropensity",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0123",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.usShipCost",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0124",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.gmsDecile",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0124",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.cartPriceP25",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0126",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToCa",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0126",
+    "name": "candidateInfo.docInfo.listingInfo.bfpPriceOptimization.avgSecondCatPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0128",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListings.taxonomyPath",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0130",
+    "name": "contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.purchaseEntropy",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0131",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.clickPriceP50",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0132",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToDe",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0136",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.avgActiveListingPriceUsd",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0141",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.clickRate",
+    "stddev": "0.3013"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0155",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.tagCount",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0159",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.avgPurchPrice",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0161",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.minClickPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5397",
+    "mean percent difference to base": "0.0184",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.clickPriceP25",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0191",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.pastYearOrders",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0192",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.purchaseEntropy",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0202",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToFr",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0210",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.imageCount",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0213",
+    "name": "candidateInfo.docInfo.listingInfo.imageQualityScore.imageQualityScore",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0225",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.avgClickPrice",
+    "stddev": "0.3007"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0253",
+    "name": "candidateInfo.docInfo.shopInfo.shopSmoothHistorical.smoothPurchase",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0282",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.avgDwellTime",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0287",
+    "name": "candidateInfo.docInfo.listingInfo.verticaListings.price",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0289",
+    "name": "candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalIntlGms",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0290",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.normalizedDailyQuantityLoc",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0291",
+    "name": "candidateInfo.docInfo.shopInfo.sellerStandards.convoResponseScore",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0301",
+    "name": "contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyCartaddedTaxoIds50FV1",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0311",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.quantity",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0339",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.minCartPrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0342",
+    "name": "contextualInfo[name=user].userInfo.vpcg.recentClicksVPCG",
+    "stddev": "0.3008"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0347",
+    "name": "contextualInfo[name=user].userInfo.userPriceFeatures.minPurchPrice",
+    "stddev": "0.3010"
+}
+{
+    "count": 48219,
+    "mean": "0.5398",
+    "mean percent difference to base": "0.0357",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.avgPurchasePrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5399",
+    "mean percent difference to base": "0.0383",
+    "name": "contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.stdPurchasePrice",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5399",
+    "mean percent difference to base": "0.0504",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasics.priceUsd",
+    "stddev": "0.3009"
+}
+{
+    "count": 48219,
+    "mean": "0.5399",
+    "mean percent difference to base": "0.0523",
+    "name": "candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalQuantitySoldLoc",
+    "stddev": "0.3009"
+}

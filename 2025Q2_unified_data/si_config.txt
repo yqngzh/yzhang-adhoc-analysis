@@ -1,0 +1,1095 @@
+bool_features:
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.hasMetMinimums
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.isStarSeller
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.newListingFlag
+    # Loc doesn't use this feature
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.hasProcessingTime
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToUs
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToUk
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToCa
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToAu
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToDe
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsToFr
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsEverywhere
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsFreeDomestic
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.shipsFreeToUs
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.isDigital
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.listingWeb.isEtsyPick
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.listingWeb.isDigital
+    shape: []
+    dtype: int64
+    default_value: False
+    is_categorical: True
+int_features:
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.totalPurchases
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.totalRatingsPast3Months
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.orderTotal
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.ratingsScore
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.convoResponseScore
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.shippingScore
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.retrievalInfo.neuralIrRank
+    shape: []
+    dtype: int64
+    default_value: 1001
+  - name: candidateInfo.retrievalInfo.solrRank
+    shape: []
+    dtype: int64
+    default_value: 1001
+  - name: candidateInfo.retrievalInfo.xmlRank
+    shape: []
+    dtype: int64
+    default_value: 1001
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.daysSinceCreate
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.daysSinceOriginalCreate
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.gmsDecile
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.gmsQuintile
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.gmsVigintile
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.imageCount
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.pastDayOrders
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.pastDayQuantitySold
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.pastYearOrders
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.pastYearQuantitySold
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.quantity
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.tagCount
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.totalFavoriteCount
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.totalOrders
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.totalQuantitySold
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.totalViewCount
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.maxProcessingDays
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.minProcessingDays
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.dwellTime.pastWeekTotalDwellMs
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.recsysBasic.clicksCount21d
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.recsysBasic.purchasesCount21d
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.listingInfo.verticaListings.price
+    # Loc doesn't use this feature
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.shopAvgRatings.count
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.activeListings
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.daysToHighPotentialSeller
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.daysToPowerSeller
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.daysToTopSeller
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.forumPosts
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.listingViews
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.pastYearQuantitySold
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopImpressions
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopViews
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalOrders
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalQuantitySold
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.totalPurchases
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: contextualInfo[name=user].userInfo.visitStat12m.visitDays
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: contextualInfo[name=user].userInfo.visitStats.visitDays
+    shape: []
+    dtype: int64
+    default_value: 0
+float_features:
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.avgMessageResponseHrsPast3Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.caseRatePast12Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.cancelRatePast12Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.avgRatingPast3Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.validTrackingRatePast3Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.onTimeShippingRatePast3Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.pctFreeShippingOrdersPast3Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.ordersPerBuyerPast3Months
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.pctCompleteListings
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.sellerStandards.avgPhotosPerListing
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.maxPriceUsd  # in dollars
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.minPriceUsd
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.normalizedDailyGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.pastYearGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.priceUsd
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.totalGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.auShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.caShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.deShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.domesticShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.everywhereElseShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.frShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.ukShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.activeListingShippingCosts.usShipCost
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.bfpPriceOptimization.avgSecondCatPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.bfpPriceOptimization.avgTopCatPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingProlistVisit30d.avgPosition
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingProlistVisit30d.avgPropensity
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingProlistVisit30d.numCarts
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingProlistVisit30d.numImpressions
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingProlistVisit30d.smoothCart
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingProlistVisit30d.smoothCtr
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.avgPosition
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.avgPropensity
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.numCarts
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.numClicks
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.numImpressions
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.smoothCart
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSearchVisit14d.smoothCtr
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSmoothHistorical.smoothCartAdd
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSmoothHistorical.smoothCtr
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.listingSmoothHistorical.smoothPurchase
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopAvgRatings.avgRating
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopProlistVisit30d.avgPosition
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopProlistVisit30d.avgPropensity
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopProlistVisit30d.smoothCtr
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopProlistVisit30d.smoothCart
+    # Loc doesn't use this feature
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopSmoothHistorical.smoothCartAdd
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopSmoothHistorical.smoothCtr
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.shopSmoothHistorical.smoothPurchase
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.avgActiveListingPriceUsd
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.pastYearGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.pastYearOrders
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalDomesticGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.totalIntlGms
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: clientProvidedInfo.user.locationLatitude
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: clientProvidedInfo.user.locationLongitude
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.cartRate
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.clickRate
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.purchaseEntropy
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryLevelMetrics.purchaseRate
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.avgClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.avgDwellTime
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.avgPurchasePrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logImpressionCount
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logNoListingsDwelled
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalCarts
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalClicks
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalClicksInVisit
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalGmsInVisit
+    # Loc doesn't use this feature
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalPurchases
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalPurchasesInVisit
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.logTotalRevenueInVisit
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.stdClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=target].docInfo.queryInfo.trebuchetQuery.stdPurchasePrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.purchaseLtd.avgOrderValue
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.docInfo.listingInfo.imageQualityScore.imageQualityScore
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.retrievalInfo.semrelPartialScore
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: candidateInfo.retrievalInfo.semrelIrrelevantScore
+    shape: []
+    dtype: float32
+    default_value: .nan
+string_features:
+  - name: clientProvidedInfo.browser.page
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: clientProvidedInfo.browser.platform
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: clientProvidedInfo.user.userCountry
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: clientProvidedInfo.user.userPreferredLanguage
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.countryName
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.activeListingLocation.originPostalCode
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListings.currencyCode
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListings.tags
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListings.taxonomyPath
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListings.title
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListingTags.machineTranslatedEnglishTags
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListingTranslations.machineTranslatedEnglishTitle
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListingTags.primaryLanguageTags
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.listingInfo.verticaListingTranslations.primaryLanguageTitle
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopName
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: clientProvidedInfo.user.locationZip
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: clientProvidedInfo.query.query
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: clientProvidedInfo.query.queryEn
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: contextualInfo[name=target].docInfo.queryInfo.query
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: contextualInfo[name=user].userInfo.activeUserShipToLocations.zip
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: contextualInfo[name=user].userInfo.coarseGrained.recentTagsList
+    shape: []
+    dtype: string
+    default_value: ""
+  - name: contextualInfo[name=user].userInfo.coarseGrained.topTagsList
+    shape: []
+    dtype: string
+    default_value: ""
+int_id_features:
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasics.taxonomyId
+    shape: []
+    dtype: int64
+    default_value: -1
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.activeListingLocation.originCountryId
+    shape: []
+    dtype: int64
+    default_value: -1
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.listingId
+    shape: []
+    dtype: int64
+    default_value: -1
+    is_categorical: True
+  - name: candidateInfo.docInfo.listingInfo.verticaListings.shopId
+    shape: []
+    dtype: int64
+    default_value: -1
+    is_categorical: True
+  - name: contextualInfo[name=user].userInfo.activeUserShipToLocations.countryId
+    shape: []
+    dtype: int64
+    default_value: -1
+    is_categorical: True
+  - name: contextualInfo[name=user].userInfo.userId
+    shape: []
+    dtype: int64
+    default_value: -1
+    is_categorical: True
+string_list_features:
+  - name: candidateInfo.docInfo.listingInfo.descNgrams.ngrams
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.topQuery.cartTopQuery
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.topQuery.clickTopQuery
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.topQuery.purchaseTopQuery
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.topQueryYear.cartTopQuery
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.topQueryYear.clickTopQuery
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.topQueryYear.purchaseTopQuery
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.coarseGrained.recentShopsList
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.coarseGrained.topShopsList
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.descNgram.recentCartsDescVector
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.descNgram.recentClicksDescVector
+    dtype: string
+dict_features:
+  - name: candidateInfo.docInfo.listingInfo.coarseGrainedVpcg.listingIdCartsVPCG#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.coarseGrainedVpcg.listingIdCartsVPCG#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.listingWeb.price#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.listingWeb.price#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.listingWeb.promotionalPrice#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.estimatedDeliveryFeatures.maxCalendarDaysIntlOrders#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.estimatedDeliveryFeatures.maxCalendarDaysIntlOrders#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.descriptionTfidf.vector#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.descriptionTfidf.vector#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.tfidf.vector#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.tfidf.vector#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.vpcg.clicksVPCG#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.vpcg.clicksVPCG#values
+    dtype: float32
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryVPCG.cartAddVPCG#keys
+    dtype: string
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryVPCG.cartAddVPCG#values
+    dtype: float32
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryVPCG.clickVPCG#keys
+    dtype: string
+  - name: contextualInfo[name=target].docInfo.queryInfo.queryVPCG.clickVPCG#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.coarseGrainedVpcg.listingIdClicksVPCG#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.coarseGrainedVpcg.listingIdClicksVPCG#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.descTfIdf.recentClickTfIdfVector#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.descTfIdf.recentClickTfIdfVector#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.tfIdf.allTimeFavoritesTfIdfVector#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.tfIdf.allTimeFavoritesTfIdfVector#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.tfIdf.allTimePurchasesTfIdfVector#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.tfIdf.allTimePurchasesTfIdfVector#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.tfIdf.recentCartTfIdfVector#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.tfIdf.recentCartTfIdfVector#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.tfIdf.recentClickTfIdfVector#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.tfIdf.recentClickTfIdfVector#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.vpcg.allTimeFavoritesVPCG#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.vpcg.allTimeFavoritesVPCG#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.vpcg.allTimePurchasesVPCG#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.vpcg.allTimePurchasesVPCG#values
+    dtype: float32
+  - name: contextualInfo[name=user].userInfo.vpcg.recentClicksVPCG#keys
+    dtype: string
+  - name: contextualInfo[name=user].userInfo.vpcg.recentClicksVPCG#values
+    dtype: float32
+rivulet_count_features:
+  - name: candidateInfo.docInfo.rivuletListingInfo.counts.cartAddCountPT24hFV1
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.rivuletListingInfo.counts.favoriteCountPT24hFV1
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.rivuletListingInfo.counts.purchaseCountPT168hFV1
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: candidateInfo.docInfo.rivuletListingInfo.counts.viewCountPT24hFV1
+    shape: []
+    dtype: int64
+    default_value: 0
+rivulet_timeseries_features:
+  - name: candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyCartaddedUserIds50FV1#userId
+    dtype: int64
+  - name: candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyFavoritedUserIds50FV1#userId
+    dtype: int64
+  - name: candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyPurchasedUserIds50FV1#userId
+    dtype: int64
+  - name: candidateInfo.docInfo.rivuletListingInfo.timeseries.recentlyViewedUserIds50FV1#userId
+    dtype: int64
+  - name: contextualInfo[name=browser].rivuletBrowserInfo.timeseries.recentlyCartaddedListingIds50FV1#listingId
+    dtype: int64
+  - name: contextualInfo[name=browser].rivuletBrowserInfo.timeseries.recentlySearchedQueries50FV1#searchQuery
+    dtype: string
+  - name: contextualInfo[name=browser].rivuletBrowserInfo.timeseries.recentlyViewedListingIds50FV1#listingId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyCartaddedListingIds50FV1#listingId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyCartaddedTaxoIds50FV1#taxoId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyFavoritedListingIds50FV1#listingId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyFavoritedTaxoIds50FV1#taxoId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyPurchasedFromShopIds50FV1#shopId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyPurchasedListingIds50FV1#listingId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlySearchedQueries50FV1#searchQuery
+    dtype: string
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingIds50FV1#listingId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedListingShopIds50FV1#shopId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedShopIds50FV1#shopId
+    dtype: int64
+  - name: contextualInfo[name=user].rivuletUserInfo.timeseries.recentlyViewedTaxoIds50FV1#taxoId
+    dtype: int64
+
+localized_int_dict_features:
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.viewCountLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.viewCountLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.favoriteCountLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.favoriteCountLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalOrdersLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalOrdersLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalQuantitySoldLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalQuantitySoldLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayOrdersLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayOrdersLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayQuantitySoldLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayQuantitySoldLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearOrdersLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearOrdersLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearQuantitySoldLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearQuantitySoldLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.purchaseCountLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.purchaseCountLoc#values
+    dtype: int64
+localized_float_dict_features:
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalGmsLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.totalGmsLoc#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.normalizedDailyGmsLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.normalizedDailyGmsLoc#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.normalizedDailyQuantityLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.normalizedDailyQuantityLoc#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayGmsLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.past30DayGmsLoc#values
+    dtype: float32
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearGmsLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.pastYearGmsLoc#values
+    dtype: float32
+localized_quantile_dict_features:
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.gmsQuintileLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.gmsQuintileLoc#values
+    dtype: int64
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.gmsDecileLoc#keys
+    dtype: string
+  - name: candidateInfo.docInfo.listingInfo.activeListingBasicsLoc.gmsDecileLoc#values
+    dtype: int64
+user_price_features:
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.numClickListings
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.numPurchListings
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.numCartListings
+    shape: []
+    dtype: int64
+    default_value: 0
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.clickPriceP90
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.clickPriceP50
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.clickPriceP25
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.purchPriceP90
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.purchPriceP50
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.cartPriceP90
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.cartPriceP50
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.cartPriceP25
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.impressionPriceP90
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.impressionPriceP50
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.impressionPriceP25
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.avgClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.avgPurchPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.avgCartPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.avgImpressionPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.maxClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.maxPurchPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.maxCartPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.maxImpressionPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.minClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.minPurchPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.minCartPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=user].userInfo.userPriceFeatures.minImpressionPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+queryen_float_features:
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.cartRate
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.clickRate
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.queryLevelMetrics.purchaseEntropy
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.avgClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.avgDwellTime
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.avgPurchasePrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logImpressionCount
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalCarts
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalClicks
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalPurchases
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.logTotalPurchasesInVisit
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.stdClickPrice
+    shape: []
+    dtype: float32
+    default_value: .nan
+  - name: contextualInfo[name=queryEn].docInfo.queryInfo.trebuchetQuery.stdPurchasePrice
+    shape: []
+    dtype: float32
+    default_value: .nan

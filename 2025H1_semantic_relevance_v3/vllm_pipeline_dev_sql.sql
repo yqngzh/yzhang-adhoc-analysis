@@ -58,7 +58,7 @@ WHERE date = "2025-04-24"
 select date, count(*)
 -- from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
 from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
-where date >= date("2025-04-24")
+where date >= date("2025-05-10")
 and guid is not null
 group by date
 order by date desc
@@ -66,14 +66,14 @@ order by date desc
 select date, modelName, count(*)
 -- from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics`
 from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
-where date >= date("2025-04-24")
+where date >= date("2025-05-10")
 group by date, modelName
 order by date desc, modelName
 
 
 -- DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics`
 DELETE FROM `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
-WHERE date = date("2025-04-29") 
+WHERE date = date("2025-05-10") 
 AND modelName = "v3-finetuned-llama-8b"
 
 CREATE OR REPLACE VIEW `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_vw` AS
@@ -107,7 +107,7 @@ with reqs as (
     select distinct date, guid, resultType
     -- from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests`
     from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
-    where date >= date("2025-04-24")
+    where date >= date("2025-05-10")
     and pageNum = 1
     and guid is not null
 )
@@ -118,7 +118,7 @@ order by date desc
 select date, modelName, count(*)
 -- from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics`
 from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
-where date >= date("2025-04-24")
+where date >= date("2025-05-10")
 group by date, modelName
 order by date desc, modelName
 
