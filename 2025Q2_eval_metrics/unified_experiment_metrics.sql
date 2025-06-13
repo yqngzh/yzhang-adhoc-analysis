@@ -58,8 +58,6 @@ DECLARE experiment_name STRING DEFAULT "ranking/search.mmx.2025_q2.nrv2_unified_
 -- DECLARE is_filtered BOOLEAN DEFAULT FALSE;
 -- DECLARE bucketing_id_type INT64 DEFAULT 1;
 
-
-
 -- get event mmx request ID from beacon
 CREATE OR REPLACE TABLE `etsy-search-ml-dev.yzhang.vscm_with_mmx_id` AS (
     with browserCustomEvents as (
@@ -91,60 +89,63 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.yzhang.vscm_with_mmx_id` AS (
         mmx_request_uuid,
         event_id, 
         event_data, 
-        TIMESTAMP_MILLIS(bce.custom_event_runtime_ms) as event_timestamp, 
+        bce.event_timestamp,
+        -- TIMESTAMP_MILLIS(bce.custom_event_runtime_ms) as event_timestamp, 
         _date
     from browserCustomEvents bce
     left join beacon
     on bce.visit_id = beacon.visit_id
-    and bce.custom_event_runtime_ms = beacon.event_timestamp
+    -- and bce.custom_event_runtime_ms = beacon.event_timestamp
+    and bce.event_timestamp = TIMESTAMP_MILLIS(beacon.event_timestamp)
 )
 
 select count(*)
 from `etsy-search-ml-dev.yzhang.vscm_with_mmx_id`
 where mmx_request_uuid is not null
--- can only match 4901 events, significantly lower than online numbers
+-- custom_event_runtime_ms: 0 matched
+-- event_timestamp: can only match 4901 events, significantly lower than online numbers (30000 - 40000)
 
 
-
+-- DEPRECATED
 -- https://etsy.slack.com/archives/CE2RHE4D8/p1749580374491569?thread_ts=1749579026.651079&cid=CE2RHE4D8
 -- take the first catapult ndcg event for each visit, aggregate across the day
-with browserCustomEvents as (
-    select 
-        visit_id, 
-        SPLIT(visit_id, ".")[OFFSET(0)] as browser_id, 
-        sequence_number, 
-        event_name as event_id, 
-        event_data, 
-        custom_event_runtime_ms,
-        event_timestamp,
-        _date
-    from `etsy-data-warehouse-prod.catapult.visit_segment_custom_metrics`
-    where event_timestamp IS NOT NULL 
-    and _date = "2025-06-04"
-    and event_name in ("purchase_NDCG", "rich_search_events_w_purchase")
-),
-first_ndcg_per_visit as (
-    select 
-        visit_id,
-        event_id,
-        event_data,
-        custom_event_runtime_ms,
-    from browserCustomEvents
-    where event_id = "purchase_NDCG"
-    QUALIFY ROW_NUMBER() OVER(PARTITION BY visit_id, event_id ORDER BY custom_event_runtime_ms) = 1
-),
-first_npurch_per_visit as (
-    select 
-        visit_id,
-        event_id,
-        event_data,
-        custom_event_runtime_ms,
-    from browserCustomEvents
-    where event_id = "rich_search_events_w_purchase"
-    QUALIFY ROW_NUMBER() OVER(PARTITION BY visit_id, event_id ORDER BY custom_event_runtime_ms) = 1
-)
-select sum(event_data)
-from first_npurch_per_visit
--- 704177259.62155843 / 126133.0 = 5582.81
+-- with browserCustomEvents as (
+--     select 
+--         visit_id, 
+--         SPLIT(visit_id, ".")[OFFSET(0)] as browser_id, 
+--         sequence_number, 
+--         event_name as event_id, 
+--         event_data, 
+--         custom_event_runtime_ms,
+--         event_timestamp,
+--         _date
+--     from `etsy-data-warehouse-prod.catapult.visit_segment_custom_metrics`
+--     where event_timestamp IS NOT NULL 
+--     and _date = "2025-06-04"
+--     and event_name in ("purchase_NDCG", "rich_search_events_w_purchase")
+-- ),
+-- first_ndcg_per_visit as (
+--     select 
+--         visit_id,
+--         event_id,
+--         event_data,
+--         custom_event_runtime_ms,
+--     from browserCustomEvents
+--     where event_id = "purchase_NDCG"
+--     QUALIFY ROW_NUMBER() OVER(PARTITION BY visit_id, event_id ORDER BY custom_event_runtime_ms) = 1
+-- ),
+-- first_npurch_per_visit as (
+--     select 
+--         visit_id,
+--         event_id,
+--         event_data,
+--         custom_event_runtime_ms,
+--     from browserCustomEvents
+--     where event_id = "rich_search_events_w_purchase"
+--     QUALIFY ROW_NUMBER() OVER(PARTITION BY visit_id, event_id ORDER BY custom_event_runtime_ms) = 1
+-- )
+-- select sum(event_data)
+-- from first_npurch_per_visit
+-- -- 704177259.62155843 / 126133.0 = 5582.81
 
 

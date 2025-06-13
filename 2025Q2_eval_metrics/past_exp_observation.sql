@@ -5,7 +5,9 @@ select
   avg(metrics.purchase.dcgAttributedPrice10) as avg_ppdcg10,
   avg(metrics.purchase.dcgAttributedPrice48) as avg_ppdcg48
 from `etsy-search-ml-prod.search_ranking.second_pass_eval`
-where source in ("web_purchase", "boe_purchase")
+where evalDate between date("")
+and source in ("web_purchase", "boe_purchase")
+and modelName 
 group by modelName
 order by modelName
 -- offline_metrics.csv
