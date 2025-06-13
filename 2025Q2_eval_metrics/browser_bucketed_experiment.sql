@@ -31,12 +31,9 @@ create or replace table `etsy-search-ml-dev.yzhang.unified_try2_offline` as (
             requestUUID,
             avg(metrics.purchase.ndcg10) as avg_pndcg10, 
             avg(metrics.purchase.ndcg48) as avg_pndcg48, 
-            -- avg(metrics.purchase.dcgAttributedPrice10) as avg_ppdcg10,
-            -- avg(metrics.purchase.dcgAttributedPrice48) as avg_ppdcg48
         from `etsy-search-ml-prod.search_ranking.second_pass_eval`
         where evalDate between date(start_date) and date(end_date)
         and source in ("web_purchase", "boe_purchase")
-        -- and tags.userId > 0
         and evalDate = date(study_date)
         and modelName in (
             "nrv2-us-intl-v2-si",
@@ -72,6 +69,7 @@ create or replace table `etsy-search-ml-dev.yzhang.unified_try2_offline` as (
     on (
         offres.browserId = bbp.bucketing_id
         and offres.event_timestamp >= bbp.bucketing_ts
+        -- same number with and without timestamp filtering
         -- and TIMESTAMP(offres.evalDate) >= bbp.boundary_start_ts
     )
 )
@@ -110,4 +108,26 @@ order by variant_id
 -- off                | 33878                      | 41317
 -- on                 | 33279                      | 41090
 
--- offline does some additional filtering like missing mmx_request_uuid??
+select 
+    variant_id, modelName, 
+    avg(avg_pndcg10) as avg_pndcg10,
+    avg(avg_pndcg48) as avg_pndcg48
+from `etsy-search-ml-dev.yzhang.unified_try2_offline`
+group by variant_id, modelName
+order by variant_id, modelName
+
+with n_requests_table as (
+    select variant_id, sum(event_value) as n_requests
+    from `etsy-search-ml-dev.yzhang.unified_try2_online`
+    where event_id = "rich_search_events_w_purchase"
+    group by variant_id
+),
+pndcg_table as (
+    select variant_id, sum(event_value) as pndcg
+    from `etsy-search-ml-dev.yzhang.unified_try2_online`
+    where event_id = "purchase_NDCG"
+    group by variant_id
+)
+select pndcg_table.variant_id, pndcg / n_requests 
+from n_requests_table
+join pndcg_table using (variant_id)
