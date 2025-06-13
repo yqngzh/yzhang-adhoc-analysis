@@ -110,6 +110,4 @@ order by variant_id
 -- off                | 33878                      | 41317
 -- on                 | 33279                      | 41090
 
--- offline does some additional filtering??
-
-
+-- offline does some additional filtering like missing mmx_request_uuid??

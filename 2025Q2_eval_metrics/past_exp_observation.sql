@@ -1,3 +1,8 @@
+DECLARE start_date DATE DEFAULT "2025-05-23";
+DECLARE end_date DATE DEFAULT "2025-06-04";
+DECLARE experiment_name STRING DEFAULT "ranking/search.mmx.2025_q2.nrv2_unified_ranking_try2";
+DECLARE study_date DATE DEFAULT "2025-05-30";
+
 select 
   modelName, 
   avg(metrics.purchase.ndcg10) as avg_pndcg10, 
@@ -5,12 +10,14 @@ select
   avg(metrics.purchase.dcgAttributedPrice10) as avg_ppdcg10,
   avg(metrics.purchase.dcgAttributedPrice48) as avg_ppdcg48
 from `etsy-search-ml-prod.search_ranking.second_pass_eval`
-where evalDate between date("")
+where evalDate between date(start_date) and date(end_date)
 and source in ("web_purchase", "boe_purchase")
-and modelName 
+and modelName in (
+
+)
 group by modelName
 order by modelName
--- offline_metrics.csv
+
 
 
 with launches as (
