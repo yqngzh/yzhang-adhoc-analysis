@@ -109,8 +109,19 @@ order by variant_id
 -- on                 | 33279                      | 41090
 
 select 
+    modelName,
+    avg(metrics.purchase.ndcg48) as avg_pndcg48, 
+from `etsy-search-ml-prod.search_ranking.second_pass_eval`
+where source in ("web_purchase", "boe_purchase")
+and evalDate = date(study_date)
+and modelName in (
+    "nrv2-us-intl-v2-si",
+    "nrv2-us-intl-si"
+)
+group by modelName
+
+select 
     variant_id, modelName, 
-    avg(avg_pndcg10) as avg_pndcg10,
     avg(avg_pndcg48) as avg_pndcg48
 from `etsy-search-ml-dev.yzhang.unified_try2_offline`
 group by variant_id, modelName
