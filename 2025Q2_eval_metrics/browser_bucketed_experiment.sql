@@ -142,3 +142,71 @@ pndcg_table as (
 select pndcg_table.variant_id, pndcg / n_requests 
 from n_requests_table
 join pndcg_table using (variant_id)
+
+
+
+---- Try only checking number of requests per day
+with requests_info as (
+    select distinct 
+        requestUUID,
+        TIMESTAMP_MILLIS(timeSinceEpochMs) as event_timestamp,
+        SPLIT(visitId, ".")[OFFSET(0)] as browserId,
+    from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_tight_2025_05_30`
+    where "purchase" in unnest(attributions)
+    union all
+    select distinct 
+        requestUUID,
+        TIMESTAMP_MILLIS(timeSinceEpochMs) as event_timestamp,
+        SPLIT(visitId, ".")[OFFSET(0)] as browserId
+    from `etsy-ml-systems-prod.attributed_instance.query_pipeline_boe_organic_tight_2025_05_30`
+    where "purchase" in unnest(attributions)
+),
+requests_info_clean as (
+    select distinct requestUUID, event_timestamp, browserId
+    from requests_info
+    where event_timestamp is not null
+    and browserId is not null
+),
+browserBucketingPeriod as (
+    select 
+        experiment_id, 
+        boundary_start_ts, 
+        variant_id, 
+        bucketing_id, 
+        bucketing_id_type, 
+        bucketing_ts, 
+        filtered_bucketing_ts
+    from `etsy-data-warehouse-prod.catapult_unified.bucketing_period`
+    where _date = "2025-05-30"
+    and bucketing_id_type = 1
+    and experiment_id = "ranking/search.mmx.2025_q2.nrv2_unified_ranking_try2"
+)
+select count(distinct requestUUID)
+from requests_info_clean offres
+join browserBucketingPeriod bbp
+on (
+    offres.browserId = bbp.bucketing_id
+    and offres.event_timestamp >= bbp.bucketing_ts
+)
+-- offline no event time check 88461
+-- offline with event time check 67157
+
+with catapult_data as (
+    SELECT
+        _date,
+        boundary_start_ts,
+        variant_id,
+        bucketing_id,
+        bucketing_ts,
+        event_id,
+        event_value,
+    FROM `etsy-data-warehouse-prod.catapult_unified.aggregated_event_daily`
+    WHERE _date = "2025-05-30"
+    and experiment_id = "ranking/search.mmx.2025_q2.nrv2_unified_ranking_try2"
+    AND bucketing_id_type = 1
+    AND event_id in ("purchase_NDCG", "rich_search_events_w_purchase")
+)
+select sum(event_value)
+from catapult_data
+where event_id = "rich_search_events_w_purchase"
+-- online 82407
