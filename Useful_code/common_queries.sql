@@ -1,4 +1,4 @@
--- training data
+----  Training data  ----
 select
     requestUUID, visitId, position,
     attributions,
@@ -9,11 +9,15 @@ from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_1
 where ctx.docInfo.queryInfo.query in ('personalized gift', 'personalise gift', 'mother day', 'mothers day', 'gift for him', 'gifts for him', 'gift')
 order by requestUUID, position
 
--- feature bank
+
+
+----  Feature bank  ----
 SELECT key, queryLevelMetrics_bin, queryLevelMetrics_gms 
 FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
 
---- rpc log
+
+
+----  RPC log  ----
 with rpc_data as (
     SELECT
         response.mmxRequestUUID,
@@ -81,16 +85,317 @@ left join user_data u
 on rpc_data.userId = u.user_id
 
 
--- visit id beacon
+WITH allRequests AS (
+    SELECT
+        (SELECT COUNTIF(stage='MO_LASTPASS') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nLastpassSources,
+        (SELECT COUNTIF(stage='POST_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostFilterSources,
+        (SELECT COUNTIF(stage='POST_BORDA') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostBordaSources,
+        (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources,
+        COALESCE((SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en'), NULLIF(request.query, '')) query,
+        request.options.userLanguage userLanguage,
+        request.options.userCountry userCountry,
+        response.count numResults,
+        request.options.searchPlacement searchPlacement,
+        request.filter.maturity as matureFilter,
+        DATE(queryTime) date,
+        RequestIdentifiers.etsyRequestUUID as etsyUUID,
+        response.mmxRequestUUID as mmxRequestUUID,
+        RequestIdentifiers.etsyRootUUID as rootUUID,
+        (SELECT
+            CASE
+                WHEN value = 'web' THEN 'web'
+                WHEN value = 'web_mobile' THEN 'mweb'
+                WHEN value IN ('etsy_app_android', 'etsy_app_ios', 'etsy_app_other') THEN 'boe'
+                ELSE value
+            END
+            FROM unnest(request.context)
+            WHERE key = "req_source"
+        ) as requestSource,
+        OrganicRequestMetadata.candidateSources candidateSources
+    FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+    WHERE request.OPTIONS.cacheBucketId LIKE "live%"
+    AND request.options.csrOrganic
+    AND request.options.searchPlacement IN ('wsg', 'allsr', 'wmg')
+    AND request.query <> ''
+    AND request.offset = 0
+    AND DATE(queryTime) = sampleDate
+    AND request.options.interleavingConfig IS NULL
+    AND response.count >= minResults
+    AND NOT EXISTS (
+      SELECT * FROM UNNEST(request.context)
+      WHERE key = "req_source" AND value = "bot"
+    )
+),
+validRequests AS (
+    SELECT *
+    FROM allRequests
+    WHERE requestSource = samplePlatform
+    AND nLastPassSources=1
+    AND nPostFilterSources>=1
+    AND (nPostBordaSources>=1 OR nPostSemrelSources>=1)
+),
+reqsSample AS (
+    -- US Search
+    SELECT * FROM validRequests
+    WHERE userCountry = 'US' AND searchPlacement IN ('wsg', 'allsr')
+      AND RAND() < samplingRate
+    UNION ALL
+    -- Intl Search
+    SELECT * FROM validRequests
+    WHERE userCountry != 'US' AND searchPlacement IN ('wsg', 'allsr')
+      AND RAND() < samplingRate
+    UNION ALL 
+    -- US Market
+    SELECT * FROM validRequests
+    WHERE userCountry = 'US' AND searchPlacement = 'wmg'
+      AND RAND() < samplingRate
+    UNION ALL
+    -- Intl Market
+    SELECT * FROM validRequests
+    WHERE userCountry != 'US' AND searchPlacement = 'wmg'
+      AND RAND() < samplingRate
+),
+prolistRequests AS (
+  SELECT
+    RequestIdentifiers.etsyRootUUID AS rootUUID,
+    response.listingIds AS prolist_listingIds
+  FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+  WHERE
+    DATE(queryTime) = sampleDate
+    AND request.options.cacheBucketId LIKE "live%"
+    AND request.options.queryType = 'prolist'
+),
+reqsSampleWithProlist AS (
+  SELECT *
+  FROM reqsSample
+  LEFT JOIN prolistRequests
+    USING(rootUUID)
+),
+beacon AS (
+    SELECT DISTINCT
+        beacon.guid,
+        visit_id,
+        COALESCE(
+            (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'mmx_request_uuid') ,
+            (SELECT JSON_KEYS(PARSE_JSON(value))[SAFE_OFFSET(0)] FROM UNNEST(beacon.properties.key_value) WHERE key = 'mmx_request_uuid_map')) mmxRequestUUID
+    FROM `etsy-visit-pipe-prod.canonical.visit_id_beacons`
+    WHERE DATE(_PARTITIONTIME) = sampleDate
+    AND beacon.event_name IN ('search', 'market')
+),
+lfb AS (
+    SELECT
+        key listingId,
+        verticaListings_taxonomyPath listingTaxo,
+        COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')) listingTitle,
+        verticaListings_description listingDescription,
+        verticaListings_tags listingTags,
+        (SELECT STRING_AGG(element, ';') FROM UNNEST(kbAttributesV2_sellerAttributesV2.list)) AS listingAttributes,
+        verticaSellerBasics_shopName as listingShopName,
+    FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
+),
+qis AS (
+    SELECT DISTINCT
+        query,
+        CASE
+          WHEN prediction = 0 THEN 'broad'
+          WHEN prediction = 1 THEN 'direct_unspecified'
+          WHEN prediction = 2 THEN 'direct_specified'
+        END AS qisClass
+    FROM `etsy-search-ml-prod.mission_understanding.qis_scores_v2`
+),
+qlm AS (
+    SELECT query_raw query, _date date, bin
+    FROM `etsy-batchjobs-prod.snapshots.query_level_metrics_raw`
+    WHERE _date BETWEEN DATE_SUB(sampleDate, INTERVAL 1 DAY) AND DATE_ADD(sampleDate, INTERVAL 1 DAY)
+),
+qfb AS (
+  SELECT key query, queryTaxoClassification_taxoPath queryTaxo
+  FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+),
+queryHydratedRequests AS (
+    SELECT
+        etsyUUID,
+        mmxRequestUUID,
+        guid,
+        visit_id,
+        query,
+        REGEXP_CONTAINS(query, '(\?i)\\bgift|\\bfor (\\bhim|\\bher|\\bmom|\\bdad|\\bmother|\\bfather|\\bdaughter|\\bson|\\bwife|\\bhusband|\\bpartner|\\baunt|\\buncle|\\bniece|\\bnephew|\\bfiance|\\bcousin|\\bin law|\\bboyfriend|\\bgirlfriend|\\bgrand|\\bfriend|\\bbest friend)') isGift,
+        IFNULL(qlm.bin, 'novel') queryBin,
+        IFNULL(qis.qisClass, 'missing') qisClass,
+        queryTaxo,
+        requestSource platform,
+        userLanguage,
+        userCountry,
+        numResults,
+        matureFilter,
+        searchPlacement,
+        reqsSampleWithProlist.date,
+        ARRAY_CONCAT(
+            ARRAY(
+                SELECT STRUCT(
+                    "organic" AS resultType,
+                    listing_id AS listingId,
+                    idx AS rankingRank,
+                    CAST(NULL AS INT64) AS retrievalRank,
+                    CAST(NULL AS STRING) AS retrievalSrc,
+                    CAST(NULL AS INT64) AS bordaRank,
+                    1 AS pageNum)
+                FROM UNNEST(candidateSources) cs,
+                    UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+                WHERE cs.stage = "MO_LASTPASS"
+                AND idx < listingPerPage
+            ),
+            ARRAY(
+                SELECT STRUCT(
+                    "organic" AS resultType,
+                    listing_id AS listingId,
+                    idx AS rankingRank,
+                    CAST(NULL AS INT64) AS retrievalRank,
+                    CAST(NULL AS STRING) AS retrievalSrc,
+                    CAST(NULL AS INT64) AS bordaRank,
+                    2 AS pageNum)
+                FROM UNNEST(candidateSources) cs,
+                    UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+                WHERE cs.stage = "MO_LASTPASS"
+                AND idx >= listingPerPage AND idx < listingPerPage * 2
+                ORDER BY RAND()
+                LIMIT 10
+            ),
+            ARRAY(
+                SELECT STRUCT(
+                    "organic" AS resultType,
+                    listing_id AS listingId,
+                    idx AS rankingRank,
+                    CAST(NULL AS INT64) AS retrievalRank,
+                    CAST(NULL AS STRING) AS retrievalSrc,
+                    CAST(NULL AS INT64) AS bordaRank,
+                    3 AS pageNum)
+                FROM UNNEST(candidateSources) cs,
+                    UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+                WHERE cs.stage = "MO_LASTPASS"
+                AND idx >= listingPerPage * 2 AND idx < listingPerPage * 3
+                ORDER BY RAND()
+                LIMIT 10
+            ),
+            ARRAY(
+                SELECT STRUCT(
+                    "organic" AS resultType,
+                    listing_id AS listingId,
+                    CAST(NULL AS INT64) AS rankingRank,
+                    idx AS retrievalRank,
+                    cs.source AS retrievalSrc,
+                    CAST(NULL AS INT64) AS bordaRank,
+                    CAST(NULL AS INT64) AS pageNum)
+                FROM UNNEST(candidateSources) cs,
+                    UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+                WHERE cs.stage = "POST_FILTER"
+                ORDER BY RAND()
+                LIMIT 10
+            ),
+            ARRAY(
+                SELECT STRUCT(
+                    "organic" AS resultType,
+                    listing_id AS listingId,
+                    CAST(NULL AS INT64) AS rankingRank,
+                    CAST(NULL AS INT64) AS retrievalRank,
+                    CAST(NULL AS STRING) AS retrievalSrc,
+                    idx AS bordaRank,
+                    CAST(NULL AS INT64) AS pageNum)
+                FROM UNNEST(candidateSources) cs,
+                    UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+                WHERE cs.stage = IF(nPostSemrelSources>0, "POST_SEM_REL_FILTER", "POST_BORDA")
+                ORDER BY RAND()
+                LIMIT 10
+            ),
+            -- Prolist
+            ARRAY(
+                SELECT STRUCT(
+                  "prolist" AS resultType,
+                  listing_id AS listingId,
+                  idx AS rankingRank,
+                  CAST(NULL AS INT64) AS retrievalRank,
+                  CAST(NULL AS STRING) AS retrievalSrc,
+                  CAST(NULL AS INT64) AS bordaRank,
+                  1 AS pageNum
+                )
+                FROM UNNEST(prolist_listingIds) AS listing_id WITH OFFSET idx
+                WHERE idx < adsPerPage
+            )
+        ) listingSamples
+    FROM reqsSampleWithProlist
+    LEFT JOIN qlm USING (query, date)
+    LEFT JOIN qis USING (query)
+    LEFT JOIN qfb USING (query)
+    LEFT JOIN beacon USING (mmxRequestUUID)
+),
+flatQueryHydratedRequests AS (
+    SELECT * EXCEPT (listingSamples)
+    FROM queryHydratedRequests,
+        UNNEST(queryHydratedRequests.listingSamples) listingSample
+    WHERE guid IS NOT NULL
+        OR searchPlacement = 'wmg' -- market events are all missing guid
+),
+outputTable AS (
+    SELECT
+        flatQueryHydratedRequests.*,
+        lfb.listingTitle,
+        lfb.listingDescription,
+        lfb.listingTaxo,
+        lfb.listingTags,
+        lfb.listingAttributes,
+        lfb.listingShopName,
+    FROM flatQueryHydratedRequests
+    LEFT JOIN lfb USING(listingId)
+    WHERE listingTitle IS NOT NULL
+)
+SELECT
+    GENERATE_UUID() AS tableUUID,
+    etsyUUID,
+    mmxRequestUUId,
+    guid,
+    visit_id,
+    query,
+    isGift,
+    queryBin,
+    qisClass,
+    queryTaxo,
+    platform,
+    userLanguage,
+    numResults,
+    matureFilter,
+    date,
+    listingid,
+    rankingRank,
+    retrievalRank,
+    retrievalSrc,
+    bordaRank,
+    pageNum,
+    listingTitle,
+    listingDescription,
+    listingTaxo,
+    listingTags,
+    userCountry,
+    listingAttributes,
+    listingShopName,
+    resultType,
+    searchPlacement
+FROM outputTable
+
+
+
+----  Visit ID Beacon  ----
 select 
   (select value from unnest(beacon.properties.key_value) where key = 'query') as query,
   (select value from unnest(beacon.properties.key_value) where key = 'translated_query') as translated_query,
+  (select value from unnest(beacon.properties.key_value) where key = 'mmx_request_uuid') as mmx_request_uuid,
 from `etsy-visit-pipe-prod.canonical.visit_id_beacons`
 where _PARTITIONTIME BETWEEN TIMESTAMP('2024-02-08') AND TIMESTAMP('2024-02-09')
 and beacon.event_name = "search"
 and (select value from unnest(beacon.properties.key_value) where key = 'translated_query') is null
 
 
+
+----  GCS Parquet to BQ  ----
 CREATE OR REPLACE EXTERNAL TABLE `etsy-sr-etl-prod.yzhang.query_missing_fl_raw`
 OPTIONS (
     format = 'parquet',
@@ -98,10 +403,38 @@ OPTIONS (
 )
 
 
--- filter mature listings
+
+----  Filter mature listings  ----
 -- https://etsy.slack.com/archives/C02BEL5DXNJ/p1713555841586769?thread_ts=1713552696.855829&cid=C02BEL5DXNJ
 select * from `etsy-data-warehouse-prod.etsy_aux.compliance_blocklist_terms`
 where lower(query) LIKE concat('%', term.term, '%') 
 and term.context = 'mature content'
 
 WHERE term.blocklist_term_id is null
+
+
+----  Semrel teacher prediction  ----
+SELECT
+  mmxRequestUUID,
+  guid,
+  visit_id,
+  r.resultType,
+  query,
+  listingId,
+  r.date,
+  platform,
+  userLanguage,
+  userCountry,
+  CASE 
+    WHEN classId = 1 THEN 'Irrelevant' 
+    WHEN classId = 2 THEN 'Partial'
+    WHEN classId = 3 THEN 'Relevant' 
+  END AS semrelClass,
+  rankingRank
+FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests` r
+JOIN `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics` USING (tableUUID)
+WHERE query = "cat"
+AND modelName = "v3-finetuned-llama-8b" 
+-- AND modelName = "v2-deberta-v3-large-tad"
+AND pageNum = 1
+order by r.date, visit_id, guid, rankingRank
