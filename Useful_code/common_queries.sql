@@ -18,6 +18,19 @@ FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
 
 
 ----  RPC log  ----
+select 
+    response.mmxRequestUUID,
+    request.query,
+    cs.listingIds,
+    cs.SemrelScores
+FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
+    unnest(OrganicRequestMetadata.candidateSources) as cs
+WHERE request.options.searchPlacement in ("wsg", "wmg", "allsr")
+AND DATE(queryTime) = DATE('2025-07-20')
+AND request.options.csrOrganic = TRUE
+limit 20
+
+
 with rpc_data as (
     SELECT
         response.mmxRequestUUID,
