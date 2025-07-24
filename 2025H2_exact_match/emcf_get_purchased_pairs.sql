@@ -84,6 +84,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_20
             IFNULL(verticaSellerBasics_shopName, "") listingShopName,
             IFNULL(listingLlmFeatures_llmHeroImageDescription, "") listingHeroImageCaption,
             IFNULL((SELECT STRING_AGG(element, ', ') FROM UNNEST(descNgrams_ngrams.list)), "") listingDescNgrams,
+            IFNULL(verticaListings_taxonomyPath, "") listingTaxo,
+            IFNULL(verticaListings_tags, "") listingTags 
         from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2025-07-20`
     )
     select distinct *
@@ -102,7 +104,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_20
 -- ARRAY_TO_STRING(IFNULL(candidateInfo.docInfo.listingInfo.descNgrams.ngrams, [""]), ', ') listingDescNgrams,
 
 with tmp as (
-    select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
+    select distinct 
+        query, listingId, 
+        listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams, 
+        listingTaxo, listingTags
     from `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20`
 )
 select count(*) from tmp
