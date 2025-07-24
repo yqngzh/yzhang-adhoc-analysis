@@ -119,13 +119,24 @@ order by n_purchase desc
 -- relevant	120288 (73%)
 
 create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_tight_2025_07_20` as (
-    with 
+    with qlm AS (
+      select distinct query_raw as query, bin as queryBin 
+      from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
+    ),
+    qee as (
+        select distinct input.query, "has_entity" as entities
+        from `etsy-search-ml-prod.mission_understanding.query_entity_extraction_v2_canonical_values`
+    )
     select 
         ori.*,
+        queryBin,
+        entities,
         semrelLabel
     from `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20` ori
     left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcf_purchase_tight_2025_07_20`
     using (query, listingId)
+    left join qlm using (query)
+    left join qee using(query)
 )
 
 
