@@ -84,13 +84,8 @@ with tmp as (
     from `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_2025_07_14`
 )
 select count(*) from tmp
-
-select query, listingId, count(*) as n_purchase 
-from `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_2025_07_14`
-group by query, listingId
-order by n_purchase desc
--- 2025-07-20: 165678 distinct query listing pairs, from 179978 requests
-
+-- 2025-07-14: 217856 distinct query listing pairs, from 233222 requests
+-- 2025-07-15: 219447 distinct query listing pairs, from 234586 requests
 
 create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_loose_2025_07_14` as (
     with qlm AS (

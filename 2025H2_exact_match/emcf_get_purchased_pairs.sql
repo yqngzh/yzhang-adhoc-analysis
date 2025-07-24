@@ -111,17 +111,10 @@ with tmp as (
     from `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20`
 )
 select count(*) from tmp
-
-select query, listingId, count(*) as n_purchase 
-from `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20`
-group by query, listingId
-order by n_purchase desc
 -- 2025-07-20: 165678 distinct query listing pairs, from 179978 requests
+-- 2025-07-21: 172960 distinct query listing pairs, from 186728 requests
 
 -- run through V3 teacher to get `semrel_adhoc_yzhang_emcf_purchase_tight_2025_07_20`
--- not_relevant	896 (0.5%)
--- partial	44494
--- relevant	120288 (73%)
 
 create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_tight_2025_07_20` as (
     with qlm AS (
