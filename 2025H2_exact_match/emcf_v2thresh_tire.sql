@@ -111,3 +111,27 @@ select count(*) from tmp
 -- 4699730 qlps
 
 
+create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthTMO43gd0mXcfrP6` as (
+  select ori.*, semrelLabel
+  from `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0mXcfrP6` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_14jthTMO43gd0mXcfrP6`
+  using (query, listingId)
+)
+
+
+-- page 1
+with page1 as (
+  select * 
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthTMO43gd0mXcfrP6`
+  where pageNum = 1
+),
+irrelevance as (
+  select 
+    variantName, mmxRequestUUID, 
+    sum(IF(semrelLabel = "not_relevant", 1, 0)) / count(*) as pct_irrelevance
+  from page1
+  group by variantName, mmxRequestUUID
+)
+select variantName, avg(pct_irrelevance)
+from irrelevance
+group by variantName
