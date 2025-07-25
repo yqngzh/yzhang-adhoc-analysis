@@ -120,18 +120,44 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthT
 
 
 -- page 1
-with page1 as (
-  select * 
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthTMO43gd0mXcfrP6`
-  where pageNum = 1
-),
-irrelevance as (
+with page1_irrelevance as (
   select 
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) / count(*) as pct_irrelevance
-  from page1
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthTMO43gd0mXcfrP6`
+  where pageNum = 1
   group by variantName, mmxRequestUUID
 )
 select variantName, avg(pct_irrelevance)
-from irrelevance
+from page1_irrelevance
 group by variantName
+
+
+-- candidate size change
+with requests as (
+  select
+    response.mmxRequestUUID,
+    COALESCE((SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en'), NULLIF(request.query, '')) query,
+    OrganicRequestMetadata.candidateSources,
+    (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
+  FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
+  WHERE request.options.cacheBucketId LIKE "replay-test/%/14jthTMO43gd0mXcfrP6/%|control|live|web"
+  and DATE(queryTime) = "2025-07-25"
+  and EXISTS (
+    SELECT 1 
+    FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
+    WHERE candidateSource.stage is not null
+  )
+),
+results as (
+  select 
+    mmxRequestUUID,
+    query,
+    ARRAY_LENGTH(ARRAY(
+        SELECT STRUCT( listing_id AS listingId, idx AS bordaRank )
+        FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+        WHERE cs.stage = IF(nPostSemrelSources>0, "POST_SEM_REL_FILTER", "POST_BORDA")
+    )) n_candidates
+  from requests
+)
+select max(n_candidates), avg(n_candidates) from results
