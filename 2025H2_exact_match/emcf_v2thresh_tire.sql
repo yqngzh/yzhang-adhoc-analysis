@@ -1,5 +1,5 @@
--- what to change: tire ID (3), query date (2), variant
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0mXcfrP6` as (
+-- what to change: tire ID, query date
+create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_EugdVgLgtItA6eaKXIRQ` as (
   with control_requests as (
     select
       response.mmxRequestUUID,
@@ -7,8 +7,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0m
       OrganicRequestMetadata.candidateSources,
       (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
     FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-    WHERE request.options.cacheBucketId LIKE "replay-test/%/14jthTMO43gd0mXcfrP6/%|control|live|web"
-    and DATE(queryTime) = "2025-07-25"
+    WHERE request.options.cacheBucketId LIKE "replay-test/%/EugdVgLgtItA6eaKXIRQ/%|control|live|web"
+    and DATE(queryTime) = "2025-07-28"
     and EXISTS (
       SELECT 1 
       FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
@@ -47,8 +47,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0m
       OrganicRequestMetadata.candidateSources,
       (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
     FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-    WHERE request.options.cacheBucketId LIKE "replay-test/%/14jthTMO43gd0mXcfrP6/%|test1|live|web"
-    and DATE(queryTime) = "2025-07-25"
+    WHERE request.options.cacheBucketId LIKE "replay-test/%/EugdVgLgtItA6eaKXIRQ/%|test1|live|web"
+    and DATE(queryTime) = "2025-07-28"
     and EXISTS (
       SELECT 1 
       FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
@@ -105,31 +105,94 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0m
 
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0mXcfrP6`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_EugdVgLgtItA6eaKXIRQ`
 )
 select count(*) from tmp
--- 4699730 qlps
+-- 4767216 qlps
 
-
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthTMO43gd0mXcfrP6` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_EugdVgLgtItA6eaKXIRQ` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_em_tire_14jthTMO43gd0mXcfrP6` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_14jthTMO43gd0mXcfrP6`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_EugdVgLgtItA6eaKXIRQ` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_EugdVgLgtItA6eaKXIRQ`
   using (query, listingId)
 )
 
 
--- page 1
-with page1_irrelevance as (
-  select 
-    variantName, mmxRequestUUID, 
-    sum(IF(semrelLabel = "not_relevant", 1, 0)) / count(*) as pct_irrelevance
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_14jthTMO43gd0mXcfrP6`
+-- @48 or @24
+with count_listings as (
+  select variantName, mmxRequestUUID, count(*) as cnt
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_EugdVgLgtItA6eaKXIRQ`
   where pageNum = 1
   group by variantName, mmxRequestUUID
+),
+valid_requests as (
+  select variantName, mmxRequestUUID
+  from count_listings
+  where cnt >= 28
+),
+page1_irrelevance as (
+  select 
+    variantName, mmxRequestUUID, 
+    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
+    count(*) as n_total
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_EugdVgLgtItA6eaKXIRQ`
+  where mmxRequestUUID is not null
+  and semrelLabel is not null
+  and pageNum = 1
+  and rank < 48
+  group by variantName, mmxRequestUUID
+),
+valid_page1_irrelevance as (
+  select * 
+  from page1_irrelevance
+  join valid_requests
+  using(variantName, mmxRequestUUID)
+),
+valid_page1_pct as (
+  select variantName, mmxRequestUUID, n_irrelevant / n_total as pct_irrelevance
+  from valid_page1_irrelevance
 )
-select variantName, avg(pct_irrelevance)
-from page1_irrelevance
+select variantName, avg(pct_irrelevance), count(*) as n_requests
+from valid_page1_pct
+group by variantName
+
+
+
+-- post filtering
+with count_listings as (
+  select variantName, mmxRequestUUID, count(*) as cnt
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_EugdVgLgtItA6eaKXIRQ`
+  where pageNum = -1
+  group by variantName, mmxRequestUUID
+),
+valid_requests as (
+  select variantName, mmxRequestUUID
+  from count_listings
+  where cnt = 250
+),
+blend_irrelevance as (
+  select 
+    variantName, mmxRequestUUID, 
+    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
+    count(*) as n_total
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_EugdVgLgtItA6eaKXIRQ`
+  where mmxRequestUUID is not null
+  and semrelLabel is not null
+  and pageNum = -1
+  group by variantName, mmxRequestUUID
+),
+valid_blend_irrelevance as (
+  select * 
+  from blend_irrelevance
+  join valid_requests
+  using(variantName, mmxRequestUUID)
+),
+valid_blend_pct as (
+  select variantName, mmxRequestUUID, n_irrelevant / n_total as pct_irrelevance
+  from valid_blend_irrelevance
+)
+select variantName, avg(pct_irrelevance), count(*) as n_requests
+from valid_blend_pct
 group by variantName
 
 
@@ -141,8 +204,8 @@ with requests as (
     OrganicRequestMetadata.candidateSources,
     (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
   FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-  WHERE request.options.cacheBucketId LIKE "replay-test/%/14jthTMO43gd0mXcfrP6/%|control|live|web"
-  and DATE(queryTime) = "2025-07-25"
+  WHERE request.options.cacheBucketId LIKE "replay-test/%/EugdVgLgtItA6eaKXIRQ/%|control|live|web"
+  and DATE(queryTime) = "2025-07-28"
   and EXISTS (
     SELECT 1 
     FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
@@ -160,4 +223,10 @@ results as (
     )) n_candidates
   from requests
 )
-select max(n_candidates), avg(n_candidates) from results
+SELECT
+  percentiles[OFFSET(50)] AS p50_value,
+  percentiles[OFFSET(75)] AS p75_value
+FROM (
+  SELECT APPROX_QUANTILES(n_candidates, 100) AS percentiles
+  FROM results
+)
