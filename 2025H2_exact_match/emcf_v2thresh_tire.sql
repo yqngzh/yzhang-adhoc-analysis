@@ -203,7 +203,7 @@ with requests as (
     OrganicRequestMetadata.candidateSources,
     (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
   FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-  WHERE request.options.cacheBucketId LIKE "replay-test/%/eWrU2F6GIkmxzpKxUhDE/%|control|live|web"
+  WHERE request.options.cacheBucketId LIKE "replay-test/%/eWrU2F6GIkmxzpKxUhDE/%|test1|live|web"
   and DATE(queryTime) = "2025-07-29"
   and EXISTS (
     SELECT 1 
@@ -213,7 +213,6 @@ with requests as (
 ),
 results as (
   select 
-    "control" as variantName,
     mmxRequestUUID, query,
     ARRAY(
         SELECT STRUCT( listing_id AS listingId, idx AS rank, 1 AS pageNum)
@@ -239,13 +238,12 @@ full_results as (
   left join lfb using (listingId)
 ),
 agg_first as (
-  select variantName, mmxRequestUUID, avg(price) as avg_price
+  select mmxRequestUUID, avg(price) as avg_price
   from full_results
-  group by variantName, mmxRequestUUID
+  group by  mmxRequestUUID
 )
-select variantName, avg(avg_price)
+select avg(avg_price)
 from agg_first
-group by variantName
 
 
 
