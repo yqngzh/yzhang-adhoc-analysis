@@ -1,5 +1,5 @@
 -- what to change: tire ID, query date
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa87iTFI` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_8sffBs5zGuhhLfXcaLYK` as (
   with control_requests as (
     select
       response.mmxRequestUUID,
@@ -7,8 +7,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa
       OrganicRequestMetadata.candidateSources,
       (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
     FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-    WHERE request.options.cacheBucketId LIKE "replay-test/%/pMylcyF0BlLvsa87iTFI/%|control|live|web"
-    and DATE(queryTime) = "2025-07-29"
+    WHERE request.options.cacheBucketId LIKE "replay-test/%/8sffBs5zGuhhLfXcaLYK/%|control|live|web"
+    and DATE(queryTime) = "2025-07-31"
     and EXISTS (
       SELECT 1 
       FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
@@ -47,8 +47,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa
       OrganicRequestMetadata.candidateSources,
       (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
     FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-    WHERE request.options.cacheBucketId LIKE "replay-test/%/pMylcyF0BlLvsa87iTFI/%|test1|live|web"
-    and DATE(queryTime) = "2025-07-29"
+    WHERE request.options.cacheBucketId LIKE "replay-test/%/8sffBs5zGuhhLfXcaLYK/%|test1|live|web"
+    and DATE(queryTime) = "2025-07-31"
     and EXISTS (
       SELECT 1 
       FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
@@ -89,7 +89,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa
     select 
       key as listingId,
       IFNULL(
-          COALESCE(NULLIF(verticaListings_title, ""), verticaListingTranslations_primaryLanguageTitle),
+          COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')) listingTitle,,
           ""
       ) listingTitle,
       IFNULL(verticaSellerBasics_shopName, "") listingShopName,
@@ -105,15 +105,15 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa
 
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa87iTFI`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_8sffBs5zGuhhLfXcaLYK`
 )
 select count(*) from tmp
 
 
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_pMylcyF0BlLvsa87iTFI` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_8sffBs5zGuhhLfXcaLYK` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_em_tire_pMylcyF0BlLvsa87iTFI` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_pMylcyF0BlLvsa87iTFI`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_8sffBs5zGuhhLfXcaLYK` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_8sffBs5zGuhhLfXcaLYK`
   using (query, listingId)
 )
 
@@ -121,7 +121,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_results_pMylcy
 -- @48 or @24
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_pMylcyF0BlLvsa87iTFI`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_8sffBs5zGuhhLfXcaLYK`
   where pageNum = 1
   group by variantName, mmxRequestUUID
 ),
@@ -135,7 +135,7 @@ page1_irrelevance as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_pMylcyF0BlLvsa87iTFI`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_8sffBs5zGuhhLfXcaLYK`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and pageNum = 1
@@ -157,11 +157,10 @@ from valid_page1_pct
 group by variantName
 
 
-
 -- post filtering
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_pMylcyF0BlLvsa87iTFI`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_8sffBs5zGuhhLfXcaLYK`
   where pageNum = -1
   group by variantName, mmxRequestUUID
 ),
@@ -175,7 +174,7 @@ blend_irrelevance as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_pMylcyF0BlLvsa87iTFI`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_8sffBs5zGuhhLfXcaLYK`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and pageNum = -1
@@ -197,6 +196,7 @@ group by variantName
 
 
 -- candidate size change
+-- deprecated, using retrieval tools
 with requests as (
   select
     response.mmxRequestUUID,
@@ -204,7 +204,7 @@ with requests as (
     OrganicRequestMetadata.candidateSources,
     (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
   FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
-  WHERE request.options.cacheBucketId LIKE "replay-test/%/pMylcyF0BlLvsa87iTFI/%|control|live|web"
+  WHERE request.options.cacheBucketId LIKE "replay-test/%/8sffBs5zGuhhLfXcaLYK/%|control|live|web"
   and DATE(queryTime) = "2025-07-29"
   and EXISTS (
     SELECT 1 
@@ -230,3 +230,45 @@ FROM (
   SELECT APPROX_QUANTILES(n_candidates, 100) AS percentiles
   FROM results
 )
+
+
+-- which query irrelevance changed
+with count_listings as (
+  select variantName, mmxRequestUUID, query, count(*) as cnt
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_fSPVIkRBlhdl0hce9EIG`
+  where pageNum = 1
+  group by variantName, mmxRequestUUID, query
+),
+valid_requests as (
+  select variantName, mmxRequestUUID, query
+  from count_listings
+  where cnt >= 28
+),
+page1_irrelevance as (
+  select 
+    variantName, mmxRequestUUID, query,
+    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
+    count(*) as n_total
+  from `etsy-search-ml-dev.search.yzhang_em_tire_results_fSPVIkRBlhdl0hce9EIG`
+  where mmxRequestUUID is not null
+  and semrelLabel is not null
+  and query != ""
+  and pageNum = 1
+  and rank < 48
+  group by variantName, mmxRequestUUID, query
+),
+valid_page1_irrelevance as (
+  select * 
+  from page1_irrelevance
+  join valid_requests
+  using(variantName, mmxRequestUUID, query)
+),
+valid_page1_pct as (
+  select variantName, mmxRequestUUID, query, n_irrelevant / n_total as pct_irrelevance
+  from valid_page1_irrelevance
+)
+select variantName, query, avg(pct_irrelevance), count(*) as n_requests
+from valid_page1_pct
+where pct_irrelevance != 0
+group by variantName, query
+order by query, variantName
