@@ -128,7 +128,7 @@ with count_listings as (
 valid_requests as (
   select variantName, mmxRequestUUID
   from count_listings
-  where cnt >= 28
+  where cnt = 48
 ),
 page1_irrelevance as (
   select 
@@ -218,7 +218,8 @@ results as (
         SELECT STRUCT( listing_id AS listingId, idx AS rank, 1 AS pageNum)
         FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
         WHERE cs.stage = "MO_LASTPASS"
-        AND idx < 48
+        -- AND idx < 48
+        AND idx < 10
     ) listingSamples
   from requests
 ),
@@ -244,6 +245,8 @@ agg_first as (
 )
 select avg(avg_price)
 from agg_first
+
+
 
 
 
@@ -282,45 +285,3 @@ FROM (
   SELECT APPROX_QUANTILES(n_candidates, 100) AS percentiles
   FROM results
 )
-
-
--- which query irrelevance changed
-with count_listings as (
-  select variantName, mmxRequestUUID, query, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_fSPVIkRBlhdl0hce9EIG`
-  where pageNum = 1
-  group by variantName, mmxRequestUUID, query
-),
-valid_requests as (
-  select variantName, mmxRequestUUID, query
-  from count_listings
-  where cnt >= 28
-),
-page1_irrelevance as (
-  select 
-    variantName, mmxRequestUUID, query,
-    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
-    count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_results_fSPVIkRBlhdl0hce9EIG`
-  where mmxRequestUUID is not null
-  and semrelLabel is not null
-  and query != ""
-  and pageNum = 1
-  and rank < 48
-  group by variantName, mmxRequestUUID, query
-),
-valid_page1_irrelevance as (
-  select * 
-  from page1_irrelevance
-  join valid_requests
-  using(variantName, mmxRequestUUID, query)
-),
-valid_page1_pct as (
-  select variantName, mmxRequestUUID, query, n_irrelevant / n_total as pct_irrelevance
-  from valid_page1_irrelevance
-)
-select variantName, query, avg(pct_irrelevance), count(*) as n_requests
-from valid_page1_pct
-where pct_irrelevance != 0
-group by variantName, query
-order by query, variantName
