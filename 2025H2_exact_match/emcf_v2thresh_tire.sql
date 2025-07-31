@@ -195,6 +195,60 @@ from valid_blend_pct
 group by variantName
 
 
+-- price diff
+with requests as (
+  select
+    response.mmxRequestUUID,
+    COALESCE((SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en'), NULLIF(request.query, '')) query,
+    OrganicRequestMetadata.candidateSources,
+    (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
+  FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*`
+  WHERE request.options.cacheBucketId LIKE "replay-test/%/eWrU2F6GIkmxzpKxUhDE/%|control|live|web"
+  and DATE(queryTime) = "2025-07-29"
+  and EXISTS (
+    SELECT 1 
+    FROM UNNEST(OrganicRequestMetadata.candidateSources) AS candidateSource
+    WHERE candidateSource.stage is not null
+  )
+),
+results as (
+  select 
+    "control" as variantName,
+    mmxRequestUUID, query,
+    ARRAY(
+        SELECT STRUCT( listing_id AS listingId, idx AS rank, 1 AS pageNum)
+        FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
+        WHERE cs.stage = "MO_LASTPASS"
+        AND idx < 48
+    ) listingSamples
+  from requests
+),
+results_flat as (
+  SELECT * EXCEPT (listingSamples)
+  FROM results, UNNEST(results.listingSamples) listingSample
+),
+lfb as (
+  SELECT 
+    key as listingId,
+    activeListingBasics_priceUsd as price
+  FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
+),
+full_results as (
+  SELECT r.*, price
+  from results_flat r
+  left join lfb using (listingId)
+),
+agg_first as (
+  select variantName, mmxRequestUUID, avg(price) as avg_price
+  from full_results
+  group by variantName, mmxRequestUUID
+)
+select variantName, avg(avg_price)
+from agg_first
+group by variantName
+
+
+
 -- candidate size change
 -- deprecated, using retrieval tools
 with requests as (
