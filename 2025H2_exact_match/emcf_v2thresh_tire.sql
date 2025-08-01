@@ -89,7 +89,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_WuieSxDS3qP4lN
     select 
       key as listingId,
       IFNULL(
-          COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')) listingTitle,,
+          COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')),
           ""
       ) listingTitle,
       IFNULL(verticaSellerBasics_shopName, "") listingShopName,
