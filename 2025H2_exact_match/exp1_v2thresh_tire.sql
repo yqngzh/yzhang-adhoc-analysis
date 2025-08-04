@@ -230,7 +230,8 @@ results_flat as (
 lfb as (
   SELECT 
     key as listingId,
-    activeListingBasics_priceUsd as price
+    -- activeListingBasics_priceUsd as price
+    (select value from unnest(listingWeb_price.key_value) where key = 'US') price
   FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
 ),
 full_results as (

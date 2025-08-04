@@ -150,3 +150,35 @@ valid_page1_pct as (
 select variantName, avg(pct_irrelevance), count(*) as n_requests
 from valid_page1_pct
 group by variantName
+
+
+
+
+---- price change
+with semrel_results as (
+  SELECT variantName, guid, query, listingId
+  FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` s
+  left JOIN `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment` m
+  USING (tableUUID, date)
+  WHERE configFlag = "ranking/isearch.exact_match_unify_with_v2_loc"
+  AND bordaRank is not null
+),
+lfb as (
+  SELECT 
+    key as listingId,
+    activeListingBasics_priceUsd as price
+  FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
+),
+merged as (
+  select variantName, guid, query, listingId, price
+  from semrel_results
+  left join lfb using (listingId)
+),
+agg_results as (
+  select variantName, guid, avg(price) as avg_price
+  from merged 
+  group by variantName, guid
+)
+select variantName, avg(avg_price) 
+from agg_results
+group by variantName
