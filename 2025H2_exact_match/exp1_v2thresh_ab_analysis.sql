@@ -182,3 +182,117 @@ agg_results as (
 select variantName, avg(avg_price) 
 from agg_results
 group by variantName
+
+
+
+
+---- candidate set change
+declare run_date date default "2025-07-31";
+
+with semrel_results as (
+    SELECT distinct variantName, mmxRequestUUID
+    FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` s
+    WHERE configFlag = "ranking/isearch.exact_match_unify_with_v2_loc"
+    and date = run_date
+),
+rpc_data as (
+  SELECT
+    response.mmxRequestUUID,
+    (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources,
+    OrganicRequestMetadata.candidateSources
+  FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+  WHERE request.OPTIONS.cacheBucketId LIKE "live%" 
+  AND request.options.userCountry != 'US' -- filtering for domestic only
+  AND request.options.csrOrganic 
+  AND request.options.searchPlacement IN ('wsg', 'allsr', 'wmg') -- search, market
+  AND request.query <> ''
+  AND request.offset = 0
+  AND DATE(queryTime) = run_date
+  AND request.options.interleavingConfig IS NULL
+  AND NOT EXISTS (
+    SELECT * FROM UNNEST(request.context)
+    WHERE key = "req_source" AND value = "bot"  -- remove bot requests
+  )
+),
+blending as (
+  SELECT distinct 
+    mmxRequestUUID,
+    array_length(cs.listingIds) n_candidates
+  FROM rpc_data, UNNEST(candidateSources) cs
+  WHERE cs.stage = IF(nPostSemrelSources>0, "POST_SEM_REL_FILTER", "POST_BORDA")
+),
+semrel_rpc as (
+  select 
+    variantName,
+    mmxRequestUUID,
+    n_candidates
+  from semrel_results
+  join blending using (mmxRequestUUID)
+),
+select variantName, avg(n_candidates)
+from semrel_rpc
+group by variantName
+
+
+DECLARE start_date date DEFAULT '2025-07-31';
+DECLARE end_date date DEFAULT '2025-08-02';
+DECLARE sample_rate FLOAT64 DEFAULT 0.01; -- 0.01 will sample at 1% i.e. 1/100 rows (queries)
+DECLARE my_experiment STRING default 'ranking/isearch.exact_match_unify_with_v2_loc';
+WITH rpc_data AS (
+  SELECT
+    NULLIF(request.query, '') query,
+    (SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en') query_en, -- machine translated query if exists
+    request.options.userLanguage,
+    request.options.userCountry,
+    request.options.browserId,
+    CASE WHEN request.options.userCountry = 'US' THEN 'Domestic' ELSE 'International' END AS region,
+    request.options.searchPlacement,
+    response.count numResults,
+    queryTime,
+    DATE(queryTime) date,
+    response.mmxRequestUUID mmx_request_uuid,
+    (SELECT
+        CASE
+          WHEN value = 'web' THEN 'desktop'
+          WHEN value = 'web_mobile' THEN 'mweb'
+          WHEN value IN ('etsy_app_android', 'etsy_app_ios', 'etsy_app_other') THEN 'boe'
+          ELSE value
+        END
+      FROM UNNEST(request.context) WHERE key = "req_source" ) platform,
+    (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources,
+    OrganicRequestMetadata.candidateSources
+  FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+  WHERE request.OPTIONS.cacheBucketId LIKE "live%" 
+    -- AND request.options.userCountry = 'US' -- filtering for domestic only
+    AND request.options.csrOrganic 
+    AND request.options.searchPlacement IN ('wsg', 'allsr', 'wmg') -- search, market
+    AND request.query <> ''
+    AND request.offset = 0
+    AND DATE(queryTime) >= start_date AND DATE(queryTime) <= end_date 
+    AND request.options.interleavingConfig IS NULL
+    AND NOT EXISTS (
+      SELECT * FROM UNNEST(request.context)
+      WHERE key = "req_source" AND value = "bot"  -- remove bot requests
+    )
+    AND ABS(MOD(FARM_FINGERPRINT(response.mmxRequestUUID), 10000)) <= sample_rate * 10000 -- abs(mod(hash)) will return 0-9999 (10K) and only return 0.01*10k (100) out of 10K rows
+),
+rpc_results as (
+  SELECT rpc_data.*, exp_data.variant_id FROM rpc_data 
+  JOIN (
+    SELECT bucketing_id, variant_id, bucketing_ts
+    FROM `etsy-data-warehouse-prod.catapult_unified.bucketing_period`
+    WHERE _date = end_date
+    AND experiment_id = my_experiment
+  ) exp_data ON rpc_data.browserId = exp_data.bucketing_id AND rpc_data.queryTime >= exp_data.bucketing_ts
+),
+blending AS (
+  SELECT 
+    variant_id,
+    mmx_request_uuid,
+    array_length(cs.listingIds) as n_candidates
+  FROM rpc_results, UNNEST(candidateSources) cs
+  WHERE cs.stage = IF(nPostSemrelSources>0, "POST_SEM_REL_FILTER", "POST_BORDA")
+)
+select variant_id, avg(n_candidates)
+from blending 
+group by variant_id

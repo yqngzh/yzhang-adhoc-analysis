@@ -24,7 +24,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_WuieSxDS3qP4lN
           SELECT STRUCT( listing_id AS listingId, idx AS rank, 1 AS pageNum)
           FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
           WHERE cs.stage = "MO_LASTPASS"
-          AND idx < 48
+          AND idx < 144
         ),
         ARRAY(
           SELECT STRUCT( listing_id AS listingId, idx AS rank, -1 AS pageNum)
@@ -64,7 +64,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_WuieSxDS3qP4lN
           SELECT STRUCT( listing_id AS listingId, idx AS rank, 1 AS pageNum)
           FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
           WHERE cs.stage = "MO_LASTPASS"
-          AND idx < 48
+          AND idx < 144
         ),
         ARRAY(
           SELECT STRUCT( listing_id AS listingId, idx AS rank, -1 AS pageNum)
