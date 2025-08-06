@@ -1,16 +1,4 @@
-select 
-    response.mmxRequestUUID,
-    request.query,
-    cs.listingIds,
-    cs.SemrelScores
-FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
-    unnest(OrganicRequestMetadata.candidateSources) as cs
-WHERE request.options.searchPlacement in ("wsg", "wmg", "allsr")
-AND DATE(queryTime) = DATE('2025-07-20')
-AND request.options.csrOrganic = TRUE
-limit 20
-
-
+----  Request 1st page
 with rpc_data as (
     SELECT
         response.mmxRequestUUID,
@@ -78,6 +66,9 @@ left join user_data u
 on rpc_data.userId = u.user_id
 
 
+
+
+----  get OrganicRequestMetadata.candidateSources
 WITH allRequests AS (
     SELECT
         (SELECT COUNTIF(stage='MO_LASTPASS') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nLastpassSources,
@@ -373,3 +364,19 @@ SELECT
     resultType,
     searchPlacement
 FROM outputTable
+
+
+
+
+---- semrel scores
+select 
+    response.mmxRequestUUID,
+    request.query,
+    cs.listingIds,
+    cs.SemrelScores
+FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`,
+    unnest(OrganicRequestMetadata.candidateSources) as cs
+WHERE request.options.searchPlacement in ("wsg", "wmg", "allsr")
+AND DATE(queryTime) = DATE('2025-07-20')
+AND request.options.csrOrganic = TRUE
+limit 20

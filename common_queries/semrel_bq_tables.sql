@@ -1,3 +1,4 @@
+--- Join tables to get classes for samples
 SELECT
   mmxRequestUUID,
   guid,
@@ -25,6 +26,7 @@ order by r.date, visit_id, guid, rankingRank
 
 
 
+--- Check %irrelevant for an experiment
 with semrel_results as (
     SELECT variantName, guid, query, platform, userLanguage, listingId, classId
     FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` s

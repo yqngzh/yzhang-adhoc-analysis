@@ -1,3 +1,4 @@
+----  Attributed instances
 select
     requestUUID, visitId, position,
     attributions,
@@ -11,6 +12,7 @@ order by requestUUID, position
 
 
 
+----  Feature bank
 SELECT key, queryLevelMetrics_bin, queryLevelMetrics_gms 
 FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
 
