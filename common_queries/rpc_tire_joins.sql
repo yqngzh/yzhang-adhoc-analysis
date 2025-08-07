@@ -25,25 +25,22 @@ LIMIT 10000
 
 
 --- find OrganicRequestMetadata for searchwithads TIRE test
-with tmp as (
+WITH tmp AS (
   SELECT
-  a.OrganicRequestMetadata.candidateSources,
-  c.tireRequestContext.variant,
-FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
-JOIN `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*` AS c
-ON a.request.options.cacheBucketId LIKE "replay-test/%/y5bJzPoWGz9z8ehdIf1w/%|test1|live|web"
-AND c.tireRequestContext.tireTestv2Id = "y5bJzPoWGz9z8ehdIf1w"
-WHERE DATE(a.queryTime) = "2025-08-04" AND DATE(c.queryTime) = "2025-08-04"
-AND EXISTS (
-    SELECT 1 
-    FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS candidateSource
-    WHERE candidateSource.stage IS NOT NULL
+    a.response.mmxRequestUUID,
+    a.OrganicRequestMetadata.candidateSources,
+    c.tireRequestContext.variant
+  FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
+  JOIN `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*` c
+  ON a.response.mmxRequestUUID = c.response.preserved.organicResults.mmxRequestUUID
+  AND c.tireRequestContext.tireTestv2Id = "y5bJzPoWGz9z8ehdIf1w"
+  WHERE DATE(a.queryTime) = "2025-08-04" AND DATE(c.queryTime) = "2025-08-04"
+  AND EXISTS (
+    SELECT 1
+    FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS cs
+    WHERE cs.stage IS NOT NULL
+  )
 )
-GROUP BY
-  a.OrganicRequestMetadata.candidateSources,
-  c.tireRequestContext.variant
-)
--- select count(*) from tmp
 SELECT
   variant,
   COUNT(*) AS rows_per_variant
