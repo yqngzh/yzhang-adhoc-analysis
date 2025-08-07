@@ -29,9 +29,9 @@ SELECT
   a.OrganicRequestMetadata.candidateSources,
   c.tireRequestContext.variant,
 FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
-JOIN `etsy-searchinfra-gke-prod-2.thrift_tire_searchwithads_rpc_logs.rpc_logs_*` c
+JOIN `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*` AS c
 ON a.request.options.cacheBucketId LIKE "replay-test/%/y5bJzPoWGz9z8ehdIf1w/%|test1|live|web"
-AND c.request.requestParams.organicRequest.options.cacheBucketId = "y5bJzPoWGz9z8ehdIf1w"
+AND c.tireRequestContext.tireTestv2Id = "y5bJzPoWGz9z8ehdIf1w"
 WHERE DATE(a.queryTime) = "2025-08-04" AND DATE(c.queryTime) = "2025-08-04"
 AND EXISTS (
     SELECT 1 
