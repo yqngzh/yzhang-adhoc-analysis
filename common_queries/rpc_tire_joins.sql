@@ -25,7 +25,8 @@ LIMIT 10000
 
 
 --- find OrganicRequestMetadata for searchwithads TIRE test
-SELECT
+with tmp as (
+  SELECT
   a.OrganicRequestMetadata.candidateSources,
   c.tireRequestContext.variant,
 FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
@@ -41,6 +42,13 @@ AND EXISTS (
 GROUP BY
   a.OrganicRequestMetadata.candidateSources,
   c.tireRequestContext.variant
+)
+-- select count(*) from tmp
+SELECT
+  variant,
+  COUNT(*) AS rows_per_variant
+FROM tmp
+GROUP BY variant
 
 
 

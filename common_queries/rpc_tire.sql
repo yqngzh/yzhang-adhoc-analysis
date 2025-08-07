@@ -131,3 +131,26 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_bKVAhAdqceVYmj
   left join lfb using (listingId)
   where query is not null and query != ""
 )
+
+-- or to do both variants in one call using regex
+WITH calls AS (
+  SELECT
+    response.mmxRequestUUID,
+    OrganicRequestMetadata.candidateSources,
+    -- grab the bit between the two |'s right before live|web
+    REGEXP_EXTRACT(
+      request.options.cacheBucketId,
+      r"\|([^|]+)\|live\|web$"
+    ) AS variant
+  FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
+  WHERE request.options.cacheBucketId LIKE "replay-test/%/y5bJzPoWGz9z8ehdIf1w/%|%|live|web"
+  AND DATE(a.queryTime) = "2025-08-04"
+  AND EXISTS (
+    SELECT 1
+    FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS cs
+    WHERE cs.stage IS NOT NULL
+  )
+)
+SELECT variant, COUNT(*) AS rows_per_variant
+FROM calls
+GROUP BY variant;
