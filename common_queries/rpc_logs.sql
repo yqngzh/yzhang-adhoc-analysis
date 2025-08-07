@@ -380,3 +380,47 @@ WHERE request.options.searchPlacement in ("wsg", "wmg", "allsr")
 AND DATE(queryTime) = DATE('2025-07-20')
 AND request.options.csrOrganic = TRUE
 limit 20
+
+
+
+WITH rpc AS (
+SELECT
+    response.mmxRequestUUID,
+    request.query AS query,
+    request.context AS context,
+    OrganicRequestMetadata.candidateSources AS candidateSources,
+    response.semanticRelevanceModelInfo.modelSetName as sem_rel_modelset_name,
+    response.semanticRelevanceScores AS semanticRelevanceScores,
+FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs_*`
+WHERE 
+    queryTime BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 120 MINUTE)  -- seconds
+    AND CURRENT_TIMESTAMP() 
+    AND request.options.cacheBucketId LIKE 'live%'
+    AND request.query <> ''
+    AND request.options.csrOrganic
+    AND request.options.searchPlacement IN ('wsg', 'allsr')
+    AND request.options.interleavingConfig IS NULL
+    AND OrganicRequestMetadata IS NOT NULL
+    AND EXISTS (
+        SELECT 1 FROM UNNEST(OrganicRequestMetadata.candidateSources) cs
+        WHERE cs.stage IN ('POST_FILTER', 'POST_SEM_REL_FILTER', 'POST_BORDA', 'RANKING', 'MO_LASTPASS')
+            AND cs.listingIds IS NOT NULL
+            AND ARRAY_LENGTH(cs.listingIds) > 0
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM UNNEST(request.context)
+        WHERE key = 'req_source' AND value = 'bot'
+    )
+)
+SELECT
+    rpc.mmxRequestUUID,
+    rpc.query,
+    sem_rel_modelset_name,
+    sem_rel_score.listingId AS listing_id,
+    sem_rel_score.candidateSource AS source,
+    sem_rel_score.relevanceScore AS rel_score,
+    sem_rel_score.partialRelevanceScore AS partial_rel_score,
+    sem_rel_score.irrelevanceScore AS irrel_score
+FROM rpc,
+    UNNEST(semanticRelevanceScores) sem_rel_score
+LIMIT 10000

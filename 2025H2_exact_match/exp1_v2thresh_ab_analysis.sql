@@ -4,7 +4,8 @@ with semrel_results as (
     FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment` s
     left JOIN `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment` m
     USING (tableUUID, date)
-    WHERE configFlag = "ranking/isearch.exact_match_unify_with_v2_loc"
+    -- WHERE configFlag = "ranking/isearch.exact_match_unify_with_v2_loc"
+    WHERE configFlag = "ranking/search.mmx.2025_q3.exact_match_unify_with_v2_si"
     -- AND s.date = "2025-08-01"
     AND pageNum is not null
     -- AND modelName = "v2-deberta-v3-large-tad"
