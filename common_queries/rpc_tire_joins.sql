@@ -1,3 +1,29 @@
+-- In TIRE, request source
+SELECT request, queryTime 
+FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_recsys_searchwithads_rpc_logs.rpc_logs*` 
+WHERE queryTime >= "2025-07-23 17:00:00+00:00"
+AND queryTime < "2025-07-23 18:00:00+00:00"
+AND request.requestParams.organicRequest is not null 
+AND request.requestParams.organicRequest.options.cacheBucketId = "live|web"
+AND request.requestParams.organicRequest.options.queryType = "ponycorn_seller_quality"
+AND request.requestParams.organicRequest.options.csrOrganic=true
+AND request.requestParams.organicRequest.offset = 0
+AND NOT EXISTS (SELECT * FROM UNNEST(request.requestParams.context) WHERE key = "req_source" AND value = "bot") 
+-- SO
+AND request.requestParams.organicRequest.options.searchPlacement in unnest(["wsg", "wmg"])
+AND request.requestParams.organicRequest.options.userCountry = "US"
+AND request.requestParams.organicRequest.options.personalizationOptions.userId = 0
+-- SI
+-- AND request.requestParams.organicRequest.options.searchPlacement in unnest(["allsr", "wsg", "wmg"])
+-- AND request.requestParams.organicRequest.options.userCountry = "US"
+-- AND request.requestParams.organicRequest.options.personalizationOptions.userId != 0
+AND runtime.sampleVal < 0.17142857142857144
+ORDER BY runtime.sampleVal
+LIMIT 10000
+
+
+
+
 --- find OrganicRequestMetadata for searchwithads TIRE test
 SELECT
   a.OrganicRequestMetadata.candidateSources,

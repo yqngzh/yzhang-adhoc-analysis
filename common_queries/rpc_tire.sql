@@ -1,3 +1,32 @@
+---- In TIRE, request source
+SELECT request, queryTime
+FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+-- Sign in
+WHERE request.options.searchPlacement in unnest(["allsr", "wsg"])
+AND request.options.personalizationOptions.userId != 0
+-- Sign out
+-- request.options.searchPlacement in unnest(["wsg"])
+-- AND request.options.personalizationOptions.userId = 0
+AND request.options.userCountry = "US"
+AND queryTime >= "2024-11-01 17:00:00+00:00"
+AND queryTime < "2024-11-01 18:00:00+00:00"
+AND request.OPTIONS.cacheBucketId = "live|web"
+AND request.options.queryType = "ponycorn_seller_quality"
+AND request.offset = 0  -- get 1st pages
+AND request.options.solrRetrievalOnly = FALSE
+AND request.sortBy = 'relevance'
+AND request.sortOrder = 'desc'
+AND request.options.mmxBehavior.matching IS NOT NULL
+AND request.options.csrOrganic = TRUE
+AND NOT EXISTS (SELECT * FROM UNNEST(request.context) WHERE KEY = "req_source" AND value = "bot")
+AND request.options.solrRetrievalOnly = FALSE
+AND OrganicRequestMetadata.candidateSources IS NOT NULL
+AND runtime.sampleVal < 0.17142857142857144
+ORDER BY runtime.sampleVal
+LIMIT 33750
+
+
+
 ----  get OrganicRequestMetadata from TIRE tests
 create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_bKVAhAdqceVYmjXbrFX0` as (
   with control_requests as (
