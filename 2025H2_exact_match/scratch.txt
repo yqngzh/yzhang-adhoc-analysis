@@ -1,0 +1,57 @@
+semrel-filter {
+      modelset_name: "semrel-filter-v2"
+      host: "semrel-filter-v2.prod-ml-platform.etsycloud.com"
+      port: 443
+      secure: true
+      shut_down_grace_period: 5 seconds
+      servable_name: "semrel-filter-v2"
+      batch_size: 1
+      signature: "score_examples_batch"
+      inputs_key: "not-used" # input_shape is used instead
+      input_shape {
+          type: byte-string-1-d
+          field: "tf_examples"
+      }
+      output_shape {
+        type: semrel-output
+      }
+      outputs_key: "outputs"
+      use_compression: true
+      feature_name_source: ${services.tfserving_feature_name_sources.static}
+      grpc_service_config: {
+        retry_throttling: {
+          max_tokens: 10
+          token_ratio: 0.1
+        }
+        predict {
+          type: with-retry-policy
+          timeout: 50ms
+          timeout: ${?LOCAL_ENV_GLOBAL_TIMEOUTS}
+          retry_policy {
+            max_attempts: 2
+            initial_backoff: 5ms
+            max_backoff: 20ms
+            backoff_multiplier: 1.5f,
+            retryable_status_codes: [
+              "UNAVAILABLE",
+              "UNKNOWN",
+            ]
+          }
+        }
+        model_metadata {
+          type: with-retry-policy
+          timeout: 300ms
+          timeout: ${?LOCAL_ENV_GLOBAL_TIMEOUTS}
+          retry_policy {
+            max_attempts: 5
+            initial_backoff: 5ms
+            max_backoff: 20ms
+            backoff_multiplier: 1.5f,
+            retryable_status_codes: [
+              "UNAVAILABLE",
+              "UNKNOWN",
+            ]
+          }
+        }
+      }
+    }
