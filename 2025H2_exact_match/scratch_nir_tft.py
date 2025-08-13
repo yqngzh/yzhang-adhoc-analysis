@@ -4,13 +4,7 @@ from semantic_relevance.utils.nir import get_latest_nir_metadata
 from semantic_relevance.training.tensorflow_models.nirt_prod_model import (
     NirWrapper,
     NirModelWrapper,
-    _SUPPORTED_NIR_CONFIGS,
-    _CHARACTER_REPLACEMENTS,
-    _DEFAULT_WHITESPACE_EQUIVALENT_CHARS,
-    NGRAM_FIELDS,
-    NGRAM_CATEGORIES,
-    HIERARCHICAL_FIELD,
-    TensorLike
+    NirTFTLayer
 )
 
 
@@ -58,135 +52,23 @@ sorted(listing_results.keys())
 #     'taxonomyPath'
 # ])
 
+type(query_results["query_char_3grams"])
+tf.sparse.to_dense(query_results["query_char_3grams"]).shape
+type(query_results["query_word_1grams"])
+tf.sparse.to_dense(query_results["query_word_1grams"]).shape
+listing_results["title"]
+tf.sparse.to_dense(listing_results["taxonomyPath"]).shape
 
 # new TFT
-input_dict_tensors = listing_input
-whitespace_pattern = f"[{''.join(_DEFAULT_WHITESPACE_EQUIVALENT_CHARS)}]+"
-character_replacements = _CHARACTER_REPLACEMENTS
+new_tft_layer = NirTFTLayer()
+new_query_results = new_tft_layer(query_input)
+new_listing_results = new_tft_layer(listing_input)
+sorted(new_query_results.keys())
+sorted(new_listing_results.keys())
 
-def normalize_string_tensor(s):
-    s = tf.strings.lower(s)
-    s = tf.strings.regex_replace(s, whitespace_pattern, " ")
-    for char, to_replace in character_replacements.items():
-        s = tf.strings.regex_replace(s, char, to_replace)
-    s = tf.strings.strip(s)
-    return s
-
-def apply_vocabulary_with_lookup(
-    token_tensor: tf.Tensor,
-    vocab_filename_tensor: tf.Tensor,
-    num_oov_buckets: int = 1,
-    default_value: int | None = None,
-    name: str | None = None,
-):
-    with tf.name_scope(name or "apply_vocab"):
-        file_init = tf.lookup.TextFileInitializer(
-            filename=vocab_filename_tensor,
-            key_dtype=tf.string,
-            key_index=tf.lookup.TextFileIndex.WHOLE_LINE,
-            value_dtype=tf.int64,
-            value_index=tf.lookup.TextFileIndex.LINE_NUMBER,
-        )
-        if num_oov_buckets > 0:
-            if default_value is not None:
-                # StaticVocabularyTable cannot also take a default_value – it uses OOV buckets.
-                raise ValueError(
-                    "When using StaticVocabularyTable (num_oov_buckets > 0), "
-                    "`default_value` must be None."
-                )
-            table = tf.lookup.StaticVocabularyTable(
-                initializer=file_init,
-                num_oov_buckets=num_oov_buckets,
-            )
-            lookup_fn = table.lookup
-        else:
-            # No OOV buckets: use a StaticHashTable with a single default id.
-            if default_value is None:
-                default_value = -1  # mirror TFT’s common default when not provided
-            table = tf.lookup.StaticHashTable(
-                initializer=file_init,
-                default_value=tf.cast(default_value, tf.int64),
-            )
-            lookup_fn = table.lookup
-        # Support SparseTensor in/out to mirror tft.apply_vocabulary behavior.
-        if isinstance(token_tensor, tf.SparseTensor):
-            mapped_vals = lookup_fn(token_tensor.values)
-            return tf.SparseTensor(
-                indices=token_tensor.indices,
-                values=mapped_vals,
-                dense_shape=token_tensor.dense_shape,
-            )
-        else:
-            return lookup_fn(token_tensor)
-
-def apply_vocab_with_offset(
-    token_tensor: tf.SparseTensor,
-    vocab_filename_tensor: tf.Tensor,
-    num_oov_buckets: int,
-    default_value: int,
-    offset: int = 0,
-    name: Optional[str] = None,
-) -> tf.SparseTensor:
-    token_ids: tf.SparseTensor = apply_vocabulary_with_lookup(
-        token_tensor,
-        deferred_vocab_filename_tensor=vocab_filename_tensor,
-        num_oov_buckets=num_oov_buckets,
-        default_value=default_value,
-        name=f"apply_vocab_{name}" if name else None,
-    )
-    if offset != 0:
-        token_ids = tf.SparseTensor(
-            indices=token_ids.indices,
-            values=tf.add(
-                token_ids.values, offset, name=f"offset_vocab_{offset}_{name or 'x'}"
-            ),
-            dense_shape=token_ids.dense_shape,
-        )
-    return token_ids
-
-def rebuild_hierarchy_fn(a, x):
-    new_val = tf.cond(
-        tf.math.equal(a[0], x[0]),
-        lambda: tf.stack([x[0], tf.strings.join([a[1], sep, x[1]])]),
-        lambda: x,
-    )
-    return new_val
-    
-def expand_hierarchy_string(s: tf.Tensor, sep: str = " ") -> tf.RaggedTensor:
-    parts = tf.strings.split(s, sep=sep)
-    rowids = parts.value_rowids()
-    rowid_and_part = tf.stack([tf.strings.as_string(rowids), parts.values], axis=1)
-    init_vals = tf.stack([tf.constant("rowid"), tf.constant("part")])
-    rowids_and_new_values = tf.scan(rebuild_hierarchy_fn, rowid_and_part, initializer=init_vals)
-    new_values = rowids_and_new_values[:, 1]
-    return tf.RaggedTensor.from_value_rowids(
-        values=new_values, value_rowids=rowids, nrows=parts.nrows()
-    )
-        
-
-
-output = {}
-for field_name, field_spec in NGRAM_FIELDS.items():
-    # field_name, field_spec = "title", NGRAM_FIELDS["title"]
-    if field_name not in input_dict_tensors:
-        continue
-
-    raw_tensor = input_dict_tensors[field_name]
-    cleaned_tensor = normalize_string_tensor(raw_tensor)
-
-    field_sep = field_spec["word_separator"]
-    char_tokens: tf.RaggedTensor = tf.strings.unicode_split(
-        tf.strings.join([field_sep, cleaned_tensor, field_sep]), 
-        input_encoding="UTF-8", errors="ignore"
-    )
-    word_tokens: tf.RaggedTensor = tf.strings.split(cleaned_tensor, field_sep)
-    field_ngram_output = []
-    for ngram_cat_name, ngram_cat_spec in NGRAM_CATEGORIES.items():
-        # ngram_cat_name, ngram_cat_spec = "word_2grams", NGRAM_CATEGORIES["word_2grams"]
-        if ngram_cat_spec["type"] == "char":
-            ngrams = tf.strings.ngrams(char_tokens, ngram_cat_spec["n"], separator="")
-        else:  # "word"
-            ngrams = tf.strings.ngrams(word_tokens, ngram_cat_spec["n"], separator=field_sep)
-        ngrams_sparse = ngrams.to_sparse()
-        field_ngram_output.append((ngram_cat_name, ngrams_sparse))
-
+type(new_query_results["query_char_3grams"])
+tf.sparse.to_dense(new_query_results["query_char_3grams"]).shape
+type(new_query_results["query_word_1grams"])
+tf.sparse.to_dense(new_query_results["query_word_1grams"]).shape
+new_listing_results["title"]
+tf.sparse.to_dense(new_listing_results["taxonomyPath"]).shape
