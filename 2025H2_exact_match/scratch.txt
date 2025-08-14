@@ -1,6 +1,6 @@
-exact_match_unify_v2student_si: ${matching.default} {
-  owners: ["#search-retrieval", "@yzhang"]
-  description: "SI: unify semrel student to serve-v2 (based on entity_title_si)"
+nir_ule_search_with_ads_si: ${matching.default} {
+  owners: ["#search-retrieval", "@smurtagh"]
+  description: "NIR trained with ULE search and ads data, signed in"
   semrel_config {
       relevance_threshold: 0.26
       shop_score_threshold: 0.7
@@ -22,7 +22,7 @@ exact_match_unify_v2student_si: ${matching.default} {
     candidate_source: ann
     config: {
       ann_ensemble: {
-        seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
+        seldon: ${services.ann_seldon.ann_ensemble_nir_ule_search_with_ads}
       }
     }
   }
