@@ -4,7 +4,8 @@ exact_match_unify_v2student_si: ${matching.default} {
   semrel_config {
       relevance_threshold: 0.26
       shop_score_threshold: 0.7
-      tfserving:${services.tfserving.semrel-serve-v2}
+      tfserving:${semrel.tfserving.semrel-serve-v2}
+      ruleset: ["GlobalThresholdRule"]
   }
   dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
     blending_backend: seldon
