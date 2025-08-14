@@ -1,57 +1,49 @@
-semrel-filter {
-      modelset_name: "semrel-filter-v2"
-      host: "semrel-filter-v2.prod-ml-platform.etsycloud.com"
-      port: 443
-      secure: true
-      shut_down_grace_period: 5 seconds
-      servable_name: "semrel-filter-v2"
-      batch_size: 1
-      signature: "score_examples_batch"
-      inputs_key: "not-used" # input_shape is used instead
-      input_shape {
-          type: byte-string-1-d
-          field: "tf_examples"
-      }
-      output_shape {
-        type: semrel-output
-      }
-      outputs_key: "outputs"
-      use_compression: true
-      feature_name_source: ${services.tfserving_feature_name_sources.static}
-      grpc_service_config: {
-        retry_throttling: {
-          max_tokens: 10
-          token_ratio: 0.1
-        }
-        predict {
-          type: with-retry-policy
-          timeout: 50ms
-          timeout: ${?LOCAL_ENV_GLOBAL_TIMEOUTS}
-          retry_policy {
-            max_attempts: 2
-            initial_backoff: 5ms
-            max_backoff: 20ms
-            backoff_multiplier: 1.5f,
-            retryable_status_codes: [
-              "UNAVAILABLE",
-              "UNKNOWN",
-            ]
-          }
-        }
-        model_metadata {
-          type: with-retry-policy
-          timeout: 300ms
-          timeout: ${?LOCAL_ENV_GLOBAL_TIMEOUTS}
-          retry_policy {
-            max_attempts: 5
-            initial_backoff: 5ms
-            max_backoff: 20ms
-            backoff_multiplier: 1.5f,
-            retryable_status_codes: [
-              "UNAVAILABLE",
-              "UNKNOWN",
-            ]
-          }
-        }
+exact_match_unify_v2student_si: ${matching.default} {
+  owners: ["#search-retrieval", "@yzhang"]
+  description: "SI: unify semrel student to serve-v2 (based on entity_title_si)"
+  semrel_config {
+      relevance_threshold: 0.26
+      shop_score_threshold: 0.7
+      tfserving:${services.tfserving.semrel-serve-v2}
+  }
+  dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
+    blending_backend: seldon
+    blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
+  }
+  lexical_engine: ${matching.default.lexical_engine} {
+    should_limit_solr_candidates: true
+    enable_gqi: true
+  }
+  preretrieval: ${core-matching.common.preretrieval} {
+    ann_feature_set: "nir-perso-lite"
+  }
+  ann: ${core-matching.common.ann} {
+    candidate_source: ann
+    config: {
+      ann_ensemble: {
+        seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
       }
     }
+  }
+  xwalk: ${core-matching.default.xwalk} {
+    xwalk_candidate_source: disabled
+  }
+  xml: ${core-matching.common.xml} {
+    request_config {
+      k: 400,
+      beam_size: 40,
+      threshold: 0.0,
+      pp: "sigmoid",
+      multiterm_predict: "True"
+    }
+    xml_http_service: ${services.xml.xml_v2_multiterm.http}
+  }
+  query_entity {
+  query_entity: cached
+    dataset: smu_query_entity_extraction_v2
+    memcached {
+      memcached_enabled: true
+      ttl: 12 hours
+  }
+  }
+}
