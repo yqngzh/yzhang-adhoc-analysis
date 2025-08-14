@@ -1,6 +1,6 @@
-nir_hard_negs_tm_so: ${matching.default} {
-  owners: ["#search-matching", "@mcastanos"]
-  description: "SO: NIR with Harder Negatives and TM data (based on entity_title_so)"
+entity_title_so: ${matching.default} {
+  owners: ["#search-matching", "@ylien"]
+  description: "SO: enable entity extraction in SOLR"
   semrel_config {
         relevance_threshold: 0.31
         shop_score_threshold: 0.7
@@ -22,7 +22,7 @@ nir_hard_negs_tm_so: ${matching.default} {
     candidate_source: ann
     config: {
       ann_ensemble: {
-        seldon: ${services.ann_seldon.ann_ensemble_nir_plite_hard_negs_tm}
+        seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
       }
     }
   }
@@ -46,5 +46,5 @@ nir_hard_negs_tm_so: ${matching.default} {
         memcached_enabled: true
         ttl: 12 hours
     }
-  }
+    }
 }
