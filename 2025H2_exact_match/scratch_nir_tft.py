@@ -31,6 +31,9 @@ listing_input = {
     "title": title_tensor,
     "tags": tags_tensor,
     "taxonomyPath": taxonomy_tensor,
+    "clickTopQuery": tf.RaggedTensor.from_tensor(tf.zeros([3, 0], tf.string)).to_sparse(),
+    "cartTopQuery": tf.RaggedTensor.from_tensor(tf.zeros([3, 0], tf.string)).to_sparse(), 
+    "purchaseTopQuery": tf.RaggedTensor.from_tensor(tf.zeros([3, 0], tf.string)).to_sparse(),
 }
 
 
@@ -58,6 +61,7 @@ type(query_results["query_word_1grams"])
 tf.sparse.to_dense(query_results["query_word_1grams"]).shape
 listing_results["title"]
 tf.sparse.to_dense(listing_results["taxonomyPath"]).shape
+tf.sparse.to_dense(listing_results["tags_word_1grams"]).shape
 
 # new TFT
 new_tft_layer = NirTFTLayer()
@@ -72,3 +76,4 @@ type(new_query_results["query_word_1grams"])
 tf.sparse.to_dense(new_query_results["query_word_1grams"]).shape
 new_listing_results["title"]
 tf.sparse.to_dense(new_listing_results["taxonomyPath"]).shape
+tf.sparse.to_dense(new_listing_results["tags_word_1grams"]).shape
