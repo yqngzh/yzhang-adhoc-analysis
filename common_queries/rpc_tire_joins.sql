@@ -1,4 +1,4 @@
--- In TIRE, request source
+------  In TIRE, request source  ------
 SELECT request, queryTime 
 FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_recsys_searchwithads_rpc_logs.rpc_logs*` 
 WHERE queryTime >= "2025-07-23 17:00:00+00:00"
@@ -19,12 +19,12 @@ AND request.requestParams.organicRequest.options.personalizationOptions.userId =
 -- AND request.requestParams.organicRequest.options.personalizationOptions.userId != 0
 AND runtime.sampleVal < 0.17142857142857144
 ORDER BY runtime.sampleVal
-LIMIT 10000
+LIMIT 13750
+-- N = rps * duration + (rampup_seconds / 2 * rps)
 
 
 
-
---- find OrganicRequestMetadata for searchwithads TIRE test
+------  Find OrganicRequestMetadata for searchwithads TIRE test  ------  
 WITH tmp AS (
   SELECT
     a.response.mmxRequestUUID,
@@ -47,9 +47,36 @@ SELECT
 FROM tmp
 GROUP BY variant
 
+-- can still use listingsv2search
+SELECT
+    response.mmxRequestUUID,
+    OrganicRequestMetadata.candidateSources,
+    REGEXP_EXTRACT(
+        request.options.cacheBucketId,
+        r"\|([^|]+)\|live\|web$"
+    ) AS variant
+FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
+WHERE request.options.cacheBucketId LIKE "replay-test/%/TIREID/%|%|live|web"
+AND DATE(a.queryTime) = "2025-08-04"
+AND EXISTS (
+    SELECT 1
+    FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS cs
+    WHERE cs.stage IS NOT NULL
+)
 
 
---- find both ads and organic listings 
+
+------  Get blended page 1 search + ads listings POST- JOINS  ------  
+SELECT
+    tireRequestContext.tireRequestUUID,
+    r.id.listingId,
+    r.candidateSource
+FROM `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*`,
+    UNNEST(response.dynamicResults.results) AS r
+WHERE tireRequestContext.tireTestv2Id = "TIREID"
+AND DATE(queryTime) = "2025-08-04"
+
+-- separate ads and organic
 SELECT
   tireRequestContext.tireRequestUUID,
   ARRAY_AGG(
@@ -63,3 +90,36 @@ FROM `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*`,
 WHERE tireRequestContext.tireTestv2Id = "eZUe8cpbYhN4OmxaOGdm"
 AND DATE(queryTime) = "2025-08-06"
 GROUP BY tireRequestContext.tireRequestUUID
+
+
+
+------  Get page 1 organic and ads listings separately PRE- JOINS  ------  
+WITH tire_data AS (
+  SELECT
+        response.preserved.organicResults.mmxRequestUUID,
+        tireRequestContext.variant AS variant,
+        request.requestParams.organicRequest.query AS query,
+        request.requestParams.organicRequest.limit AS organic_limit,
+        request.requestParams.organicRequest.offset AS organic_offset,
+        request.requestParams.adsRequest.limit AS ads_limit,
+        request.requestParams.adsRequest.offset AS ads_offset,
+        response.preserved.organicResults.listingIds AS organic_listing_ids,
+        response.preserved.adsResults.listingIds AS ads_listing_ids
+  FROM `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*`
+  WHERE tireRequestContext.tireTestv2Id = "TIREID"
+  AND DATE(queryTime) = "2025-08-04" 
+),
+organic_listings_control AS (
+  SELECT mmxRequestUUID, variant, query, listing_id
+  FROM tire_data, UNNEST(organic_listing_ids) AS listing_id
+  WHERE variant = "control"
+  AND ARRAY_LENGTH(organic_listing_ids) > 0
+  AND organic_offset = 0 
+),
+organic_listings_test AS (
+  SELECT mmxRequestUUID, variant, query, listing_id
+  FROM tire_data, UNNEST(organic_listing_ids) AS listing_id
+  WHERE variant = "test1"
+  AND ARRAY_LENGTH(organic_listing_ids) > 0
+  AND organic_offset = 0 
+)
