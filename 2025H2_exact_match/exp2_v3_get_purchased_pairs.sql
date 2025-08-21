@@ -1,5 +1,5 @@
 -- get purchased pairs data
-create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emexp2_purchase_tight_2025_08_18` as (
     with qlp_raw as (
         -- web
         select 
@@ -16,7 +16,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_20
             candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry,
             candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage,
             "web" as platform
-        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_tight_2025_07_20`, unnest(contextualInfo) as ctx
+        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_tight_2025_08_18`, unnest(contextualInfo) as ctx
         where "purchase" in unnest(attributions)
         -- boe
         union all
@@ -34,7 +34,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_20
             candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry,
             candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage,
             "boe" as platform
-        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_boe_organic_tight_2025_07_20`, unnest(contextualInfo) as ctx
+        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_boe_organic_tight_2025_08_18`, unnest(contextualInfo) as ctx
         where "purchase" in unnest(attributions)
         -- market
         union all
@@ -52,7 +52,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_20
             candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry,
             candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage,
             "market" as platform
-        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_market_web_organic_2025_07_20`, unnest(contextualInfo) as ctx
+        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_market_web_organic_2025_08_18`, unnest(contextualInfo) as ctx
         where "purchase" in unnest(attributions)
     ),
     qlp as (
@@ -78,45 +78,36 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_20
         select 
             key as listingId,
             IFNULL(
-                COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')),
+                COALESCE(NULLIF(verticaListings_title, ""), verticaListingTranslations_primaryLanguageTitle),
                 ""
             ) listingTitle,
+            -- exactly as how V3 would inference
             IFNULL(verticaSellerBasics_shopName, "") listingShopName,
             IFNULL(listingLlmFeatures_llmHeroImageDescription, "") listingHeroImageCaption,
             IFNULL((SELECT STRING_AGG(element, ', ') FROM UNNEST(descNgrams_ngrams.list)), "") listingDescNgrams,
             IFNULL(verticaListings_taxonomyPath, "") listingTaxo,
             IFNULL(verticaListings_tags, "") listingTags 
-        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2025-07-20`
+        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2025-08-18`
     )
     select distinct *
     from qlp
     left join lfb using (listingId)
     where query is not null and query != ""
 )
--- IFNULL(
---     COALESCE(
---         NULLIF(candidateInfo.docInfo.listingInfo.verticaListings.title, ''), 
---         NULLIF(candidateInfo.docInfo.listingInfo.verticaListingTranslations.machineTranslatedEnglishTitle, '')
---     ), ""
--- ) listingTitle,
--- IFNULL(candidateInfo.docInfo.shopInfo.verticaSellerBasics.shopName, "") listingShopName,
--- IFNULL(candidateInfo.docInfo.listingInfo.listingLlmFeatures.llmHeroImageDescription, "") listingHeroImageCaption,
--- ARRAY_TO_STRING(IFNULL(candidateInfo.docInfo.listingInfo.descNgrams.ngrams, [""]), ', ') listingDescNgrams,
 
 with tmp as (
     select distinct 
         query, listingId, 
         listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams, 
         listingTaxo, listingTags
-    from `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20`
+    from `etsy-search-ml-dev.search.yzhang_emexp2_purchase_tight_2025_08_18`
 )
 select count(*) from tmp
--- 2025-07-20: 165678 distinct query listing pairs, from 179978 requests
--- 2025-07-21: 172960 distinct query listing pairs, from 186728 requests
+-- 183060 distinct query listing pairs, from 196761 requests
 
--- run through V3 teacher to get `semrel_adhoc_yzhang_emcf_purchase_tight_2025_07_20`
+-- run through V3 teacher
 
-create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_tight_2025_07_20` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emexp2_purchase_results_tight_2025_08_18` as (
     with qlm AS (
       select distinct query_raw as query, bin as queryBin 
       from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
@@ -130,8 +121,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_
         queryBin,
         entities,
         semrelLabel
-    from `etsy-search-ml-dev.search.yzhang_emcf_purchase_tight_2025_07_20` ori
-    left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcf_purchase_tight_2025_07_20`
+    from `etsy-search-ml-dev.search.yzhang_emexp2_purchase_tight_2025_08_18` ori
+    left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emexp2_purchase_tight_2025_08_18`
     using (query, listingId)
     left join qlm using (query)
     left join qee using(query)

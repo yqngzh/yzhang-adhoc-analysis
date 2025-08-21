@@ -1,5 +1,5 @@
 -- get purchased pairs data (loose attribution)
-create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_2025_07_14` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emexp2_purchase_loose_2025_08_13` as (
     with qlp_raw as (
         -- web
         select 
@@ -16,7 +16,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_20
             candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry,
             candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage,
             "web" as platform
-        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_loose_2025_07_14`, unnest(contextualInfo) as ctx
+        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_loose_2025_08_13`, unnest(contextualInfo) as ctx
         where "purchase" in unnest(attributions)
         -- boe
         union all
@@ -34,7 +34,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_20
             candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry,
             candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage,
             "boe" as platform
-        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_boe_organic_loose_2025_07_14`, unnest(contextualInfo) as ctx
+        from `etsy-ml-systems-prod.attributed_instance.query_pipeline_boe_organic_loose_2025_08_13`, unnest(contextualInfo) as ctx
         where "purchase" in unnest(attributions)
     ),
     qlp as (
@@ -60,7 +60,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_20
         select 
             key as listingId,
             IFNULL(
-                COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')),
+                COALESCE(NULLIF(verticaListings_title, ""), verticaListingTranslations_primaryLanguageTitle),
                 ""
             ) listingTitle,
             IFNULL(verticaSellerBasics_shopName, "") listingShopName,
@@ -68,7 +68,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_20
             IFNULL((SELECT STRING_AGG(element, ', ') FROM UNNEST(descNgrams_ngrams.list)), "") listingDescNgrams,
             IFNULL(verticaListings_taxonomyPath, "") listingTaxo,
             IFNULL(verticaListings_tags, "") listingTags 
-        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2025-07-14`
+        from `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2025-08-13`
     )
     select distinct *
     from qlp
@@ -81,13 +81,12 @@ with tmp as (
         query, listingId, 
         listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams, 
         listingTaxo, listingTags
-    from `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_2025_07_14`
+    from `etsy-search-ml-dev.search.yzhang_emexp2_purchase_loose_2025_08_13`
 )
 select count(*) from tmp
--- 2025-07-14: 217856 distinct query listing pairs, from 233222 requests
--- 2025-07-15: 219447 distinct query listing pairs, from 234586 requests
+-- 217856 distinct query listing pairs, from 233222 requests
 
-create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_loose_2025_07_14` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emexp2_purchase_results_loose_2025_08_13` as (
     with qlm AS (
       select distinct query_raw as query, bin as queryBin 
       from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
@@ -101,8 +100,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcf_purchase_results_
         queryBin,
         entities,
         semrelLabel
-    from `etsy-search-ml-dev.search.yzhang_emcf_purchase_loose_2025_07_14` ori
-    left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcf_purchase_loose_2025_07_14`
+    from `etsy-search-ml-dev.search.yzhang_emexp2_purchase_loose_2025_08_13` ori
+    left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emexp2_purchase_loose_2025_08_13`
     using (query, listingId)
     left join qlm using (query)
     left join qee using(query)
