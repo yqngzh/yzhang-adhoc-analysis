@@ -5,7 +5,7 @@ select
     ctx.docInfo.queryInfo.query, 
     ctx.docInfo.queryInfo.queryLevelMetrics.*,
     ctx.docInfo.queryInfo.queryTaxoDemandFeatures.*,
-from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_2023_10_03`, 
+from `etsy-ml-systems-prod.attributed_instance.query_pipeline_web_organic_tight_2025_08_19`, 
     unnest(contextualInfo) as ctx
 where ctx.docInfo.queryInfo.query in ('personalized gift', 'personalise gift', 'mother day', 'mothers day', 'gift for him', 'gifts for him', 'gift')
 order by requestUUID, position
