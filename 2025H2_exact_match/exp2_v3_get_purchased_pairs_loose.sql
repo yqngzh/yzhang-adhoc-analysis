@@ -84,7 +84,9 @@ with tmp as (
     from `etsy-search-ml-dev.search.yzhang_emexp2_purchase_loose_2025_08_13`
 )
 select count(*) from tmp
--- 217856 distinct query listing pairs, from 233222 requests
+-- 246159 distinct query listing pairs, from 262417 requests
+
+-- run through V3 teacher
 
 create or replace table `etsy-search-ml-dev.search.yzhang_emexp2_purchase_results_loose_2025_08_13` as (
     with qlm AS (
