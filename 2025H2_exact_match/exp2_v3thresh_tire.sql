@@ -1,16 +1,20 @@
 -- create table
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_om_y5bJzPoWGz9z8ehdIf1w` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9` as (
   with requests as (
     SELECT
       a.response.mmxRequestUUID,
-      COALESCE((SELECT NULLIF(a.query, '') FROM UNNEST(a.request.filter.query.translations) WHERE language = 'en'), NULLIF(a.request.query, '')) query,
+      COALESCE((SELECT NULLIF(query, '') FROM UNNEST(a.request.filter.query.translations) WHERE language = 'en'), NULLIF(a.request.query, '')) query,
       a.OrganicRequestMetadata.candidateSources,
-      c.tireRequestContext.variant variantName
+      c.tireRequestContext.variant variantName,
+      (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources
     FROM `etsy-searchinfra-gke-dev.thrift_mmx_listingsv2search_search.rpc_logs*` a
-    JOIN `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs*` c
-    ON a.response.mmxRequestUUID = c.response.preserved.organicResults.mmxRequestUUID
-    AND c.tireRequestContext.tireTestv2Id = "y5bJzPoWGz9z8ehdIf1w"
-    WHERE DATE(a.queryTime) = "2025-08-04" AND DATE(c.queryTime) = "2025-08-04"
+    JOIN `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs*` c
+    ON (
+      a.response.mmxRequestUUID = c.response.mmxRequestUUID
+      AND c.tireRequestContext.tireTestv2Id = "vm7cucX7qECYLbXpVVM9"
+      AND a.request.options.cacheBucketId LIKE "replay-test/%/vm7cucX7qECYLbXpVVM9/%|live|web"
+    )
+    WHERE DATE(a.queryTime) = "2025-08-22" AND DATE(c.queryTime) = "2025-08-22"
     AND EXISTS (
       SELECT 1
       FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS cs
@@ -60,26 +64,27 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_om_y5bJzPoWGz9
   where query is not null and query != ""
 )
 
+-- check how many query listing pairs are in table
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_em_tire_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_vm7cucX7qECYLbXpVVM9`
 )
 select count(*) from tmp
 
 -- run semrel adhoc teacher inference
 
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_y5bJzPoWGz9z8ehdIf1w` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_om_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_vm7cucX7qECYLbXpVVM9` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_om_vm7cucX7qECYLbXpVVM9`
   using (query, listingId)
 )
 
 
--- organic @48, @24 or @144
+-- organic @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
   where resultType = "organic_mo"
   group by variantName, mmxRequestUUID
 ),
@@ -93,7 +98,7 @@ page1_irrelevance as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_mo"
@@ -118,7 +123,7 @@ group by variantName
 -- post filtering
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -132,7 +137,7 @@ blend_irrelevance as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_blend"
@@ -155,30 +160,11 @@ group by variantName
 
 -- candidate size change
 -- modifiy https://github.com/etsy/search-retrieval-tools/blob/main/bigquery/new_listing_stats_tire_blender.sql
-SET (min_query_time, max_query_time) = (
-  SELECT AS STRUCT MIN(queryTime), MAX(queryTime)
-  FROM `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*`
-  WHERE tireRequestContext.tireTestv2Id = tire_id
-  AND DATE(queryTime) >= tire_run_date
-);
-
-WITH tire_ids AS (
-  SELECT
-    tireRequestContext.variant,
-    tireRequestContext.requestId,
-    tireRequestContext.tireRequestUUID,
-  FROM `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs_*`
-  WHERE tireRequestContext.tireTestv2Id = tire_id 
-    AND queryTime BETWEEN min_query_time AND max_query_time
-    AND tireRequestContext.attempt = 0
-),
-
 
 -- blending page price diff
--- TODO: get query
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -191,7 +177,7 @@ blend_price as (
   select 
     variantName, mmxRequestUUID, 
     avg(price) as avg_price
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_y5bJzPoWGz9z8ehdIf1w`
+  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
   and resultType = "organic_blend"
   group by variantName, mmxRequestUUID
@@ -205,21 +191,3 @@ valid_blend_price as (
 select variantName, avg(avg_price), count(*) as n_requests
 from valid_blend_price
 group by variantName
-
-
-
-
---------   For 1st page after JOINS  --------
-with requests as (
-  SELECT
-    tireRequestContext.tireRequestUUID,
-    tireRequestContext.variant variantName,
-    r.id.listingId,
-    r.candidateSource
-  FROM `etsy-searchinfra-gke-dev.thrift_tire_searchwithads_rpc_logs.rpc_logs*`,
-    UNNEST(response.dynamicResults.results) AS r
-  WHERE tireRequestContext.tireTestv2Id = "y5bJzPoWGz9z8ehdIf1w"
-  AND DATE(queryTime) = "2025-08-04"
-  AND request.requestParams.organicRequest.offset = 0
-  AND request.requestParams.adsRequest.offset = 0
-)
