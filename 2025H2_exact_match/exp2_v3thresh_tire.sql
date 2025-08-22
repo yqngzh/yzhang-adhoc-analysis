@@ -67,16 +67,16 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cu
 -- check how many query listing pairs are in table
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_em_tire_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9`
 )
 select count(*) from tmp
 
 -- run semrel adhoc teacher inference
 
-create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_vm7cucX7qECYLbXpVVM9` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_em_tire_om_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9`
   using (query, listingId)
 )
 
@@ -84,7 +84,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7
 -- organic @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where resultType = "organic_mo"
   group by variantName, mmxRequestUUID
 ),
@@ -98,7 +98,7 @@ page1_irrelevance as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_mo"
@@ -123,7 +123,7 @@ group by variantName
 -- post filtering
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -164,7 +164,7 @@ group by variantName
 -- blending page price diff
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -177,7 +177,7 @@ blend_price as (
   select 
     variantName, mmxRequestUUID, 
     avg(price) as avg_price
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
   and resultType = "organic_blend"
   group by variantName, mmxRequestUUID
