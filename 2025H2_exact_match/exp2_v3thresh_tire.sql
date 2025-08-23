@@ -73,6 +73,8 @@ select count(*) from tmp
 
 -- run semrel adhoc teacher inference
 
+
+-- start analysis
 create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9` as (
   select ori.*, semrelLabel
   from `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9` ori
@@ -80,8 +82,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_resul
   using (query, listingId)
 )
 
-
--- organic @48
+-- relevant / irrelevant @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
   from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
@@ -93,10 +94,10 @@ valid_requests as (
   from count_listings
   where cnt = 144
 ),
-page1_irrelevance as (
+page1_semrel as (
   select 
     variantName, mmxRequestUUID, 
-    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
+    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
     count(*) as n_total
   from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
@@ -105,89 +106,91 @@ page1_irrelevance as (
   and rank < 48
   group by variantName, mmxRequestUUID
 ),
-valid_page1_irrelevance as (
+valid_page1_semrel as (
   select * 
-  from page1_irrelevance
+  from page1_semrel
   join valid_requests
   using(variantName, mmxRequestUUID)
 ),
 valid_page1_pct as (
-  select variantName, mmxRequestUUID, n_irrelevant / n_total as pct_irrelevance
-  from valid_page1_irrelevance
+  select variantName, mmxRequestUUID, n_semrel / n_total as pct_semrel
+  from valid_page1_semrel
 )
-select variantName, avg(pct_irrelevance), count(*) as n_requests
+select variantName, avg(pct_semrel), count(*) as n_requests
 from valid_page1_pct
 group by variantName
 
 
--- post filtering
+-- price @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
   from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
-  where resultType = "organic_blend"
+  where resultType = "organic_mo"
   group by variantName, mmxRequestUUID
 ),
 valid_requests as (
   select variantName, mmxRequestUUID
   from count_listings
-  where cnt = 250
+  where cnt = 144
 ),
-blend_irrelevance as (
-  select 
-    variantName, mmxRequestUUID, 
-    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_irrelevant, 
-    count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_em_tire_om_results_vm7cucX7qECYLbXpVVM9`
-  where mmxRequestUUID is not null
-  and semrelLabel is not null
-  and resultType = "organic_blend"
-  group by variantName, mmxRequestUUID
-),
-valid_blend_irrelevance as (
-  select * 
-  from blend_irrelevance
-  join valid_requests
-  using(variantName, mmxRequestUUID)
-),
-valid_blend_pct as (
-  select variantName, mmxRequestUUID, n_irrelevant / n_total as pct_irrelevance
-  from valid_blend_irrelevance
-)
-select variantName, avg(pct_irrelevance), count(*) as n_requests
-from valid_blend_pct
-group by variantName
-
-
--- candidate size change
--- modifiy https://github.com/etsy/search-retrieval-tools/blob/main/bigquery/new_listing_stats_tire_blender.sql
-
--- blending page price diff
-with count_listings as (
-  select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
-  where resultType = "organic_blend"
-  group by variantName, mmxRequestUUID
-),
-valid_requests as (
-  select variantName, mmxRequestUUID
-  from count_listings
-  where cnt = 250
-),
-blend_price as (
+page1_price as (
   select 
     variantName, mmxRequestUUID, 
     avg(price) as avg_price
   from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
   where mmxRequestUUID is not null
-  and resultType = "organic_blend"
+  and resultType = "organic_mo"
+  and rank < 48
   group by variantName, mmxRequestUUID
 ),
-valid_blend_price as (
+valid_page1_price as (
   select * 
-  from blend_price
+  from page1_price
   join valid_requests
   using(variantName, mmxRequestUUID)
 )
 select variantName, avg(avg_price), count(*) as n_requests
-from valid_blend_price
+from valid_page1_price
 group by variantName
+
+
+-- blending semrel
+with count_listings as (
+  select variantName, mmxRequestUUID, count(*) as cnt
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
+  where resultType = "organic_blend"
+  group by variantName, mmxRequestUUID
+),
+valid_requests as (
+  select variantName, mmxRequestUUID
+  from count_listings
+  where cnt = 250
+),
+blend_semrel as (
+  select 
+    variantName, mmxRequestUUID, 
+    sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
+    count(*) as n_total
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
+  where mmxRequestUUID is not null
+  and semrelLabel is not null
+  and resultType = "organic_blend"
+  group by variantName, mmxRequestUUID
+),
+valid_blend_semrel as (
+  select * 
+  from blend_semrel
+  join valid_requests
+  using(variantName, mmxRequestUUID)
+),
+valid_blend_pct as (
+  select variantName, mmxRequestUUID, n_semrel / n_total as pct_semrel
+  from valid_blend_semrel
+)
+select variantName, avg(pct_semrel), count(*) as n_requests
+from valid_blend_pct
+group by variantName
+
+
+-- candidate size change
+-- https://github.com/etsy/search-retrieval-tools/blob/main/bigquery/new_listing_stats_tire_blender.sql
