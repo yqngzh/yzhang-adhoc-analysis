@@ -59,7 +59,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_try1` as (
     select req.*, queryBin 
     from valid_requests_w_pct_em req
     left join qlm using (query)
-    where queryBin in ("top.01", "top.1", "head", "tail")
+    where queryBin in ("top.01", "top.1", "tail")
     and pct_em <= 0.6
 )
 
@@ -68,5 +68,5 @@ from `etsy-search-ml-dev.search.yzhang_emqueries_try1`
 where platform = "web"
 and userLanguage = "en-US"
 and userCountry = "US"
-and date = "2025-08-22"
+and date = "2025-07-22"
 order by queryBin desc
