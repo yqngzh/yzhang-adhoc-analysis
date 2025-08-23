@@ -1,10 +1,10 @@
-entity_title_so: ${matching.default} {
-  owners: ["#search-matching", "@ylien"]
-  description: "SO: enable entity extraction in SOLR"
+exact_match_student_v3: ${matching.default} {
+  owners: ["#search-retrieval", "@yzhang"]
+  description: "Semrel student v3 (based on entity_title_so and exact_match_unify_v2student_si)"
   semrel_config {
-        relevance_threshold: 0.31
+        relevance_threshold: 0.26
         shop_score_threshold: 0.7
-        tfserving:${semrel.tfserving.semrel-serve-v2}
+        tfserving:${semrel.tfserving.semrel-student-v3}
         ruleset: ["GlobalThresholdRule"]
   }
   dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
@@ -46,5 +46,5 @@ entity_title_so: ${matching.default} {
         memcached_enabled: true
         ttl: 12 hours
     }
-    }
+  }
 }
