@@ -1,5 +1,5 @@
 -- create table
-create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_uyzy4il8NyF001sTPADa` as (
   with requests as (
     SELECT
       a.response.mmxRequestUUID,
@@ -11,10 +11,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cu
     JOIN `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs*` c
     ON (
       a.response.mmxRequestUUID = c.response.mmxRequestUUID
-      AND c.tireRequestContext.tireTestv2Id = "vm7cucX7qECYLbXpVVM9"
-      AND a.request.options.cacheBucketId LIKE "replay-test/%/vm7cucX7qECYLbXpVVM9/%|live|web"
+      AND c.tireRequestContext.tireTestv2Id = "uyzy4il8NyF001sTPADa"
+      AND a.request.options.cacheBucketId LIKE "replay-test/%/uyzy4il8NyF001sTPADa/%|live|web"
     )
-    WHERE DATE(a.queryTime) = "2025-08-22" AND DATE(c.queryTime) = "2025-08-22"
+    WHERE DATE(a.queryTime) = "2025-08-24" AND DATE(c.queryTime) = "2025-08-24"
     AND EXISTS (
       SELECT 1
       FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS cs
@@ -67,7 +67,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cu
 -- check how many query listing pairs are in table
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_uyzy4il8NyF001sTPADa`
 )
 select count(*) from tmp
 
@@ -75,17 +75,17 @@ select count(*) from tmp
 
 
 -- start analysis
-create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_uyzy4il8NyF001sTPADa` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emv3student_tire_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_uyzy4il8NyF001sTPADa` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emv3student_tire_uyzy4il8NyF001sTPADa`
   using (query, listingId)
 )
 
--- relevant / irrelevant @48
+-- @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_uyzy4il8NyF001sTPADa`
   where resultType = "organic_mo"
   group by variantName, mmxRequestUUID
 ),
@@ -94,70 +94,42 @@ valid_requests as (
   from count_listings
   where cnt = 144
 ),
-page1_semrel as (
+page1_res as (
   select 
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
+    avg(price) as avg_price,
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_uyzy4il8NyF001sTPADa`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_mo"
   and rank < 48
   group by variantName, mmxRequestUUID
 ),
-valid_page1_semrel as (
+valid_page1_res as (
   select * 
-  from page1_semrel
+  from page1_res
   join valid_requests
   using(variantName, mmxRequestUUID)
 ),
 valid_page1_pct as (
   select variantName, mmxRequestUUID, n_semrel / n_total as pct_semrel
-  from valid_page1_semrel
+  from valid_page1_res
 )
 select variantName, avg(pct_semrel), count(*) as n_requests
 from valid_page1_pct
 group by variantName
-
-
 -- price @48
-with count_listings as (
-  select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
-  where resultType = "organic_mo"
-  group by variantName, mmxRequestUUID
-),
-valid_requests as (
-  select variantName, mmxRequestUUID
-  from count_listings
-  where cnt = 144
-),
-page1_price as (
-  select 
-    variantName, mmxRequestUUID, 
-    avg(price) as avg_price
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
-  where mmxRequestUUID is not null
-  and resultType = "organic_mo"
-  and rank < 48
-  group by variantName, mmxRequestUUID
-),
-valid_page1_price as (
-  select * 
-  from page1_price
-  join valid_requests
-  using(variantName, mmxRequestUUID)
-)
-select variantName, avg(avg_price), count(*) as n_requests
-from valid_page1_price
-group by variantName
+-- select variantName, avg(avg_price), count(*) as n_requests
+-- from valid_page1_res
+-- group by variantName
 
 
--- blending semrel
+-- blending
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_uyzy4il8NyF001sTPADa`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -166,26 +138,26 @@ valid_requests as (
   from count_listings
   where cnt = 250
 ),
-blend_semrel as (
+blend_res as (
   select 
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_vm7cucX7qECYLbXpVVM9`
+  from `etsy-search-ml-dev.search.yzhang_emv3student_tire_results_uyzy4il8NyF001sTPADa`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
-valid_blend_semrel as (
+valid_blend_res as (
   select * 
-  from blend_semrel
+  from blend_res
   join valid_requests
   using(variantName, mmxRequestUUID)
 ),
 valid_blend_pct as (
   select variantName, mmxRequestUUID, n_semrel / n_total as pct_semrel
-  from valid_blend_semrel
+  from valid_blend_res
 )
 select variantName, avg(pct_semrel), count(*) as n_requests
 from valid_blend_pct
