@@ -8,24 +8,24 @@ loc_exact_match_unify_v2student: ${matching.default} {
         ruleset: ["GlobalThresholdRule"]
     }
     dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
-        blending_backend: seldon
-        blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
+      blending_backend: seldon
+      blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
     }
     lexical_engine: ${matching.default.lexical_engine} {
-        should_limit_solr_candidates: true
+      should_limit_solr_candidates: true
     }
     preretrieval: ${core-matching.common.preretrieval} {
-        ann_feature_set: "nir-loc"
+      ann_feature_set: "nir-loc"
     }
     ann: ${core-matching.common.ann} {
-        config: {
+      config: {
         ann_threshold: 0.2
         ann_ensemble: {
-            seldon: ${services.ann_seldon.ann_ensemble_nir_loc_unify_loose}
+          seldon: ${services.ann_seldon.ann_ensemble_nir_loc_unify_loose}
         }
-        }
+      }
     }
     xwalk: ${core-matching.default.xwalk} {
-        xwalk_candidate_source: disabled
+      xwalk_candidate_source: disabled
     }
-}
+  }
