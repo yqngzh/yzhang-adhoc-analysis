@@ -1,6 +1,6 @@
-loc_exact_match_unify_v2student: ${matching.default} {
-    owners: ["#search-retrieval", "@yzhang"]
-    description: "loc: unify semrel using v2 student (based on loc_mp_no_xwalk_no_borda)"
+loc_exact_match_unify_v3student: ${matching.default} {
+    owners: ["#search-retrieval", "@ocavrois"]
+    description: "loc: semrel using v3 student (based on loc_exact_match_unify_v2student)"
     semrel_config {
         relevance_threshold: 0.31
         shop_score_threshold: 0.7
