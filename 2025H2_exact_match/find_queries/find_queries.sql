@@ -1,10 +1,10 @@
-declare start_date date default "2025-08-25";
-declare end_date date default "2025-08-25";
+declare start_date date default "2025-08-01";
+declare end_date date default "2025-08-31";
 
 -- ============================================================
 -- 1. Base sampling
 -- ============================================================
-create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_step1_0825` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base` as (
     with semrel_teacher_page1 as (
         SELECT
             mmxRequestUUID,
@@ -113,10 +113,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_step1_0825` 
 -- ============================================================
 -- 2. Query hydration (only queries from base table)
 -- ============================================================
-create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_step1_qfs_0825` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_qfs` as (
     WITH ids AS (
         SELECT DISTINCT query
-        FROM `etsy-search-ml-dev.search.yzhang_emqueries_step1_0825`
+        FROM `etsy-search-ml-dev.search.yzhang_emqueries_aug_base`
     ),
 
     query_rewrites AS (
@@ -188,7 +188,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_step1_qfs_08
         queryEntities_price,
         queryEntities_quantity,
         queryEntities_recipient
-    FROM `etsy-search-ml-dev.search.yzhang_emqueries_step1_0825` b
+    FROM `etsy-search-ml-dev.search.yzhang_emqueries_aug_base` b
     LEFT JOIN query_rewrites USING (query)
     LEFT JOIN query_entities USING (query)
     LEFT JOIN qtcv5 USING (query)
@@ -199,10 +199,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_step1_qfs_08
 -- ============================================================
 -- 3. Listing hydration (only listingIds from base table)
 -- ============================================================
-CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_step1_hydrated_0825` AS (
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated` AS (
   WITH ids AS (
     SELECT DISTINCT listingId
-    FROM `etsy-search-ml-dev.search.yzhang_emqueries_step1_0825`
+    FROM `etsy-search-ml-dev.search.yzhang_emqueries_aug_base`
   ),
 
   lfb AS (
@@ -218,7 +218,7 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_step1_hydrat
       IFNULL(listingLlmFeatures_llmHeroImageDescription, "") AS listingHeroImageCaption,
       IFNULL(verticaShopSettings_primaryLanguage, "") AS shop_primaryLanguage,
       IFNULL(localeFeatures_listingCountry, "") AS listingCountry
-    FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_2025-08-25`
+    FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent`
     WHERE key IN (SELECT listingId FROM ids)
   ),
 
@@ -311,7 +311,7 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_step1_hydrat
     listingEntities_recipient,
     listingEntities_age,
     listingEntities_misc
-  FROM `etsy-search-ml-dev.search.yzhang_emqueries_step1_qfs_0825` hq
+  FROM `etsy-search-ml-dev.search.yzhang_emqueries_aug_qfs` hq
   LEFT JOIN lfb USING (listingId)
   LEFT JOIN listing_variations USING (listingId)
   LEFT JOIN listing_reviews USING (listingId)
