@@ -319,3 +319,12 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated
   LEFT JOIN listing_entities USING (listingId)
   LEFT JOIN listing_description USING (listingId)
 );
+
+-- 46980 requests
+-- 45633 queries
+------ 1899 top.01
+------ 4529 top.1
+------ 16951 head
+------ 7863 torso
+------ 2776 tail
+-- 1790979 qlp
