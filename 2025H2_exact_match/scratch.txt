@@ -1,23 +1,82 @@
-SELECT request, queryTime 
-FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*` logs 
-WHERE request.OPTIONS.cacheBucketId = "live|web" 
-AND queryTime >= "2025-08-22 03:00:00+00:00" 
-AND queryTime < "2025-08-22 04:00:00+00:00" 
-AND request.options.queryType NOT IN ("prolist", "prolist_similar", "prolist_user_to_listing") 
-AND request.options.csrOrganic=true
-AND request.offset = 0
-AND (request.options.prolistOptions.useVespaANN = false OR request.options.prolistOptions.useVespaANN IS NULL) 
-AND NOT EXISTS (SELECT * FROM UNNEST(request.context) WHERE key = "req_source" AND value = "bot") 
--- SO
-AND request.options.searchPlacement in unnest(["wsg", "wmg"])
-AND request.options.userCountry = "US"
-AND request.options.personalizationOptions.userId = 0
--- SI
--- AND request.options.searchPlacement in unnest(["allsr", "wsg", "wmg"])
--- AND request.options.userCountry = "US"
--- AND request.options.personalizationOptions.userId != 0
-AND request.options.solrRetrievalOnly = FALSE
-AND OrganicRequestMetadata.candidateSources IS NOT NULL
-AND runtime.sampleVal < 0.01
-ORDER BY runtime.sampleVal 
-LIMIT 13750
+loc_exact_match_unify_v2student: ${matching.default} {
+    owners: ["#search-retrieval", "@yzhang"]
+    description: "loc: unify semrel using v2 student (based on loc_mp_no_xwalk_no_borda)"
+    semrel_config {
+        relevance_threshold: 0.31
+        shop_score_threshold: 0.7
+        tfserving:${semrel.tfserving.semrel-serve-v2}
+        ruleset: ["GlobalThresholdRule"]
+    }
+    dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
+      blending_backend: seldon
+      blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
+    }
+    lexical_engine: ${matching.default.lexical_engine} {
+      should_limit_solr_candidates: true
+    }
+    preretrieval: ${core-matching.common.preretrieval} {
+      ann_feature_set: "nir-loc"
+    }
+    ann: ${core-matching.common.ann} {
+      config: {
+        ann_threshold: 0.2
+        ann_ensemble: {
+          seldon: ${services.ann_seldon.ann_ensemble_nir_loc_unify_loose}
+        }
+      }
+    }
+    xwalk: ${core-matching.default.xwalk} {
+      xwalk_candidate_source: disabled
+    }
+  }
+
+  exact_match_unify_v2student_si: ${matching.default} {
+     owners: ["#search-retrieval", "@yzhang"]
+     description: "SI: unify semrel student to serve-v2 (based on entity_title_si)"
+     semrel_config {
+          relevance_threshold: 0.26
+          shop_score_threshold: 0.7
+          tfserving:${semrel.tfserving.semrel-serve-v2}
+          ruleset: ["GlobalThresholdRule"]
+     }
+     dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
+       blending_backend: seldon
+       blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
+     }
+     lexical_engine: ${matching.default.lexical_engine} {
+       should_limit_solr_candidates: true
+       enable_gqi: true
+     }
+     preretrieval: ${core-matching.common.preretrieval} {
+        ann_feature_set: "nir-perso-lite"
+     }
+     ann: ${core-matching.common.ann} {
+       candidate_source: ann
+       config: {
+         ann_ensemble: {
+           seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
+         }
+       }
+     }
+     xwalk: ${core-matching.default.xwalk} {
+       xwalk_candidate_source: disabled
+     }
+     xml: ${core-matching.common.xml} {
+       request_config {
+         k: 400,
+         beam_size: 40,
+         threshold: 0.0,
+         pp: "sigmoid",
+         multiterm_predict: "True"
+       }
+       xml_http_service: ${services.xml.xml_v2_multiterm.http}
+     }
+     query_entity {
+      query_entity: cached
+        dataset: smu_query_entity_extraction_v2
+        memcached {
+          memcached_enabled: true
+          ttl: 12 hours
+      }
+    }
+  }
