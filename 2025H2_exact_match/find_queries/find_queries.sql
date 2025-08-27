@@ -328,3 +328,13 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated
 ------ 7863 torso
 ------ 2776 tail
 -- 1790979 qlp
+
+-- one day 2025-08-24
+-- 2133 requests
+-- 2102 queries
+------ 93 top.01
+------ 245 top.1
+------ 746 head
+------ 394 torso
+------ 123 tail
+-- 80878 qlp
