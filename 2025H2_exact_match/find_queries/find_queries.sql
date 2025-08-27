@@ -1,10 +1,10 @@
 declare start_date date default "2025-08-01";
-declare end_date date default "2025-08-31";
+declare end_date date default "2025-08-25";
 
 -- ============================================================
--- 1. Base sampling
+-- 0. Base sampling
 -- ============================================================
-create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw` as (
     with semrel_teacher_page1 as (
         SELECT
             mmxRequestUUID,
@@ -105,6 +105,27 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base` as
     FROM valid_us_so_page1 r, UNNEST(r.listing_set) AS ls
     where pct_em <= 0.6
     order by date, mmxRequestUUID, query, rankingRank
+)
+
+
+-- ============================================================
+-- 1. capture page 1 exact match locations
+-- ============================================================
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base` as (
+    with semrel_on_page as (
+        select 
+            mmxRequestUUID, guid, date, query, platform, queryBin, qisClass,
+            sum(if(semrelClass = "Relevant" and rankingRank >= 12 , 1, 0)) n_bottom_em,
+            sum(if(semrelClass != "Relevant" and rankingRank < 12 , 1, 0)) n_top_irr
+        from `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw`
+        group by mmxRequestUUID, guid, date, query, platform, queryBin, qisClass
+    )
+    select raw_table.*
+    from `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw` raw_table
+    join semrel_on_page
+    using (mmxRequestUUID, guid, date, query, platform, queryBin, qisClass)
+    where n_bottom_em >= 1
+    and n_top_irr >= 2
 )
 
 
@@ -318,23 +339,59 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated
   LEFT JOIN listing_images USING (listingId)
   LEFT JOIN listing_entities USING (listingId)
   LEFT JOIN listing_description USING (listingId)
-);
+)
 
--- 46980 requests
--- 45633 queries
------- 1899 top.01
------- 4529 top.1
------- 16951 head
------- 7863 torso
------- 2776 tail
--- 1790979 qlp
 
--- one day 2025-08-24
--- 2133 requests
--- 2102 queries
------- 93 top.01
------- 245 top.1
------- 746 head
------- 394 torso
------- 123 tail
--- 80878 qlp
+-- ============================================================
+-- 4. Analysis on the tables
+-- ============================================================
+------ August data
+-- teacher sample: 505681 reqs, 418154 queries, 16680632 qlps  
+-- raw:            46980 reqs,  45633 queries,  1790979  qlps  (~10%)
+-- base:           33336 reqs,  32351 queries,  1269029  qlps  (~7%)
+
+------ One day 2025-08-24
+-- teacher sample: 21483 reqs, 20631 queries, 749210 qlps  
+-- raw:            2133  reqs, 2102  queries, 80878 qlps  (~10%)
+-- base:           1437  reqs, 1425  queries, 54871  qlps  (~7%)
+
+declare start_date date default "2025-08-01";
+declare end_date date default "2025-08-25";
+
+with semrel_teacher_page1 as (
+    SELECT
+        mmxRequestUUID,
+        guid,
+        query,
+        r.queryBin,
+        r.qisClass,
+        listingId,
+        r.date,
+        platform,
+        userLanguage,
+        userCountry,
+        CASE 
+            WHEN classId = 1 THEN 'Irrelevant' 
+            WHEN classId = 2 THEN 'Partial'
+            WHEN classId = 3 THEN 'Relevant' 
+        END AS semrelClass,
+        softmaxScores,
+        rankingRank
+    FROM `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests` r
+    JOIN `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics` USING (tableUUID)
+    WHERE modelName = "v3-finetuned-llama-8b" 
+    AND r.date between start_date and end_date
+    AND pageNum = 1
+    AND r.resultType = "organic"
+),
+tmp as (
+    select distinct query, listingId
+    from semrel_teacher_page1
+)
+select count(*) from tmp
+
+with tmp as (
+    select distinct query, listingId
+    from `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw`
+)
+select count(*) from tmp
