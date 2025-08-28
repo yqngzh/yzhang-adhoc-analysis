@@ -395,3 +395,51 @@ with tmp as (
     from `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw`
 )
 select count(*) from tmp
+
+
+
+
+-- ============================================================
+-- 5. After LLM annotation, analyze the results
+-- ============================================================
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_result` AS (
+  with qlp as (
+    select distinct query, listingId, semrelClass, llm_final_label, llm_consensus_type
+    from `etsy-search-ml-dev.search.yzhang_emqueries_aug_llm`
+  ),
+
+  queries_consensus_group as (
+    select 
+      query, 
+      sum(if(llm_consensus_type in ("5-0", "4-1"), 1, 0)) / count(*) as pct_consensus
+    from qlp
+    group by query
+  ),
+  queries_good_consensus as (
+    select distinct query
+    from queries_consensus_group
+    where pct_consensus > 0.8
+  ),
+
+  queries_llm_teacher_align as (
+    select 
+      query,
+      sum(if(llm_final_label = semrelClass, 1, 0)) / count(*) as pct_agree
+    from qlp
+    group by query
+  ),
+  queries_models_agree as (
+    select distinct query
+    from queries_llm_teacher_align
+    where pct_agree > 0.8
+  )
+
+  select * 
+  from `etsy-search-ml-dev.search.yzhang_emqueries_aug_llm`
+  where query in (select query from queries_models_agree)
+  and query in (select query from queries_good_consensus)
+)
+-- 1425 queries total
+-- good agreement: 1310
+-- llm, v3 align: 515
+-- final: 500
