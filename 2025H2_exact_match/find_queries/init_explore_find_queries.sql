@@ -352,7 +352,8 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated
 
 ------ One day 2025-08-24
 -- teacher sample: 21483 reqs, 20631 queries, 749210 qlps  
--- raw:            2133  reqs, 2102  queries, 80878 qlps  (~10%)
+-- raw excl <0.6:  4492  reqs, 4338  queries, 166623 qlps  (~20%)
+-- raw:            2133  reqs, 2102  queries, 80878  qlps  (~10%)
 -- base:           1437  reqs, 1425  queries, 54871  qlps  (~7%)
 
 declare start_date date default "2025-08-01";
