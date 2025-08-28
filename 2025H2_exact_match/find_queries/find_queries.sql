@@ -1,5 +1,5 @@
 declare start_date date default "2025-08-01";
-declare end_date date default "2025-08-25";
+declare end_date date default "2025-08-26";
 
 -- ============================================================
 -- 0. Base sampling
@@ -18,9 +18,9 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw
             userLanguage,
             userCountry,
             CASE 
-                WHEN classId = 1 THEN 'Irrelevant' 
-                WHEN classId = 2 THEN 'Partial'
-                WHEN classId = 3 THEN 'Relevant' 
+                WHEN classId = 1 THEN 'not_relevant' 
+                WHEN classId = 2 THEN 'partial'
+                WHEN classId = 3 THEN 'relevant' 
             END AS semrelClass,
             softmaxScores,
             rankingRank
@@ -71,7 +71,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw
             date,
             platform, 
             count(*) as n_total, 
-            sum(if(semrelClass = 'Relevant', 1, 0)) as n_em,
+            sum(if(semrelClass = 'relevant', 1, 0)) as n_em,
             ARRAY_AGG(STRUCT(listingId, semrelClass, softmaxScores, rankingRank) ORDER BY rankingRank) AS listing_set
         from us_so_page1
         group by mmxRequestUUID, guid, date, query, platform, queryBin, qisClass
@@ -115,8 +115,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_aug_base` as
     with semrel_on_page as (
         select 
             mmxRequestUUID, guid, date, query, platform, queryBin, qisClass,
-            sum(if(semrelClass = "Relevant" and rankingRank >= 12 , 1, 0)) n_bottom_em,
-            sum(if(semrelClass != "Relevant" and rankingRank < 12 , 1, 0)) n_top_irr
+            sum(if(semrelClass = "relevant" and rankingRank >= 12 , 1, 0)) n_bottom_em,
+            sum(if(semrelClass != "relevant" and rankingRank < 12 , 1, 0)) n_top_irr
         from `etsy-search-ml-dev.search.yzhang_emqueries_aug_base_raw`
         group by mmxRequestUUID, guid, date, query, platform, queryBin, qisClass
     )
@@ -346,9 +346,9 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated
 -- 4. Analysis on the tables
 -- ============================================================
 ------ August data
--- teacher sample: 505681 reqs, 418154 queries, 16680632 qlps  
--- raw:            46980 reqs,  45633 queries,  1790979  qlps  (~10%)
--- base:           33336 reqs,  32351 queries,  1269029  qlps  (~7%)
+-- teacher sample: 525350 reqs, 433377 queries, 17311138 qlps  
+-- raw:            48704 reqs,  47304 queries,  1857206  qlps  (~10%)
+-- base:           34564 reqs,  33540 queries,  1315831  qlps  (~7%)
 
 ------ One day 2025-08-24
 -- teacher sample: 21483 reqs, 20631 queries, 749210 qlps  
@@ -356,7 +356,7 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_aug_hydrated
 -- base:           1437  reqs, 1425  queries, 54871  qlps  (~7%)
 
 declare start_date date default "2025-08-01";
-declare end_date date default "2025-08-25";
+declare end_date date default "2025-08-26";
 
 with semrel_teacher_page1 as (
     SELECT
@@ -371,9 +371,9 @@ with semrel_teacher_page1 as (
         userLanguage,
         userCountry,
         CASE 
-            WHEN classId = 1 THEN 'Irrelevant' 
-            WHEN classId = 2 THEN 'Partial'
-            WHEN classId = 3 THEN 'Relevant' 
+            WHEN classId = 1 THEN 'not_relevant' 
+            WHEN classId = 2 THEN 'partial'
+            WHEN classId = 3 THEN 'relevant' 
         END AS semrelClass,
         softmaxScores,
         rankingRank
