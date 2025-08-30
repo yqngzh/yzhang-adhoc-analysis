@@ -7,13 +7,13 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
             source_request_uuid as mmxRequestUUID,
             date(TIMESTAMP_SECONDS(request_time)) as queryDate,
         from `etsy-data-warehouse-prod.rollups.unified_impressions`
-        where _date between date('2025-08-26') and date('2025-08-28')
+        where _date = date('2025-08-28')
         and source_request_uuid is not null
         and source = 'search'
         and page_number = 1
         and query is not null and query != ""
         and rand() > 0.5
-        limit 100000
+        limit 5000
     ),
 
     rpc_data as (
@@ -33,6 +33,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
             ) as platform,
             request.options.userLanguage userLanguage,
             request.options.userCountry userCountry,
+            IF(request.options.personalizationOptions.userId > 0, "SI", "SO") si_so,
             OrganicRequestMetadata.candidateSources candidateSources
         FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
         WHERE request.OPTIONS.cacheBucketId LIKE "live%"
@@ -40,14 +41,11 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
         AND request.options.searchPlacement IN ('wsg', 'allsr', 'wmg')
         AND request.query <> ''
         AND request.offset = 0
-        AND DATE(queryTime) between date('2025-08-26') and date('2025-08-29')
+        AND DATE(queryTime) = date('2025-08-28')
         AND request.options.interleavingConfig IS NULL
         AND NOT EXISTS (
             SELECT * FROM UNNEST(request.context)
             WHERE key = "req_source" AND value = "bot"
-        )
-        AND response.mmxRequestUUID IN (
-            select mmxRequestUUID from sample_requests_with_impression
         )
     ),
 
@@ -63,7 +61,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
             ) listingSamples
         from sample_requests_with_impression
         join rpc_data
-        using (mmxRequestUUID, queryDate)
+        using (mmxRequestUUID)
     ),
 
     valid_impressed_requests as (
@@ -71,7 +69,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
         from impressed_requests
         where array_length(listingSamples) = 48
     )
-    select * except (listingSamples)
+    select * except (listingSamples, candidateSources)
     from valid_impressed_requests,
       unnest(valid_impressed_requests.listingSamples) listingSample
 )
