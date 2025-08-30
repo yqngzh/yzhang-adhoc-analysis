@@ -88,6 +88,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_qfs` a
       select distinct query_raw as query, bin as queryBin 
       from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
     ),
+
     qisv3 AS (
       select query_raw query,
       CASE 
@@ -168,6 +169,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_qfs` a
         queryEntities_quantity,
         queryEntities_recipient
     FROM `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` b
+    LEFT JOIN qlm USING (query)
+    LEFT JOIN qisv3 USING (query)
     LEFT JOIN query_rewrites USING (query)
     LEFT JOIN query_entities USING (query)
     LEFT JOIN qtcv5 USING (query)
