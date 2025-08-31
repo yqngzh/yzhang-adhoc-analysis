@@ -13,7 +13,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
         and page_number = 1
         and query is not null and query != ""
         and rand() > 0.5
-        limit 5000
+        limit 10000
     ),
 
     rpc_data as (
@@ -55,13 +55,13 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
             rpc_data.*,
             ARRAY(
                 SELECT STRUCT(listing_id AS listingId, idx AS listingRank)
-                FROM UNNEST(candidateSources) cs,
+                FROM UNNEST(candidateSources) cs, 
                     UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
                 WHERE cs.stage = "MO_LASTPASS"
                 AND idx < 48
             ) listingSamples
-        from sample_requests_with_impression
-        join rpc_data
+        from rpc_data 
+        join sample_requests_with_impression
         using (mmxRequestUUID)
     ),
 
