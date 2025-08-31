@@ -19,7 +19,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
     rpc_data as (
         select distinct 
             response.mmxRequestUUID AS mmxRequestUUID,
-            COALESCE((SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en'), NULLIF(request.query, '')) query,
+            request.query,
+            (SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en') queryEn,
             DATE(queryTime) queryDate,
             (SELECT
                 CASE
@@ -150,6 +151,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_qfs` a
 
     SELECT
         b.*,
+        queryBin,
+        qisClass,
         queryRewrites,
         queryEntities,
         queryTaxoFullPath,
