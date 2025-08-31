@@ -7,7 +7,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
             source_request_uuid as mmxRequestUUID,
             date(TIMESTAMP_SECONDS(request_time)) as queryDate,
         from `etsy-data-warehouse-prod.rollups.unified_impressions`
-        where _date = date('2025-08-28')
+        where _date = date('2025-08-29')
         and source_request_uuid is not null
         and source = 'search'
         and page_number = 1
@@ -42,7 +42,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
         AND request.options.searchPlacement IN ('wsg', 'allsr', 'wmg')
         AND request.query <> ''
         AND request.offset = 0
-        AND DATE(queryTime) = date('2025-08-28')
+        AND DATE(queryTime) = date('2025-08-29')
         AND request.options.interleavingConfig IS NULL
         AND NOT EXISTS (
             SELECT * FROM UNNEST(request.context)
