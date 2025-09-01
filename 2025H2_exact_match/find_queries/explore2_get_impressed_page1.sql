@@ -13,7 +13,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` 
         and page_number = 1
         and query is not null and query != ""
         and rand() > 0.5
-        limit 10000
+        limit 5000
     ),
 
     rpc_data as (
