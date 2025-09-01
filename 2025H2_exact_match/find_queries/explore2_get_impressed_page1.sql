@@ -305,3 +305,25 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_issue_hydrat
   LEFT JOIN listing_description USING (listingId)
 )
 
+
+-- ============================================================
+-- 4. clean LLM annotated data
+-- why rows don't match: 
+    -- 232136 query, listingId; 232162 query, queryEn, listingId
+    -- same qlp can have different prediction due to randomness
+-- ============================================================
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm_clean` AS (
+    with requests_n_listings as (
+        select mmxRequestUUID, query, queryEn, count(*) as n_listings
+        from `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm`
+        group by mmxRequestUUID, query, queryEn
+    )
+    select *
+    from `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm`
+    where mmxRequestUUID in (
+        select mmxRequestUUID from requests_n_listings
+        where n_listings = 48
+    )
+)
+-- 4855 requests -> 4849 requests
+-- 4801 query
