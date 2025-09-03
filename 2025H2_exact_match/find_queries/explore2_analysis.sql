@@ -231,3 +231,47 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_issue_proble
         select mmxRequestUUID from problematic_requests
     )
 )
+
+
+
+-- ============================================================
+-- Queries with or without prior engagement
+-- ============================================================
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm_clean_full` as (
+    with qlm as (
+        select distinct 
+            query_raw as query, 
+            if(total_clicks > 0, "has_clicks", "no_clicks") as queryPriorClicks,
+            if(total_purchases > 0, "has_purchase", "no_purchase") as queryPriorPurchase,
+        from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
+    )
+    select 
+        x.*,
+        queryPriorClicks, queryPriorPurchase
+    from `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm_clean_wqee` x
+    left join qlm using (query)
+)
+
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_problem_requests_full` as (
+    with qlm as (
+        select distinct 
+            query_raw as query, 
+            if(total_clicks > 0, "has_clicks", "no_clicks") as queryPriorClicks,
+            if(total_purchases > 0, "has_purchase", "no_purchase") as queryPriorPurchase,
+        from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
+    )
+    select 
+        x.*,
+        queryPriorClicks, queryPriorPurchase
+    from `etsy-search-ml-dev.search.yzhang_emqueries_issue_problem_requests_wqee` x
+    left join qlm using (query)
+)
+
+with tmp as (
+    select distinct queryPriorClicks, mmxRequestUUID
+    from `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm_clean_full`
+)
+select queryPriorClicks, count(*) 
+from tmp
+group by queryPriorClicks
+order by queryPriorClicks
