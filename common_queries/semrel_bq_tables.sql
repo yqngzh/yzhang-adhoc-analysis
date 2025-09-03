@@ -46,3 +46,34 @@ agg_results as (
 select variantName, avg(n_irrelevant / n_total)
 from agg_results
 group by variantName
+
+
+
+---- student score from rpc logs
+WITH rpc AS (
+  SELECT
+      response.mmxRequestUUID,
+      request.query AS query,
+      request.context AS context,
+      OrganicRequestMetadata.candidateSources AS candidateSources,
+      response.semanticRelevanceModelInfo.modelSetName as sem_rel_modelset_name,
+      response.semanticRelevanceScores AS semanticRelevanceScores,
+  FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+  WHERE 
+      queryTime BETWEEN TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 MINUTE)  -- seconds
+    AND CURRENT_TIMESTAMP() 
+      AND request.query <> ''
+      AND request.options.csrOrganic
+      AND request.options.interleavingConfig IS NULL
+      AND OrganicRequestMetadata IS NOT NULL
+)
+SELECT
+    rpc.mmxRequestUUID,
+    rpc.query,
+    sem_rel_modelset_name,
+    sem_rel_score.listingId AS listing_id,
+    sem_rel_score.candidateSource AS source,
+    sem_rel_score.relevanceClass AS rel_class
+FROM rpc,
+  UNNEST(semanticRelevanceScores) sem_rel_score
+LIMIT 10000
