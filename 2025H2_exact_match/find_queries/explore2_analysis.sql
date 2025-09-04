@@ -275,3 +275,12 @@ select queryPriorClicks, count(*)
 from tmp
 group by queryPriorClicks
 order by queryPriorClicks
+
+
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_query_engagement` as (
+    select distinct 
+        query_raw as query, 
+        if(total_clicks > 0, "has_clicks", "no_clicks") as queryPriorClicks,
+        if(total_purchases > 0, "has_purchase", "no_purchase") as queryPriorPurchase,
+    from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
+)
