@@ -1,83 +1,635 @@
-loc_exact_match_unify_v3student: ${matching.default} {
-    owners: ["#search-retrieval", "@ocavrois"]
-    description: "loc: semrel using v3 student (based on loc_exact_match_unify_v2student)"
-    semrel_config {
-        relevance_threshold: 0.32
-        shop_score_threshold: 0.7
-        tfserving:${semrel.tfserving.semrel-student-v3}
-        ruleset: ["GlobalThresholdRule"]
-    }
-    dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
-      blending_backend: seldon
-      blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
-    }
-    lexical_engine: ${matching.default.lexical_engine} {
-      should_limit_solr_candidates: true
-    }
-    preretrieval: ${core-matching.common.preretrieval} {
-      ann_feature_set: "nir-loc"
-    }
-    ann: ${core-matching.common.ann} {
-      config: {
-        ann_threshold: 0.2
-        ann_ensemble: {
-          seldon: ${services.ann_seldon.ann_ensemble_nir_loc_unify_loose}
-        }
-      }
-    }
-    xwalk: ${core-matching.default.xwalk} {
-      xwalk_candidate_source: disabled
-    }
-  }
+CREATE OR REPLACE TABLE FUNCTION `etsy-data-warehouse-prod.search.sem_rel_get_requests_per_every_exp`(sampleDate DATE) AS (
+WITH
+allConfigs AS (
+  SELECT
+    DISTINCT l.config_flag AS configFlag,
+    e.variant_id AS variantName,
+    LOWER(p.name) AS platform,
+  FROM `etsy-data-warehouse-prod.etsy_atlas.catapult_launches` l
+  JOIN `etsy-data-warehouse-prod.catapult_unified.bucketing_period` e
+  ON
+    l.config_flag = e.experiment_id
+    AND _date = sampleDate
+  JOIN `etsy-data-warehouse-prod.etsy_atlas.catapult_launches_expected_platforms` p
+  ON p.launch_id = l.launch_id
+  WHERE (team IN ('Search Ranking', 'Search Retrieval', 'International Search', 'Search Mission Understanding', 'Search Optimization','Ads Search Quality'))
+),
+platformConfigs AS (
+  SELECT *
+  FROM allConfigs
+  UNION ALL
+  SELECT
+    configFlag,
+    variantName,
+    'mweb'
+  FROM allConfigs
+  WHERE platform = 'web'
+),
+sampleConfigs AS (
+  SELECT
+    configFlag,
+    variantName,
+    platform AS requestSource,
+    CASE
+      WHEN platform = 'boe' THEN 68
+      WHEN platform = 'web' THEN 88
+      WHEN platform = 'mweb' THEN 74
+    END AS minResults,
+    CASE
+      WHEN platform = 'boe' THEN 28
+      WHEN platform = 'web' THEN 48
+      WHEN platform = 'mweb' THEN 34
+    END AS listingPerPage
+  FROM platformConfigs
+),
+
+sampleConfigs_prolist AS (
+  SELECT
+    configFlag,
+    variantName,
+    platform AS requestSource,
+    CASE
+      WHEN platform = 'boe' THEN 49
+      WHEN platform = 'web' THEN 64
+      WHEN platform = 'mweb' THEN 54
+    END AS minResults,
+    CASE
+      WHEN platform = 'boe' THEN 9
+      WHEN platform = 'web' THEN 24
+      WHEN platform = 'mweb' THEN 14
+    END AS listingPerPage
+  FROM platformConfigs
+),
+
+experimentRequests AS (
+  SELECT
+    DISTINCT properties.value AS etsyUUID,
+    ab.key AS configFlag,
+    ab.value.value_tuple[
+  OFFSET(0)] AS variantName,
+  FROM `etsy-visit-pipe-prod.canonical.beacons_recent` b
+  INNER JOIN
+    UNNEST(b.ab.key_value) ab,
+    UNNEST(b.properties.key_value) properties
+  WHERE
+    DATE(_PARTITIONTIME) = sampleDate
+    AND properties.key = "request_uuid"
+    AND ab.value.value_tuple[OFFSET(0)] <> 'ineligible'
+    AND b.event_name IN ('search', 'market')
+  ),
+
+ProlistexperimentRequests AS (
+  SELECT
+    DISTINCT 
+    (SELECT value FROM UNNEST(properties.key_value) WHERE key = 'request_uuid') AS etsyUUID,
+    ab.key AS configFlag,
+    ab.value.value_tuple[
+  OFFSET(0)] AS variantName,
+  FROM `etsy-visit-pipe-prod.canonical.beacons_recent` b
+  INNER JOIN
+    UNNEST(b.ab.key_value) ab
+  WHERE
+    DATE(_PARTITIONTIME) = sampleDate
+    AND  (SELECT value FROM UNNEST(properties.key_value) WHERE key = 'source') in ('ads')
+    AND  (SELECT value FROM UNNEST(properties.key_value) WHERE key = 'placement') in ('wsg','allsr','wmg')  
+    AND ab.value.value_tuple[OFFSET(0)] <> 'ineligible'
+    AND b.event_name IN ('listing_set_delivered')
+  ),
 
 
-exact_match_student_v3_us_si: ${matching.default} {
-    owners: ["#search-retrieval", "@yzhang"]
-    description: "Semrel student v3 (based on exact_match_unify_v2student_si)"
-    semrel_config {
-         relevance_threshold: 0.27
-         shop_score_threshold: 0.7
-         tfserving:${semrel.tfserving.semrel-student-v3}
-         ruleset: ["GlobalThresholdRule"]
-    }
-    dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
-      blending_backend: seldon
-      blending_modelset:  ${services.blender_seldon.search_blender_no_borda}
-    }
-    lexical_engine: ${matching.default.lexical_engine} {
-      should_limit_solr_candidates: true
-      enable_gqi: true
-    }
-    preretrieval: ${core-matching.common.preretrieval} {
-      ann_feature_set: "nir-perso-lite"
-    }
-    ann: ${core-matching.common.ann} {
-      candidate_source: ann
-      config: {
-        ann_ensemble: {
-          seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
-        }
-      }
-    }
-    xwalk: ${core-matching.default.xwalk} {
-      xwalk_candidate_source: disabled
-    }
-    xml: ${core-matching.common.xml} {
-      request_config {
-        k: 400,
-        beam_size: 40,
-        threshold: 0.0,
-        pp: "sigmoid",
-        multiterm_predict: "True"
-      }
-     xml_http_service: ${services.xml.xml_v2_multiterm.http}
-    }
-    query_entity {
-      query_entity: cached
-        dataset: smu_query_entity_extraction_v2
-        memcached {
-          memcached_enabled: true
-          ttl: 12 hours
-      }
-    }
-  }
+allRequests AS (
+  SELECT
+    (SELECT COUNTIF(stage='MO_LASTPASS') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nLastpassSources,
+    (SELECT COUNTIF(stage='POST_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostFilterSources,
+    (SELECT COUNTIF(stage='POST_BORDA') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostBordaSources,
+    (SELECT COUNTIF(stage='POST_SEM_REL_FILTER') FROM UNNEST(OrganicRequestMetadata.candidateSources)) nPostSemrelSources,
+    COALESCE((SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en'), NULLIF(request.query, '')) query,
+    request.options.userLanguage userLanguage,
+    request.options.locale userLocale,
+    response.count numResults,
+    request.filter.maturity AS matureFilter,
+    DATE(queryTime) date,
+    RequestIdentifiers.etsyRequestUUID AS etsyUUID,
+    response.mmxRequestUUID AS mmxRequestUUID,
+    (
+    SELECT
+      CASE
+        WHEN value = 'web' THEN 'web'
+        WHEN value = 'web_mobile' THEN 'mweb'
+        WHEN value IN ('etsy_app_android', 'etsy_app_ios', 'etsy_app_other') THEN 'boe'
+      ELSE value
+    END
+    FROM UNNEST(request.context)
+    WHERE KEY = "req_source" ) AS requestSource,
+    OrganicRequestMetadata.candidateSources candidateSources
+  FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+  WHERE
+    request.OPTIONS.cacheBucketId LIKE "live%"
+    AND request.options.csrOrganic
+    AND request.query <> ''
+    AND request.OFFSET = 0
+    AND DATE(queryTime) = sampleDate
+    AND request.options.interleavingConfig IS NULL
+),
+reqsSample AS (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY sc.configFlag, sc.variantName ORDER BY RAND()) AS rn
+  FROM allRequests a
+    JOIN experimentRequests e USING (etsyUUID)
+    JOIN sampleConfigs sc USING (requestSource, configFlag, variantName)
+  WHERE
+    nLastPassSources=1
+    AND nPostFilterSources>=1
+    AND (nPostBordaSources>=1 OR nPostSemrelSources>=1)
+    AND a.numResults > sc.minResults
+  -- Sample 6k from each variant if BOE, 8k if mweb/desktop
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY sc.configFlag, sc.variantName ORDER BY RAND()) <= IF(requestSource = 'boe', 6000, 8000)
+),
+
+prolist_requests AS (
+  SELECT
+    RequestIdentifiers.etsyRequestUUID AS etsyUUID,
+    DATE(queryTime) date,
+    response.mmxRequestUUID as mmxRequestUUID,
+    response.count as numResults,
+    request.filter.maturity AS matureFilter,
+    (
+    SELECT 
+      CASE
+        WHEN value = 'web' THEN 'web' -- desktop and mweb are sampled differently due to their different page size
+        WHEN value = 'web_mobile' THEN 'mweb'
+        WHEN value IN ('etsy_app_android', 'etsy_app_ios', 'etsy_app_other') THEN 'boe'
+      ELSE value
+    END
+    FROM UNNEST(request.context)
+    WHERE KEY = "req_source" ) AS requestSource,
+    request.options.userLanguage userLanguage,
+    ProlistRequestMetadata.auctionMetadata,
+    COALESCE((SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en'), NULLIF(request.query, '')) query
+  FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
+  WHERE 
+    DATE(queryTime) = sampleDate AND
+    request.OPTIONS.cacheBucketId LIKE "live%" AND
+    request.options.queryType = "prolist" AND
+    request.query <> '' AND
+    request.OFFSET = 0 AND
+    NOT EXISTS (SELECT * FROM UNNEST(request.context) WHERE key = "req_source" AND value = "bot") AND
+    request.options.searchPlacement in ('wsg','wmg','allsr') --limiting the resuts to Search and Market Grid on all Platforms
+),
+
+prolist_samples AS (
+  SELECT *,
+     ROW_NUMBER() OVER (PARTITION BY sc.configFlag, sc.variantName ORDER BY RAND()) AS rn
+  FROM prolist_requests pr
+  JOIN ProlistexperimentRequests e USING (etsyUUID)
+  JOIN sampleConfigs_prolist sc USING (requestSource, configFlag, variantName)
+  WHERE 
+    pr.numResults > sc.minResults
+  -- Sample 6k from each variant if BOE, 8k if mweb/desktop
+  QUALIFY ROW_NUMBER() OVER (PARTITION BY sc.configFlag, sc.variantName ORDER BY RAND()) <= IF(requestSource = 'boe', 6000, 8000)
+),
+
+beacon AS (
+  SELECT
+    DISTINCT beacon.guid,
+    visit_id,
+    COALESCE(
+            (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'mmx_request_uuid') ,
+            (SELECT JSON_KEYS(PARSE_JSON(value))[SAFE_OFFSET(0)] FROM UNNEST(beacon.properties.key_value) WHERE key = 'mmx_request_uuid_map')) mmxRequestUUID
+  FROM `etsy-visit-pipe-prod.canonical.visit_id_beacons`
+  WHERE
+    DATE(_PARTITIONTIME) = sampleDate
+    AND beacon.event_name IN ('search', 'market')
+),
+
+Prolistbeacon AS (
+  SELECT
+    DISTINCT beacon.guid,
+    visit_id,
+    COALESCE(
+            (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'source_request_uuid') , 
+            (SELECT JSON_KEYS(PARSE_JSON(value))[SAFE_OFFSET(0)] FROM UNNEST(beacon.properties.key_value) WHERE key = 'mmx_request_uuid_map')) mmxRequestUUID
+  FROM `etsy-visit-pipe-prod.canonical.visit_id_beacons`
+  WHERE
+    DATE(_PARTITIONTIME) = sampleDate
+    AND beacon.event_name IN ('listing_set_delivered')
+    AND  (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'source') = 'ads'
+    AND  (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'source_request_type') = 'mmx'
+    AND  (SELECT value FROM UNNEST(beacon.properties.key_value) WHERE key = 'placement') in ('wsg','allsr','wmg')  
+),
+
+lfb AS (
+  SELECT
+    KEY listingId,
+    verticaListings_taxonomyPath listingTaxo,
+    COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')) listingTitle,
+    verticaListings_description listingDescription,
+    verticaListings_tags listingTags,
+    (SELECT STRING_AGG(element, ';') FROM UNNEST(kbAttributesV2_sellerAttributesV2.list)) AS listingAttributes,
+    verticaSellerBasics_shopName as listingShopName
+  FROM `etsy-ml-systems-prod.feature_bank_v2.listing_feature_bank_most_recent` ),
+qis AS (
+  SELECT DISTINCT
+    query,
+    CASE
+      WHEN prediction = 0 THEN 'broad'
+      WHEN prediction = 1 THEN 'direct_unspecified'
+      WHEN prediction = 2 THEN 'direct_specified'
+    END AS qisClass
+  FROM `etsy-search-ml-prod.mission_understanding.qis_scores_v2` ),
+qfb AS (
+  SELECT
+    KEY query,
+    queryTaxoClassification_taxoPath queryTaxo
+  FROM `etsy-ml-systems-prod.feature_bank_v2.query_feature_bank_most_recent`
+),
+
+queryHydratedRequests AS (
+  SELECT
+    etsyUUID,
+    mmxRequestUUID,
+    guid,
+    visit_id,
+    query,
+    REGEXP_CONTAINS(query, '(\?i)\\bgift|\\bfor (\\bhim|\\bher|\\bmom|\\bdad|\\bmother|\\bfather|\\bdaughter|\\bson|\\bwife|\\bhusband|\\bpartner|\\baunt|\\buncle|\\bniece|\\bnephew|\\bfiance|\\bcousin|\\bin law|\\bboyfriend|\\bgirlfriend|\\bgrand|\\bfriend|\\bbest friend)') isGift,
+    IFNULL(qis.qisClass, 'missing') qisClass,
+    queryTaxo,
+    requestSource platform,
+    userLanguage,
+    numResults,
+    matureFilter,
+    reqsSample.date,
+    reqsSample.variantName,
+    reqsSample.configFlag,
+    ARRAY_CONCAT(
+      ARRAY(
+        SELECT
+          STRUCT(listing_id AS listingId,
+            idx AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            CAST(NULL AS STRING) AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            1 AS pageNum,
+            CAST(NULL AS INT64)  AS FirstPassRetrievedRank_prolist, --for prolist, Added for struct consistency required for the union done later in the script
+            CAST(NULL AS INT64)  AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64)  AS SecondPassRanked_prolist
+          )
+        FROM UNNEST(candidateSources) cs,
+          UNNEST(cs.listingIds) AS listing_id
+          WITH OFFSET idx
+        WHERE
+          cs.stage = "MO_LASTPASS"
+          AND idx < listingPerPage
+      ),
+      ARRAY(
+        SELECT
+          STRUCT(listing_id AS listingId,
+            idx AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            CAST(NULL AS STRING) AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            2 AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist, --for prolist, Added for struct consistency required for the union done later in the script
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64) AS  SecondPassRanked_prolist
+          )
+        FROM UNNEST(candidateSources) cs,
+          UNNEST(cs.listingIds) AS listing_id
+          WITH OFFSET idx
+        WHERE
+          cs.stage = "MO_LASTPASS"
+          AND idx >= listingPerPage
+          AND idx < listingPerPage * 2
+        ORDER BY RAND()
+        LIMIT 10
+      ),
+      ARRAY(
+        SELECT
+          STRUCT(listing_id AS listingId,
+            idx AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            CAST(NULL AS STRING) AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            3 AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist, --for prolist, Added for struct consistency required for the union done later in the script
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64) AS SecondPassRanked_prolist
+            )
+        FROM UNNEST(candidateSources) cs,
+          UNNEST(cs.listingIds) AS listing_id
+          WITH OFFSET idx
+        WHERE
+          cs.stage = "MO_LASTPASS"
+          AND idx >= listingPerPage * 2
+          AND idx < listingPerPage * 3
+        ORDER BY RAND()
+        LIMIT 10
+      ),
+      ARRAY(
+        SELECT
+          STRUCT(listing_id AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            idx AS retrievalRank,
+            cs.source AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            CAST(NULL AS INT64) AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist, --for prolist, Added for struct consistency required for the union done later in the script
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64) AS SecondPassRanked_prolist
+          )
+        FROM UNNEST(candidateSources) cs,
+          UNNEST(cs.listingIds) AS listing_id
+          WITH OFFSET idx
+        WHERE cs.stage = "POST_FILTER"
+        ORDER BY RAND()
+        LIMIT 10
+      ),
+      ARRAY(
+        SELECT
+          STRUCT(listing_id AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            CAST(NULL AS STRING) AS retrievalSrc,
+            idx AS bordaRank,
+            CAST(NULL AS INT64) AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist, --for prolist, Added for struct consistency required for the union done later in the script
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64) AS SecondPassRanked_prolist
+            )
+        FROM UNNEST(candidateSources) cs,
+          UNNEST(cs.listingIds) AS listing_id
+          WITH OFFSET idx
+        WHERE cs.stage = IF(nPostSemrelSources>0, "POST_SEM_REL_FILTER", "POST_BORDA")
+        ORDER BY RAND()
+        LIMIT 10
+      )
+    ) listingSamples
+  FROM reqsSample
+  LEFT JOIN qis
+  USING (query)
+  LEFT JOIN qfb
+  USING (query)
+  LEFT JOIN beacon
+  USING (mmxRequestUUID)
+),
+
+flatQueryHydratedRequests AS (
+  SELECT * EXCEPT (listingSamples)
+  FROM queryHydratedRequests,
+    UNNEST(queryHydratedRequests.listingSamples) listingSample
+  WHERE guid IS NOT NULL ),
+
+outputTable AS (
+  SELECT
+    flatQueryHydratedRequests.*,
+    lfb.listingTitle,
+    lfb.listingDescription,
+    lfb.listingTaxo,
+    lfb.listingTags,
+    lfb.listingAttributes,
+    lfb.listingShopName,
+  FROM flatQueryHydratedRequests
+    LEFT JOIN lfb USING (listingId)
+  WHERE listingTitle IS NOT NULL
+),
+
+ProlistqueryHydratedRequests AS (
+  SELECT
+    etsyUUID,
+    mmxRequestUUID,
+    guid,
+    visit_id,
+    query,
+    REGEXP_CONTAINS(query, '(\?i)\\bgift|\\bfor (\\bhim|\\bher|\\bmom|\\bdad|\\bmother|\\bfather|\\bdaughter|\\bson|\\bwife|\\bhusband|\\bpartner|\\baunt|\\buncle|\\bniece|\\bnephew|\\bfiance|\\bcousin|\\bin law|\\bboyfriend|\\bgirlfriend|\\bgrand|\\bfriend|\\bbest friend)') isGift,
+    IFNULL(qis.qisClass, 'missing') qisClass,
+    queryTaxo,
+    requestSource as platform,
+    userLanguage,
+    numResults,
+    matureFilter,
+    prolist_samples.date as date,
+    prolist_samples.variantName,
+    prolist_samples.configFlag,
+    ARRAY_CONCAT( 
+         ARRAY(
+        SELECT
+          STRUCT(listing_id.listingId AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            STRING_AGG(CAST(c.source AS STRING),",") AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            CAST(NULL AS INT64) AS pageNum,
+            idx AS FirstPassRetrievedRank_prolist,
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64) AS SecondPassRanked_prolist
+            )
+        FROM UNNEST(auctionMetadata) m,
+          UNNEST(m.listings) AS listing_id
+          WITH OFFSET idx
+          , UNNEST(listing_id.context1stPass.sourceContexts) c
+        WHERE
+          m.name = "FirstPassRetrieved"
+        GROUP BY listing_id.listingId, idx
+        ORDER BY RAND()
+        LIMIT 10
+        ),
+      ARRAY(
+        SELECT
+          STRUCT(listing_id.listingId AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            STRING_AGG(CAST(c.source AS STRING), ",") AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            CAST(NULL AS INT64) AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist,
+            idx AS FirstPassRankingRank_prolist,
+            CAST(NULL AS INT64) AS SecondPassRanked_prolist
+          )
+        FROM UNNEST(auctionMetadata) m,
+          UNNEST(m.listings) AS listing_id
+          WITH OFFSET idx
+        , UNNEST(listing_id.context1stPass.sourceContexts) c
+        WHERE
+          m.name = "FirstPassRanked"
+        GROUP BY listing_id.listingId, idx
+        ORDER BY RAND()
+        LIMIT 10
+        ),
+        ARRAY(
+        SELECT
+          STRUCT(listing_id.listingId AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            STRING_AGG(CAST(c.source AS STRING), ",") AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            1 AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist,
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            idx AS SecondPassRanked_prolist
+            )
+        FROM UNNEST(auctionMetadata) m,
+          UNNEST(m.listings) AS listing_id
+          WITH OFFSET idx
+        LEFT JOIN UNNEST(listing_id.context1stPass.sourceContexts) c
+        WHERE
+          m.name = "SecondPassRanked"
+          AND idx < listingPerPage
+        GROUP BY listing_id.listingId, idx
+        ORDER BY RAND()
+        LIMIT 10
+        ),
+        ARRAY(
+        SELECT
+          STRUCT(listing_id.listingId AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            STRING_AGG(CAST(c.source AS STRING), ",") AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            2 AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist,
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            idx AS SecondPassRanked_prolist
+            )
+        FROM UNNEST(auctionMetadata) m,
+          UNNEST(m.listings) AS listing_id
+          WITH OFFSET idx
+        LEFT JOIN UNNEST(listing_id.context1stPass.sourceContexts) c
+        WHERE
+          m.name = "SecondPassRanked"
+          AND idx >= listingPerPage 
+          AND idx < listingPerPage * 2
+        GROUP BY listing_id.listingId, idx
+        ORDER BY RAND()
+        LIMIT 10
+        ),
+        ARRAY(
+        SELECT
+          STRUCT(listing_id.listingId AS listingId,
+            CAST(NULL AS INT64) AS rankingRank,
+            CAST(NULL AS INT64) AS retrievalRank,
+            STRING_AGG(CAST(c.source AS STRING), ",") AS retrievalSrc,
+            CAST(NULL AS INT64) AS bordaRank,
+            3 AS pageNum,
+            CAST(NULL AS INT64) AS FirstPassRetrievedRank_prolist,
+            CAST(NULL AS INT64) AS FirstPassRankingRank_prolist,
+            idx AS SecondPassRanked_prolist
+             )
+        FROM UNNEST(auctionMetadata) m,
+          UNNEST(m.listings) AS listing_id
+          WITH OFFSET idx
+        LEFT JOIN UNNEST(listing_id.context1stPass.sourceContexts) c
+        WHERE
+          m.name = "SecondPassRanked"
+          AND idx >= listingPerPage * 2
+          AND idx < listingPerPage * 3
+        GROUP BY listing_id.listingId, idx
+        ORDER BY RAND()
+        LIMIT 10
+        ) 
+      ) AS listingSamples
+  FROM prolist_samples
+  LEFT JOIN qis
+  USING (query)
+  LEFT JOIN qfb
+  USING (query)
+  LEFT JOIN Prolistbeacon
+  USING (mmxRequestUUID)
+),
+
+  flatQueryHydratedProlistRequests AS (
+  SELECT * EXCEPT (listingSamples)
+  FROM ProlistqueryHydratedRequests,
+    UNNEST(ProlistqueryHydratedRequests.listingSamples) listingSamples
+  WHERE guid IS NOT NULL ),
+
+  ProlistoutputTable AS (
+  SELECT
+    flatQueryHydratedProlistRequests.*,
+    lfb.listingTitle,
+    lfb.listingDescription,
+    lfb.listingTaxo,
+    lfb.listingTags,
+    lfb.listingAttributes,
+    lfb.listingShopName
+  FROM flatQueryHydratedProlistRequests
+  LEFT JOIN lfb USING (listingId)
+  WHERE listingTitle IS NOT NULL
+),
+
+OrganicAdsCombinedOutputTable As (
+  SELECT 
+    etsyUUID,
+    mmxRequestUUID,
+    guid,
+    visit_id,
+    query,
+    isGift,
+    qisClass,
+    queryTaxo,
+    platform,
+    userLanguage,
+    numResults,
+    matureFilter,
+    date,
+    variantName,
+    configFlag,
+    listingId,
+    rankingRank,
+    retrievalRank,
+    retrievalSrc,
+    bordaRank,
+    pageNum,
+    listingTitle,
+    listingDescription,
+    listingTaxo,
+    listingTags,
+    listingAttributes,
+    listingShopName,
+    'search' as resultType,
+    FirstPassRetrievedRank_prolist,
+    FirstPassRankingRank_prolist,
+    SecondPassRanked_prolist
+  FROM outputTable
+
+  UNION ALL
+
+  SELECT
+    etsyUUID,
+    mmxRequestUUID,
+    guid,
+    visit_id,
+    query,
+    isGift,
+    qisClass,
+    queryTaxo,
+    platform,
+    userLanguage,
+    numResults,
+    matureFilter,
+    date,
+    variantName,
+    configFlag,
+    listingId,
+    rankingRank,
+    retrievalRank,
+    retrievalSrc,
+    bordaRank,
+    pageNum,
+    listingTitle,
+    listingDescription,
+    listingTaxo,
+    listingTags,
+    listingAttributes,
+    listingShopName,
+    'ads' as resultType,
+    FirstPassRetrievedRank_prolist,
+    FirstPassRankingRank_prolist,
+    SecondPassRanked_prolist
+  FROM ProlistoutputTable
+)
+
+SELECT
+  GENERATE_UUID() AS tableUUID,
+  OrganicAdsCombinedOutputTable.*
+FROM OrganicAdsCombinedOutputTable
+);
