@@ -88,11 +88,13 @@ order by date desc, resultType
 
 select date, resultType, count(*)
 from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
+where modelName = "v3-finetuned-llama-8b"
 group by date, resultType
 order by date desc, resultType
 
 select date, resultType, count(*)
 from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
+where modelName = "v3-finetuned-llama-8b"
 group by date, resultType
 order by date desc, resultType
 
