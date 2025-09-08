@@ -278,6 +278,7 @@ order by queryPriorClicks
 
 
 create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_query_engagement` as (
+    -- has any purchase or clicks in the past year
     select distinct 
         query_raw as query, 
         if(total_clicks > 0, "has_clicks", "no_clicks") as queryPriorClicks,
