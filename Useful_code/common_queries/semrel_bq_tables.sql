@@ -77,3 +77,24 @@ SELECT
 FROM rpc,
   UNNEST(semanticRelevanceScores) sem_rel_score
 LIMIT 10000
+
+
+
+--- semrel dashboard diagnosis
+select date, resultType, count(*)
+from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
+group by date, resultType
+order by date desc, resultType
+
+select date, resultType, count(*)
+from `etsy-data-warehouse-prod.search.sem_rel_query_listing_metrics_per_experiment`
+group by date, resultType
+order by date desc, resultType
+
+select date, resultType, count(*)
+from `etsy-data-warehouse-prod.search.sem_rel_requests_metrics_per_experiment`
+group by date, resultType
+order by date desc, resultType
+
+delete from `etsy-data-warehouse-prod.search.sem_rel_hydrated_daily_requests_per_experiment`
+where date between '2025-09-04' and "2025-09-06" 
