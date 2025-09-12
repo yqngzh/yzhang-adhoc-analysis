@@ -54,15 +54,16 @@ semrel_filtered_count as (
 )
 
 SELECT
-  percentiles[OFFSET(100)] AS p10,
-  percentiles[OFFSET(500)] AS median,
-  percentiles[OFFSET(900)] AS p90,
-  percentiles[OFFSET(950)] AS p95,
-  percentiles[OFFSET(990)] AS p99,
-  percentiles[OFFSET(999)] AS p999
+  percentiles[OFFSET(10000)] AS p10,
+  percentiles[OFFSET(50000)] AS median,
+  percentiles[OFFSET(90000)] AS p90,
+  percentiles[OFFSET(95000)] AS p95,
+  percentiles[OFFSET(99000)] AS p99,
+  percentiles[OFFSET(99900)] AS p999,
+  percentiles[OFFSET(99999)] AS p99999,
 FROM (
   SELECT
-    APPROX_QUANTILES(n_filtered, 1000) AS percentiles
+    APPROX_QUANTILES(n_filtered, 100000) AS percentiles
   FROM
     semrel_filtered_count
 )
