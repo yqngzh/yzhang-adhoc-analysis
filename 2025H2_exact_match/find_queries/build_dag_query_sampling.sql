@@ -221,7 +221,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_qfs` as 
         queryEntities_price,
         queryEntities_quantity,
         queryEntities_recipient
-    FROM `etsy-search-ml-dev.search.yzhang_emqueries_issue_base` b
+    FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` b
     LEFT JOIN qlm USING (query)
     LEFT JOIN qisv3 USING (query)
     LEFT JOIN query_rewrites USING (query)
