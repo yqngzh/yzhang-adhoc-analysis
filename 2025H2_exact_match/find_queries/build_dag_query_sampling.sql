@@ -11,11 +11,13 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
         and query is not null and query != ""
         group by query, visit_id, mmx_request_uuid
     ),
+
     query_level_impression as (
         select query, sum(per_request_impression) as per_query_impression
         from request_level_impression
         group by query
     ),
+
     top_impressed_queries as (
         select query
         from query_level_impression
@@ -69,6 +71,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
         )
         AND response.mmxRequestUUID IS NOT NULL
     ),
+
     rpc_top_impressed as (
         select 
             queryDate,
@@ -86,6 +89,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             select query from top_impressed_queries
         )
     ),
+
     sampled_requests as (
         select * except (rn)
         from rpc_top_impressed
@@ -112,8 +116,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             ) listingSamples
         from sampled_requests
     )
+    
     SELECT * EXCEPT (listingSamples)
     FROM sampled_qlp_raw, UNNEST(sampled_qlp_raw.listingSamples) listingSample
+    order by queryDate, query, mmxRequestUUID, lastPassRank
 )
 
 
