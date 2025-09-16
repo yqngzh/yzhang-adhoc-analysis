@@ -31,6 +31,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             date(queryTime) as queryDate,
             request.query AS query,
             (SELECT NULLIF(query, '') FROM UNNEST(request.filter.query.translations) WHERE language = 'en') queryEn,
+            NULLIF(response.spellCorrectionResult.correction, '') as querySpellCorrect,
             response.mmxRequestUUID,
             (SELECT
                 CASE
@@ -77,6 +78,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             queryDate,
             query,
             queryEn,
+            querySpellCorrect,
             mmxRequestUUID,
             platform,
             userLanguage,
@@ -102,6 +104,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             queryDate,
             query,
             queryEn,
+            querySpellCorrect,
             mmxRequestUUID,
             platform,
             userLanguage,
