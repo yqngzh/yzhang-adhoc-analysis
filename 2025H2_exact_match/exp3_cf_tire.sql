@@ -1,4 +1,4 @@
-create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_52IDOvAxmwy6k37yP9Me` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_DnFwDQ4pBy1PIYxrd1y5` as (
   with requests as (
     SELECT
       a.response.mmxRequestUUID,
@@ -10,10 +10,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_52IDOvAxmw
     JOIN `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs*` c
     ON (
       a.response.mmxRequestUUID = c.response.mmxRequestUUID
-      AND c.tireRequestContext.tireTestv2Id = "52IDOvAxmwy6k37yP9Me"
-      AND a.request.options.cacheBucketId LIKE "replay-test/%/52IDOvAxmwy6k37yP9Me/%|live|web"
+      AND c.tireRequestContext.tireTestv2Id = "DnFwDQ4pBy1PIYxrd1y5"
+      AND a.request.options.cacheBucketId LIKE "replay-test/%/DnFwDQ4pBy1PIYxrd1y5/%|live|web"
     )
-    WHERE DATE(a.queryTime) = "2025-09-16" AND DATE(c.queryTime) = "2025-09-16"
+    WHERE DATE(a.queryTime) = "2025-09-17" AND DATE(c.queryTime) = "2025-09-17"
     AND EXISTS (
       SELECT 1
       FROM UNNEST(a.OrganicRequestMetadata.candidateSources) AS cs
