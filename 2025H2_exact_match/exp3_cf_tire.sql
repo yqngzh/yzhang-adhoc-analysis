@@ -1,4 +1,4 @@
-create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_DnFwDQ4pBy1PIYxrd1y5` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_rsB4oyaNUssQwYNv4k5r` as (
   with requests as (
     SELECT
       a.response.mmxRequestUUID,
@@ -10,8 +10,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_DnFwDQ4pBy
     JOIN `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs*` c
     ON (
       a.response.mmxRequestUUID = c.response.mmxRequestUUID
-      AND c.tireRequestContext.tireTestv2Id = "DnFwDQ4pBy1PIYxrd1y5"
-      AND a.request.options.cacheBucketId LIKE "replay-test/%/DnFwDQ4pBy1PIYxrd1y5/%|live|web"
+      AND c.tireRequestContext.tireTestv2Id = "rsB4oyaNUssQwYNv4k5r"
+      AND a.request.options.cacheBucketId LIKE "replay-test/%/rsB4oyaNUssQwYNv4k5r/%|live|web"
     )
     WHERE DATE(a.queryTime) = "2025-09-17" AND DATE(c.queryTime) = "2025-09-17"
     AND EXISTS (
@@ -67,7 +67,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_DnFwDQ4pBy
 -- check how many query listing pairs are in table
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_52IDOvAxmwy6k37yP9Me`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_rsB4oyaNUssQwYNv4k5r`
 )
 select count(*) from tmp
 
@@ -75,17 +75,17 @@ select count(*) from tmp
 
 
 -- start analysis
-create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_52IDOvAxmwy6k37yP9Me` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_rsB4oyaNUssQwYNv4k5r` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_52IDOvAxmwy6k37yP9Me` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcfaa_tire_52IDOvAxmwy6k37yP9Me`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_rsB4oyaNUssQwYNv4k5r` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcfaa_tire_rsB4oyaNUssQwYNv4k5r`
   using (query, listingId)
 )
 
 -- @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_52IDOvAxmwy6k37yP9Me`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_rsB4oyaNUssQwYNv4k5r`
   where resultType = "organic_mo"
   group by variantName, mmxRequestUUID
 ),
@@ -100,7 +100,7 @@ page1_res as (
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
     avg(price) as avg_price,
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_52IDOvAxmwy6k37yP9Me`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_rsB4oyaNUssQwYNv4k5r`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_mo"
@@ -129,7 +129,7 @@ group by variantName
 -- blending
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_52IDOvAxmwy6k37yP9Me`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_rsB4oyaNUssQwYNv4k5r`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -143,7 +143,7 @@ blend_res as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_52IDOvAxmwy6k37yP9Me`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_rsB4oyaNUssQwYNv4k5r`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_blend"
