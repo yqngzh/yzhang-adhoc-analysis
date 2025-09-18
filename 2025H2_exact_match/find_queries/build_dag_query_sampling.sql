@@ -112,7 +112,11 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             userIdSeg,
             "Par3AboveExact3" as qlp_source,
             ARRAY(
-                SELECT STRUCT(listing_id AS listingId, idx AS lastPassRank)
+                SELECT STRUCT(
+                  listing_id AS listingId,
+                  cs.stage AS listingStage, 
+                  idx AS listingRank
+                )
                 FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
                 WHERE cs.stage = "MO_LASTPASS"
                 AND idx < 48
@@ -120,9 +124,23 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
         from sampled_requests
     )
     
-    SELECT * EXCEPT (listingSamples)
+    SELECT
+      GENERATE_UUID() AS tableUUID,
+      queryDate,
+      query,
+      ifnull(queryEn, "") queryEn,
+      ifnull(querySpellCorrect, "") querySpellCorrect,
+      mmxRequestUUID,
+      ifnull(platform, "") platform,
+      ifnull(userLanguage, "") userLanguage,
+      ifnull(userCountry, "") userCountry,
+      ifnull(userIdSeg, "") userIdSeg,
+      listingId,
+      ifnull(listingStage, "") listingStage,
+      ifnull(listingRank, -1) listingRank,
+      qlp_source
     FROM sampled_qlp_raw, UNNEST(sampled_qlp_raw.listingSamples) listingSample
-    order by queryDate, query, mmxRequestUUID, lastPassRank
+    order by queryDate, query, mmxRequestUUID, listingRank
 )
 
 
