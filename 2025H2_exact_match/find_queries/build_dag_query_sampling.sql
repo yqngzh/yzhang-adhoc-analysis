@@ -300,6 +300,30 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_dag_hydrated
     QUALIFY ROW_NUMBER() OVER (PARTITION BY listing_id ORDER BY processing_timestamp DESC) = 1
   ),
 
+  listing_entities_json AS (
+    SELECT
+      listing_id AS listingId,
+      TO_JSON_STRING(STRUCT(
+        IFNULL(tangible_item, ARRAY<STRING>[]) AS tangibleItem,
+        IFNULL(material, ARRAY<STRING>[])     AS material,
+        IFNULL(color, ARRAY<STRING>[])        AS color,
+        IFNULL(style, ARRAY<STRING>[])        AS style,
+        IFNULL(size, ARRAY<STRING>[])         AS size,
+        IFNULL(occasion, ARRAY<STRING>[])     AS occasion,
+        IFNULL(customization, ARRAY<STRING>[]) AS customization,
+        IFNULL(technique, ARRAY<STRING>[])    AS technique,
+        IFNULL(fandom, ARRAY<STRING>[])       AS fandom,
+        IFNULL(brand, ARRAY<STRING>[])        AS brand,
+        IFNULL(quantity, ARRAY<STRING>[])     AS quantity,
+        IFNULL(recipient, ARRAY<STRING>[])    AS recipient,
+        IFNULL(age, ARRAY<STRING>[])          AS age,
+        IFNULL(misc, ARRAY<STRING>[])         AS misc
+      )) AS listingEntities
+    FROM `etsy-data-warehouse-prod.inventory_ml.listing_entities_raw_v1`
+    WHERE listing_id IN (SELECT listingId FROM ids)
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY listing_id ORDER BY processing_timestamp DESC) = 1
+  ),
+
   listing_description AS (
     SELECT 
       listing_id AS listingId, 
@@ -353,6 +377,7 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_dag_hydrated
     listingHeroImageCaption,
     listingVariations,
     listingReviews,
+    listingEntities,
     listingEntities_tangibleItem,
     listingEntities_material,
     listingEntities_color,
@@ -373,5 +398,6 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_dag_hydrated
   LEFT JOIN listing_reviews USING (listingId)
   LEFT JOIN listing_images USING (listingId)
   LEFT JOIN listing_entities USING (listingId)
+  LEFT JOIN listing_entities_json USING (listingId)
   LEFT JOIN listing_description USING (listingId)
 )
