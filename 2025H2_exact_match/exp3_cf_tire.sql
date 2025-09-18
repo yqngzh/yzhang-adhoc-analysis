@@ -1,4 +1,4 @@
-create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_7sYxGUjcF1einbesZCo1` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_fTvg7r82YaPHNviQXSV6` as (
   with requests as (
     SELECT
       a.response.mmxRequestUUID,
@@ -10,8 +10,8 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_7sYxGUjcF1
     JOIN `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs*` c
     ON (
       a.response.mmxRequestUUID = c.response.mmxRequestUUID
-      AND c.tireRequestContext.tireTestv2Id = "7sYxGUjcF1einbesZCo1"
-      AND a.request.options.cacheBucketId LIKE "replay-test/%/7sYxGUjcF1einbesZCo1/%|live|web"
+      AND c.tireRequestContext.tireTestv2Id = "fTvg7r82YaPHNviQXSV6"
+      AND a.request.options.cacheBucketId LIKE "replay-test/%/fTvg7r82YaPHNviQXSV6/%|live|web"
     )
     WHERE DATE(a.queryTime) = "2025-09-17" AND DATE(c.queryTime) = "2025-09-17"
     AND EXISTS (
@@ -67,7 +67,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_7sYxGUjcF1
 -- check how many query listing pairs are in table
 with tmp as (
   select distinct query, listingId, listingTitle, listingShopName, listingHeroImageCaption, listingDescNgrams
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_7sYxGUjcF1einbesZCo1`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_fTvg7r82YaPHNviQXSV6`
 )
 select count(*) from tmp
 
@@ -75,17 +75,17 @@ select count(*) from tmp
 
 
 -- start analysis
-create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_7sYxGUjcF1einbesZCo1` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_fTvg7r82YaPHNviQXSV6` as (
   select ori.*, semrelLabel
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_7sYxGUjcF1einbesZCo1` ori
-  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcfaa_tire_7sYxGUjcF1einbesZCo1`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_fTvg7r82YaPHNviQXSV6` ori
+  left join `etsy-search-ml-dev.search.semrel_adhoc_yzhang_emcfaa_tire_fTvg7r82YaPHNviQXSV6`
   using (query, listingId)
 )
 
 -- @48
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_7sYxGUjcF1einbesZCo1`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_fTvg7r82YaPHNviQXSV6`
   where resultType = "organic_mo"
   group by variantName, mmxRequestUUID
 ),
@@ -100,7 +100,7 @@ page1_res as (
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
     avg(price) as avg_price,
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_7sYxGUjcF1einbesZCo1`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_fTvg7r82YaPHNviQXSV6`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_mo"
@@ -129,7 +129,7 @@ group by variantName
 -- blending
 with count_listings as (
   select variantName, mmxRequestUUID, count(*) as cnt
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_7sYxGUjcF1einbesZCo1`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_fTvg7r82YaPHNviQXSV6`
   where resultType = "organic_blend"
   group by variantName, mmxRequestUUID
 ),
@@ -143,7 +143,7 @@ blend_res as (
     variantName, mmxRequestUUID, 
     sum(IF(semrelLabel = "not_relevant", 1, 0)) n_semrel, -- change to relevant
     count(*) as n_total
-  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_7sYxGUjcF1einbesZCo1`
+  from `etsy-search-ml-dev.search.yzhang_emcfaa_tire_results_fTvg7r82YaPHNviQXSV6`
   where mmxRequestUUID is not null
   and semrelLabel is not null
   and resultType = "organic_blend"
@@ -166,6 +166,7 @@ group by variantName
 
 -- candidate size change
 -- https://github.com/etsy/search-retrieval-tools/blob/main/bigquery/new_listing_stats_tire_blender.sql
+-- above only works on two variants, below is for a/a/b
 with rpc as (
   SELECT
     a.response.mmxRequestUUID,
@@ -177,8 +178,8 @@ with rpc as (
   JOIN `etsy-searchinfra-gke-dev.thrift_tire_listingsv2search_search.rpc_logs*` c
   ON (
     a.response.mmxRequestUUID = c.response.mmxRequestUUID
-    AND c.tireRequestContext.tireTestv2Id = "7sYxGUjcF1einbesZCo1"
-    AND a.request.options.cacheBucketId LIKE "replay-test/%/7sYxGUjcF1einbesZCo1/%|live|web"
+    AND c.tireRequestContext.tireTestv2Id = "fTvg7r82YaPHNviQXSV6"
+    AND a.request.options.cacheBucketId LIKE "replay-test/%/fTvg7r82YaPHNviQXSV6/%|live|web"
   )
   WHERE DATE(a.queryTime) = "2025-09-17" AND DATE(c.queryTime) = "2025-09-17"
   AND EXISTS (
