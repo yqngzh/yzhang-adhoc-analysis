@@ -110,7 +110,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             userLanguage,
             userCountry,
             userIdSeg,
-            "Par3AboveExact3" as qlp_source,
+            "Par3AboveExact3" as qlpSource,
             ARRAY(
                 SELECT STRUCT(
                   listing_id AS listingId,
@@ -127,18 +127,18 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
     SELECT
       GENERATE_UUID() AS tableUUID,
       queryDate,
-      query,
+      query queryRaw,
       ifnull(queryEn, "") queryEn,
       ifnull(querySpellCorrect, "") querySpellCorrect,
       mmxRequestUUID,
       ifnull(platform, "") platform,
       ifnull(userLanguage, "") userLanguage,
       ifnull(userCountry, "") userCountry,
-      ifnull(userIdSeg, "") userIdSeg,
+      ifnull(userIdSeg, "") userSegment,
       listingId,
       ifnull(listingStage, "") listingStage,
       ifnull(listingRank, -1) listingRank,
-      qlp_source
+      qlpSource
     FROM sampled_qlp_raw, UNNEST(sampled_qlp_raw.listingSamples) listingSample
     order by queryDate, query, mmxRequestUUID, listingRank
 )
