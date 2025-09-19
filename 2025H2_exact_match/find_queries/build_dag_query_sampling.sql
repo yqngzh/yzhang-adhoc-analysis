@@ -3,26 +3,32 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
     with request_level_impression as (
         select
             query,
+            _date,
             visit_id,
             mmx_request_uuid,
             count(*) as per_request_impression
         from `etsy-data-warehouse-prod.rollups.search_impressions`
-        where _date = date("2025-09-14")
+        where _date between date("2025-09-16") and date("2025-09-18")
         and query is not null and query != ""
-        group by query, visit_id, mmx_request_uuid
+        group by query, _date, visit_id, mmx_request_uuid
     ),
 
     query_level_impression as (
-        select query, sum(per_request_impression) as per_query_impression
+        select query, _date, sum(per_request_impression) as per_query_impression
         from request_level_impression
-        group by query
+        group by query, _date
     ),
 
     top_impressed_queries as (
-        select query
-        from query_level_impression
-        order by per_query_impression desc
-        limit 1000
+        select query, _date
+        from (
+          select 
+            query, _date, 
+            ROW_NUMBER() OVER (PARTITION BY _date ORDER BY per_query_impression DESC) AS rn
+          from query_level_impression
+        )
+        where rn <= 1000
+        order by _date, rn
     ),
 
     -- get requests for most impressed queries, take up to 3 per query
@@ -52,7 +58,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             ) as userIdSeg,
             OrganicRequestMetadata.candidateSources
         FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
-        WHERE date(queryTime) = date("2025-09-14")
+        WHERE date(queryTime) between date("2025-09-16") and date("2025-09-18")
         AND request.options.cacheBucketId LIKE 'live%'
         AND request.query != ""
         AND request.options.csrOrganic
@@ -76,7 +82,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
     rpc_top_impressed as (
         select 
             queryDate,
-            query,
+            rpc.query,
             queryEn,
             querySpellCorrect,
             mmxRequestUUID,
@@ -85,10 +91,12 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             userCountry,
             userIdSeg,
             candidateSources,
-            ROW_NUMBER() OVER (PARTITION BY queryDate, query ORDER BY RAND()) AS rn
+            ROW_NUMBER() OVER (PARTITION BY queryDate, rpc.query ORDER BY RAND()) AS rn
         from rpc
-        where query in (
-            select query from top_impressed_queries
+        join top_impressed_queries ti
+        on (
+          rpc.query = ti.query
+          and rpc.queryDate = ti._date
         )
     ),
 
@@ -126,10 +134,11 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
     
     SELECT
       GENERATE_UUID() AS tableUUID,
-      queryDate,
-      query queryRaw,
+      queryDate as _date,
+      query,
       ifnull(queryEn, "") queryEn,
       ifnull(querySpellCorrect, "") querySpellCorrect,
+      queryDate,
       mmxRequestUUID,
       ifnull(platform, "") platform,
       ifnull(userLanguage, "") userLanguage,
@@ -144,6 +153,36 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
 )
 
 
+-- stats
+with tmp as (
+  select distinct _date, query, queryEn, querySpellCorrect, listingId
+  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base`
+)
+select _date, count(*) 
+from tmp
+group by _date
+order by _date
+-- 2025-09-16	143521 request-qlp, 115282 qqenlp, 112945 qlp, 2998 request-query 
+-- 2025-09-17	143626 request-qlp, 114252 qqenlp, 112033 qlp, 3000 request-query
+-- 2025-09-18	143574 request-qlp, 114490 qqenlp, 112333 qlp, 3000 request-query
+
+with tmp as (
+  select distinct query, queryEn
+  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base`
+),
+tmp2 as (
+  select query, count(*) as cnt
+  from tmp
+  group by query
+)
+select * from tmp 
+where query in (
+  select query
+  from tmp2 where cnt > 1
+)
+and lower(queryEn) != lower(query)
+and queryEn != ""
+order by query, queryEn
 
 
 
