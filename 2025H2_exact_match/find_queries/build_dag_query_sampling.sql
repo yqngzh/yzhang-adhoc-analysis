@@ -440,3 +440,77 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_dag_hydrated
   LEFT JOIN listing_entities_json USING (listingId)
   LEFT JOIN listing_description USING (listingId)
 )
+
+
+
+
+
+CREATE TABLE IF NOT EXISTS `{{ input_table }}_hydrated` (
+    -- from base input table
+    tableUUID  STRING  NOT NULL,
+    _date  DATE  NOT NULL,
+    query  STRING  NOT NULL, 
+    queryEn  STRING,
+    querySpellCorrect  STRING,
+    queryDate  DATE,
+    platform  STRING,
+    userLanguage  STRING,
+    userCountry  STRING,
+    userSegment  STRING,
+    listingId  INT64  NOT NULL,
+    listingStage  STRING,
+    listingRank  INT64,
+    qlpSource  STRING  NOT NULL,
+    -- query features
+    queryBin  STRING,
+    qisClass  STRING,
+    queryRewrites  STRING,
+    queryEntities  STRING,
+    queryTaxoFullPath  STRING,
+    queryTaxoTop  STRING,
+    queryEntities_fandom  ARRAY<STRING>,
+    queryEntities_motif  ARRAY<STRING>,
+    queryEntities_style  ARRAY<STRING>,
+    queryEntities_material  ARRAY<STRING>,
+    queryEntities_color  ARRAY<STRING>,
+    queryEntities_technique  ARRAY<STRING>,
+    queryEntities_tangibleItem  ARRAY<STRING>,
+    queryEntities_size  ARRAY<STRING>,
+    queryEntities_occasion  ARRAY<STRING>,
+    queryEntities_customization  ARRAY<STRING>,
+    queryEntities_age  ARRAY<STRING>,
+    queryEntities_price  ARRAY<STRING>,
+    queryEntities_quantity  ARRAY<STRING>,
+    queryEntities_recipient  ARRAY<STRING>,
+    -- listing features
+    listingCountry  STRING,
+    shop_primaryLanguage  STRING,
+    listingTitle  STRING,
+    listingTitleEn  STRING,
+    listingTaxo  STRING,
+    listingTags  STRING,
+    listingAttributes  STRING,
+    listingShopName  STRING,
+    listingDescription  STRING,
+    listingDescriptionEn   STRING,
+    listingDescNgrams   STRING,
+    listingImageUrls  STRING,
+    listingHeroImageCaption  STRING,
+    listingVariations  STRING,
+    listingReviews  STRING,
+    listingEntities  STRING,
+    listingEntities_tangibleItem  ARRAY<STRING>,
+    listingEntities_material  ARRAY<STRING>,
+    listingEntities_color  ARRAY<STRING>,
+    listingEntities_style  ARRAY<STRING>,
+    listingEntities_size  ARRAY<STRING>,
+    listingEntities_occasion  ARRAY<STRING>,
+    listingEntities_customization  ARRAY<STRING>,
+    listingEntities_technique  ARRAY<STRING>,
+    listingEntities_fandom  ARRAY<STRING>,
+    listingEntities_brand  ARRAY<STRING>,
+    listingEntities_quantity  ARRAY<STRING>,
+    listingEntities_recipient  ARRAY<STRING>,
+    listingEntities_age  ARRAY<STRING>,
+    listingEntities_misc  ARRAY<STRING>
+);
