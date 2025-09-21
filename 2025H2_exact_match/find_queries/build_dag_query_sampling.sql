@@ -27,7 +27,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             ROW_NUMBER() OVER (PARTITION BY _date ORDER BY per_query_impression DESC) AS rn
           from query_level_impression
         )
-        where rn <= 1000
+        where rn <= 50
         order by _date, rn
     ),
 
@@ -154,6 +154,10 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
 
 
 -- stats
+SELECT _date, count(*) 
+FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_base_hydrated` 
+group by _date
+
 with tmp as (
   select distinct _date, query, queryEn, querySpellCorrect, listingId
   from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base`
@@ -166,6 +170,7 @@ order by _date
 -- 2025-09-17	143626 request-qlp, 114252 qqenlp, 112033 qlp, 3000 request-query
 -- 2025-09-18	143574 request-qlp, 114490 qqenlp, 112333 qlp, 3000 request-query
 
+-- query, queryEn relationship
 with tmp as (
   select distinct query, queryEn
   from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base`
@@ -184,6 +189,84 @@ and lower(queryEn) != lower(query)
 and queryEn != ""
 order by query, queryEn
 
+
+
+
+
+
+
+
+-- ======================== DEPRECATED ====================================
+-- hydrated table schema
+CREATE TABLE IF NOT EXISTS `{{ input_table }}_hydrated` (
+    -- from base input table
+    tableUUID  STRING  NOT NULL,
+    _date  DATE  NOT NULL,
+    query  STRING  NOT NULL, 
+    queryEn  STRING,
+    querySpellCorrect  STRING,
+    queryDate  DATE,
+    platform  STRING,
+    userLanguage  STRING,
+    userCountry  STRING,
+    userSegment  STRING,
+    listingId  INT64  NOT NULL,
+    listingStage  STRING,
+    listingRank  INT64,
+    qlpSource  STRING  NOT NULL,
+    -- query features
+    queryBin  STRING,
+    qisClass  STRING,
+    queryRewrites  STRING,
+    queryEntities  STRING,
+    queryTaxoFullPath  STRING,
+    queryTaxoTop  STRING,
+    queryEntities_fandom  ARRAY<STRING>,
+    queryEntities_motif  ARRAY<STRING>,
+    queryEntities_style  ARRAY<STRING>,
+    queryEntities_material  ARRAY<STRING>,
+    queryEntities_color  ARRAY<STRING>,
+    queryEntities_technique  ARRAY<STRING>,
+    queryEntities_tangibleItem  ARRAY<STRING>,
+    queryEntities_size  ARRAY<STRING>,
+    queryEntities_occasion  ARRAY<STRING>,
+    queryEntities_customization  ARRAY<STRING>,
+    queryEntities_age  ARRAY<STRING>,
+    queryEntities_price  ARRAY<STRING>,
+    queryEntities_quantity  ARRAY<STRING>,
+    queryEntities_recipient  ARRAY<STRING>,
+    -- listing features
+    listingCountry  STRING,
+    shop_primaryLanguage  STRING,
+    listingTitle  STRING,
+    listingTitleEn  STRING,
+    listingTaxo  STRING,
+    listingTags  STRING,
+    listingAttributes  STRING,
+    listingShopName  STRING,
+    listingDescription  STRING,
+    listingDescriptionEn   STRING,
+    listingDescNgrams   STRING,
+    listingImageUrls  STRING,
+    listingHeroImageCaption  STRING,
+    listingVariations  STRING,
+    listingReviews  STRING,
+    listingEntities  STRING,
+    listingEntities_tangibleItem  ARRAY<STRING>,
+    listingEntities_material  ARRAY<STRING>,
+    listingEntities_color  ARRAY<STRING>,
+    listingEntities_style  ARRAY<STRING>,
+    listingEntities_size  ARRAY<STRING>,
+    listingEntities_occasion  ARRAY<STRING>,
+    listingEntities_customization  ARRAY<STRING>,
+    listingEntities_technique  ARRAY<STRING>,
+    listingEntities_fandom  ARRAY<STRING>,
+    listingEntities_brand  ARRAY<STRING>,
+    listingEntities_quantity  ARRAY<STRING>,
+    listingEntities_recipient  ARRAY<STRING>,
+    listingEntities_age  ARRAY<STRING>,
+    listingEntities_misc  ARRAY<STRING>
+);
 
 
 -- ============================================================
@@ -441,76 +524,3 @@ CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.yzhang_emqueries_dag_hydrated
   LEFT JOIN listing_description USING (listingId)
 )
 
-
-
-
-
-CREATE TABLE IF NOT EXISTS `{{ input_table }}_hydrated` (
-    -- from base input table
-    tableUUID  STRING  NOT NULL,
-    _date  DATE  NOT NULL,
-    query  STRING  NOT NULL, 
-    queryEn  STRING,
-    querySpellCorrect  STRING,
-    queryDate  DATE,
-    platform  STRING,
-    userLanguage  STRING,
-    userCountry  STRING,
-    userSegment  STRING,
-    listingId  INT64  NOT NULL,
-    listingStage  STRING,
-    listingRank  INT64,
-    qlpSource  STRING  NOT NULL,
-    -- query features
-    queryBin  STRING,
-    qisClass  STRING,
-    queryRewrites  STRING,
-    queryEntities  STRING,
-    queryTaxoFullPath  STRING,
-    queryTaxoTop  STRING,
-    queryEntities_fandom  ARRAY<STRING>,
-    queryEntities_motif  ARRAY<STRING>,
-    queryEntities_style  ARRAY<STRING>,
-    queryEntities_material  ARRAY<STRING>,
-    queryEntities_color  ARRAY<STRING>,
-    queryEntities_technique  ARRAY<STRING>,
-    queryEntities_tangibleItem  ARRAY<STRING>,
-    queryEntities_size  ARRAY<STRING>,
-    queryEntities_occasion  ARRAY<STRING>,
-    queryEntities_customization  ARRAY<STRING>,
-    queryEntities_age  ARRAY<STRING>,
-    queryEntities_price  ARRAY<STRING>,
-    queryEntities_quantity  ARRAY<STRING>,
-    queryEntities_recipient  ARRAY<STRING>,
-    -- listing features
-    listingCountry  STRING,
-    shop_primaryLanguage  STRING,
-    listingTitle  STRING,
-    listingTitleEn  STRING,
-    listingTaxo  STRING,
-    listingTags  STRING,
-    listingAttributes  STRING,
-    listingShopName  STRING,
-    listingDescription  STRING,
-    listingDescriptionEn   STRING,
-    listingDescNgrams   STRING,
-    listingImageUrls  STRING,
-    listingHeroImageCaption  STRING,
-    listingVariations  STRING,
-    listingReviews  STRING,
-    listingEntities  STRING,
-    listingEntities_tangibleItem  ARRAY<STRING>,
-    listingEntities_material  ARRAY<STRING>,
-    listingEntities_color  ARRAY<STRING>,
-    listingEntities_style  ARRAY<STRING>,
-    listingEntities_size  ARRAY<STRING>,
-    listingEntities_occasion  ARRAY<STRING>,
-    listingEntities_customization  ARRAY<STRING>,
-    listingEntities_technique  ARRAY<STRING>,
-    listingEntities_fandom  ARRAY<STRING>,
-    listingEntities_brand  ARRAY<STRING>,
-    listingEntities_quantity  ARRAY<STRING>,
-    listingEntities_recipient  ARRAY<STRING>,
-    listingEntities_age  ARRAY<STRING>,
-    listingEntities_misc  ARRAY<STRING>
-);
