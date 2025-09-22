@@ -166,9 +166,10 @@ select _date, count(*)
 from tmp
 group by _date
 order by _date
--- 2025-09-16	143521 request-qlp, 115282 qqenlp, 112945 qlp, 2998 request-query 
--- 2025-09-17	143626 request-qlp, 114252 qqenlp, 112033 qlp, 3000 request-query
--- 2025-09-18	143574 request-qlp, 114490 qqenlp, 112333 qlp, 3000 request-query
+-- 2025-09-16	7200 request-qlp, 6042 qqenlp, 5925 qlp, 150 request-query 
+-- 2025-09-17	7200 request-qlp, 5988 qqenlp, 5885 qlp, 150 request-query
+-- 2025-09-18	7190 request-qlp, 5747 qqenlp, 5667 qlp, 150 request-query
+-- total      21590             14400        13956     450
 
 -- query, queryEn relationship
 with tmp as (
