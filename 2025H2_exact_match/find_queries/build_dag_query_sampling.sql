@@ -171,6 +171,9 @@ order by _date
 -- 2025-09-18	7190 request-qlp, 5747 qqenlp, 5667 qlp, 150 request-query
 -- total      21590             14400        13956     450
 
+delete from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base_hydrated` 
+where _date = "2025-09-17"
+
 -- query, queryEn relationship
 with tmp as (
   select distinct query, queryEn
