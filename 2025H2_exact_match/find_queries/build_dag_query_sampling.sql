@@ -1,5 +1,5 @@
 create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling` as (
-    -- get distinct 1000 most impressed queries every day
+    -- get distinct 100 most impressed queries every day
     with request_level_impression as (
         select
             query,
@@ -166,9 +166,32 @@ select _date, count(*)
 from tmp
 group by _date
 order by _date
--- 2025-09-16	7200 request-qlp, 5981 qqenlp, 5875 qlp, 300 request-query 
--- 2025-09-17	7200 request-qlp, 5871 qqenlp, 5732 qlp, 300 request-query
--- 2025-09-18	7200 request-qlp, 5782 qqenlp, 5595 qlp, 300 request-query
+
+with new_qlp as (
+  select distinct query, listingId
+  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+  where _date = "2025-09-20"
+),
+existing_qlp as (
+  select distinct query, listingId
+  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+  where _date < "2025-09-20"
+),
+res as (
+  SELECT new_qlp.*
+  FROM new_qlp
+  LEFT JOIN existing_qlp USING (query, listingId)
+  WHERE existing_qlp.query IS NULL
+  AND existing_qlp.listingId IS NULL
+)
+select count(*) from res
+
+-- 2025-09-19	7200 request-qlp, 5981 qqenlp, 5875 qlp, 300 request-query 
+-- 2025-09-20	7200 request-qlp, 5871 qqenlp, 5732 qlp, 300 request-query
+                                  -- new qlp 4233
+-- 2025-09-21	7200 request-qlp, 5782 qqenlp, 5595 qlp, 300 request-query
+                                  -- new qlp 3495
+
 
 delete from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base_hydrated` 
 where _date = "2025-09-17"
@@ -193,7 +216,37 @@ and queryEn != ""
 order by query, queryEn
 
 
-
+-- create initial base table
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as (
+  WITH new_samples AS (
+    SELECT *
+    FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+    WHERE _date = "2025-09-19"
+  ),
+  -- find distinct query listing pairs in nes sample
+  distinct_qqqlp AS (
+      SELECT DISTINCT _date, query, listingId, queryEn, querySpellCorrect
+      FROM new_samples
+  ),
+  -- queryEn and querySpellCorrect are not consistent across requests
+  -- prioritize rows with these info
+  distinct_qlp AS (
+      SELECT _date, query, listingId, queryEn, querySpellCorrect
+      FROM (
+          SELECT
+              *,
+              ROW_NUMBER() OVER (
+                  PARTITION BY query, listingId
+                  ORDER BY
+                      CASE WHEN queryEn IS NOT NULL AND queryEn <> '' THEN 1 ELSE 0 END DESC,
+                      CASE WHEN querySpellCorrect IS NOT NULL AND querySpellCorrect <> '' THEN 1 ELSE 0 END DESC
+              ) AS rn
+          FROM distinct_qqqlp
+          QUALIFY rn = 1
+      )
+  )
+  select * from distinct_qlp
+)
 
 
 
