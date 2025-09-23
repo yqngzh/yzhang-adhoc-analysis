@@ -217,7 +217,9 @@ order by query, queryEn
 
 
 -- create initial base table
-create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base`
+PARTITION BY _date
+as (
   WITH new_samples AS (
     SELECT *
     FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
