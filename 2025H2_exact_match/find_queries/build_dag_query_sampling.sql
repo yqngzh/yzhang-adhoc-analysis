@@ -1,4 +1,4 @@
-create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as (
+create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling` as (
     -- get distinct 1000 most impressed queries every day
     with request_level_impression as (
         select
@@ -8,7 +8,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
             mmx_request_uuid,
             count(*) as per_request_impression
         from `etsy-data-warehouse-prod.rollups.search_impressions`
-        where _date between date("2025-09-16") and date("2025-09-18")
+        where _date between date("2025-09-19") and date("2025-09-21")
         and query is not null and query != ""
         group by query, _date, visit_id, mmx_request_uuid
     ),
@@ -134,17 +134,17 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_base` as
     
     SELECT
       GENERATE_UUID() AS tableUUID,
+      mmxRequestUUID,
       queryDate as _date,
       query,
+      listingId,
       ifnull(queryEn, "") queryEn,
       ifnull(querySpellCorrect, "") querySpellCorrect,
       queryDate,
-      mmxRequestUUID,
       ifnull(platform, "") platform,
       ifnull(userLanguage, "") userLanguage,
       ifnull(userCountry, "") userCountry,
       ifnull(userIdSeg, "") userSegment,
-      listingId,
       ifnull(listingStage, "") listingStage,
       ifnull(listingRank, -1) listingRank,
       qlpSource
