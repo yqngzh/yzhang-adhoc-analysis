@@ -27,7 +27,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling
             ROW_NUMBER() OVER (PARTITION BY _date ORDER BY per_query_impression DESC) AS rn
           from query_level_impression
         )
-        where rn <= 50
+        where rn <= 100
         order by _date, rn
     ),
 
@@ -58,7 +58,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling
             ) as userIdSeg,
             OrganicRequestMetadata.candidateSources
         FROM `etsy-searchinfra-gke-prod-2.thrift_mmx_listingsv2search_search.rpc_logs_*`
-        WHERE date(queryTime) between date("2025-09-16") and date("2025-09-18")
+        WHERE date(queryTime) between date("2025-09-19") and date("2025-09-21")
         AND request.options.cacheBucketId LIKE 'live%'
         AND request.query != ""
         AND request.options.csrOrganic
@@ -127,7 +127,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling
                 )
                 FROM UNNEST(candidateSources) cs, UNNEST(cs.listingIds) AS listing_id WITH OFFSET idx
                 WHERE cs.stage = "MO_LASTPASS"
-                AND idx < 48
+                AND idx < 24
             ) listingSamples
         from sampled_requests
     )
@@ -155,21 +155,20 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling
 
 -- stats
 SELECT _date, count(*) 
-FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_base_hydrated` 
+FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling` 
 group by _date
 
 with tmp as (
   select distinct _date, query, queryEn, querySpellCorrect, listingId
-  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base`
+  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
 )
 select _date, count(*) 
 from tmp
 group by _date
 order by _date
--- 2025-09-16	7200 request-qlp, 6042 qqenlp, 5925 qlp, 150 request-query 
--- 2025-09-17	7200 request-qlp, 5988 qqenlp, 5885 qlp, 150 request-query
--- 2025-09-18	7190 request-qlp, 5747 qqenlp, 5667 qlp, 150 request-query
--- total      21590             14400        13956     450
+-- 2025-09-16	7200 request-qlp, 5981 qqenlp, 5875 qlp, 300 request-query 
+-- 2025-09-17	7200 request-qlp, 5871 qqenlp, 5732 qlp, 300 request-query
+-- 2025-09-18	7200 request-qlp, 5782 qqenlp, 5595 qlp, 300 request-query
 
 delete from `etsy-search-ml-dev.search.yzhang_emqueries_dag_base_hydrated` 
 where _date = "2025-09-17"
