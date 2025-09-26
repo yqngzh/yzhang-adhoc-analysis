@@ -65,10 +65,53 @@ AS (
 
 
 -- =================================================
+-- _llm
+-- =================================================
+CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_llm`
+PARTITION BY _date
+AS (
+    WITH tmp AS (
+        SELECT 
+            *, 
+            ROW_NUMBER() OVER(PARTITION BY query, listingId ORDER BY RAND()) AS rn
+        FROM `etsy-search-ml-dev.search.yzhang_emqueries_issue_llm`
+    )
+    SELECT DISTINCT
+        DATE("2025-09-19") AS _date,
+        query,
+        listingId,
+        "o3_s3h7fs3" AS llm_name,
+        llm_final_label,
+        llm_consensus_type,
+        "" AS llm_reason,
+    FROM tmp
+    WHERE rn = 1
+)
+
+
+-- =================================================
 -- _human_sampling
 -- =================================================
+CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_human_sampling`
+PARTITION BY _date
+AS (
+    WITH tmp AS (
+        SELECT
+            DATE("2025-09-19") AS _date,
+            *,
+            "Par3AboveExact3At24" AS qlpSource
+        FROM `etsy-search-ml-dev.search.exact_match_key_queries_for_v4_2`
+    )
+    SELECT * EXCEPT (tableUUID)
+    FROM tmp    
+)
 
 
 -- =================================================
 -- _human_base
 -- =================================================
+CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_human_base`
+PARTITION BY _date
+AS (
+    SELECT * FROM `etsy-data-warehouse-prod.search.sem_rel_labels_human_sampling`
+)
