@@ -252,6 +252,65 @@ as (
 
 
 
+WITH new_sample AS (
+  SELECT * 
+  FROM `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+  WHERE _date = "2025-09-22"
+  AND qlpSource = "Par3AboveExact3At24"
+),
+merge_with_feature AS (
+  SELECT 
+    s.*,
+    h.queryBin,
+    h.qisClass,
+    h.listingTitle,
+    h.listingTitleEn,
+    h.listingDescription,
+    h.listingDescriptionEn,
+    h.listingAttributes,
+    h.listingVariations,
+    h.listingImageUrls
+  FROM new_sample s  
+  LEFT JOIN `etsy-search-ml-dev.search.yzhang_emqueries_dag_hydrated` h USING (query, listingId)
+),
+merged AS (
+  SELECT 
+    m.*,
+    l.llm_final_label,
+  FROM merge_with_feature m
+  LEFT JOIN `etsy-search-ml-dev.search.yzhang_emqueries_dag_llm` l USING (query, listingId)
+),
+
+-- identify problematic requests
+agg_requests AS (
+  SELECT 
+      mmxRequestUUID,
+      COUNT(*) AS n_total,
+      SUM(IF(llm_final_label = "relevant", 1, 0)) AS n_relevant,
+      SUM(IF(llm_final_label != "relevant" AND listingRank < 12, 1, 0)) AS n_top_irr,
+      SUM(IF(llm_final_label = "relevant" AND listingRank >= 12, 1, 0)) AS n_bottom_rel,
+  FROM merged
+  GROUP BY mmxRequestUUID
+),
+problematic_requests AS (
+  SELECT mmxRequestUUID
+  FROM agg_requests
+  WHERE n_relevant / n_total <= 0.8
+  AND (
+      n_top_irr >= 3 and n_bottom_rel >= 3
+  )
+),
+selected_sample AS (
+  SELECT *
+  FROM merged
+  WHERE mmxRequestUUID IN (
+    SELECT * FROM problematic_requests
+  )
+)
+
+
+
+
 
 
 -- ======================== DEPRECATED ====================================
