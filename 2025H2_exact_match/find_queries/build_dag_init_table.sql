@@ -99,6 +99,7 @@ AS (
         SELECT
             DATE("2025-09-19") AS _date,
             *,
+            "" AS listingShopName,
             "Par3AboveExact3At24" AS qlpSource
         FROM `etsy-search-ml-dev.search.exact_match_key_queries_for_v4_2`
     )
@@ -107,11 +108,11 @@ AS (
 )
 
 
--- =================================================
--- _human_base
--- =================================================
-CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_human_base`
-PARTITION BY _date
-AS (
-    SELECT * FROM `etsy-data-warehouse-prod.search.sem_rel_labels_human_sampling`
-)
+-- -- =================================================
+-- -- _human_base
+-- -- =================================================
+-- CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_human_base`
+-- PARTITION BY _date
+-- AS (
+--     SELECT * FROM `etsy-data-warehouse-prod.search.sem_rel_labels_human_sampling`
+-- )
