@@ -1,12 +1,11 @@
-nir_tm_si: ${matching.default} {
-      owners: ["#search-retrieval", "@mcastanos"]
-      description: "SI: NIR with TM data (based on exact_match_unify_v2student_si)"
+loc_nir_unify: ${matching.default} {
+      owners: ["#search-retrieval", "@ylien"]
+      description: "loc: using domestic nir (based on loc_exact_match_unify_v3student)"
       semrel_config {
-           relevance_threshold: 0.27
+           relevance_threshold: 0.32
            shop_score_threshold: 0.7
            tfserving:${semrel.tfserving.semrel-student-v3}
            ruleset: ["GlobalThresholdRule"]
-           exact_match_cumulative_listing_threshold: 100
       }
       dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
         blending_backend: seldon
@@ -14,7 +13,6 @@ nir_tm_si: ${matching.default} {
       }
       lexical_engine: ${matching.default.lexical_engine} {
         should_limit_solr_candidates: true
-        enable_gqi: true
       }
       preretrieval: ${core-matching.common.preretrieval} {
         ann_feature_set: "nir-perso-lite"
@@ -23,29 +21,11 @@ nir_tm_si: ${matching.default} {
         candidate_source: ann
         config: {
           ann_ensemble: {
-            seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose_tm}
+            seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
           }
         }
       }
       xwalk: ${core-matching.default.xwalk} {
         xwalk_candidate_source: disabled
-      }
-      xml: ${core-matching.common.xml} {
-        request_config {
-          k: 400,
-          beam_size: 40,
-          threshold: 0.0,
-          pp: "sigmoid",
-          multiterm_predict: "True"
-        }
-       xml_http_service: ${services.xml.xml_v2_multiterm_tm.http}
-      }
-      query_entity {
-        query_entity: cached
-          dataset: smu_query_entity_extraction_v2
-          memcached {
-            memcached_enabled: true
-            ttl: 12 hours
-        }
       }
     }

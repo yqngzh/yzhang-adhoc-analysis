@@ -105,12 +105,26 @@ semrel_filtered_count as (
     select 
         variant_id,
         mmx_request_uuid,
-        SUM(CASE WHEN stage = 'POST_FILTER' THEN candidate_count END) 
+        SUM(CASE WHEN stage = 'POST_FILTER' THEN candidate_count END) n_post_filter,
+        SUM(CASE WHEN stage = 'POST_SEM_REL_FILTER' THEN candidate_count END) n_post_sem_rel_filter,
+        SUM(CASE WHEN stage = 'POST_BORDA' THEN candidate_count END) n_post_borda,
+        SUM(CASE WHEN stage = 'RANKING' THEN candidate_count END) n_ranking,
+        SUM(CASE WHEN stage = 'MO_LASTPASS' THEN candidate_count END) n_mo_lastpass,
+        SUM(CASE WHEN stage = 'POST_FILTER' THEN candidate_count END)
             - SUM(CASE WHEN stage = 'POST_SEM_REL_FILTER' THEN candidate_count END) as n_filtered
     from stage_counts
     group by variant_id, mmx_request_uuid
 )
 
-select variant_id, avg(n_filtered), count(*)
+select 
+  variant_id, 
+  avg(n_post_filter) avg_post_filter,
+  avg(n_post_sem_rel_filter) avg_post_semrel_filter,
+  avg(n_post_borda) avg_post_borda,
+  avg(n_ranking) avg_ranking,
+  avg(n_mo_lastpass) avg_lastpass,
+  avg(n_filtered) avg_filtered,
+  count(*) n_requests
 from semrel_filtered_count
 group by variant_id
+
