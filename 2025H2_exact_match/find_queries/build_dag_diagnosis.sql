@@ -1,5 +1,39 @@
 -- ======================== diagnosis-prod ====================================
+select _date, count(*) 
+from `etsy-search-ml-dev.search.sem_rel_labels_sampling`
+group by _date
+order by _date
 
+with tmp as (
+  select distinct _date, query, listingId
+  from `etsy-search-ml-dev.search.sem_rel_labels_human_sampling`
+)
+select _date, query, count(*) cnt
+from tmp 
+group by _date, query
+order by _date desc, cnt desc
+
+with distinct_qlp as (
+  select distinct query, listingId 
+  from `etsy-search-ml-dev.search.sem_rel_labels_sampling`
+  where _date = "2025-09-26"
+),
+existing_qlp as (
+  select distinct query, listingId, 1 as seen 
+  from `etsy-search-ml-dev.search.sem_rel_labels_sampling`
+  where _date < "2025-09-26"
+),
+tmp as (
+  select * 
+  from existing_qlp
+  join distinct_qlp using (query, listingId)
+  -- SELECT d.*
+  -- FROM distinct_qlp d
+  -- LEFT JOIN existing_qlp e USING (query, listingId)
+  -- WHERE e.seen IS NULL
+)
+select count(*) from tmp
+-- 936 + 41718 = 42654
 
 
 
