@@ -1,8 +1,8 @@
-nir_tm_so: ${matching.default} {
-      owners: ["#search-matching", "@mcastanos"]
-      description: "SO: NIR with TM data (based on entity_title_so)"
+nir_tm_si: ${matching.default} {
+      owners: ["#search-retrieval", "@mcastanos"]
+      description: "SI: NIR with TM data (based on exact_match_unify_v2student_si)"
       semrel_config {
-           relevance_threshold: 0.37
+           relevance_threshold: 0.27
            shop_score_threshold: 0.7
            tfserving:${semrel.tfserving.semrel-student-v3}
            ruleset: ["GlobalThresholdRule"]
