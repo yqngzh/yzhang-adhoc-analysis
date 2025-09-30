@@ -5,7 +5,7 @@
 -- =================================================
 -- _sampling
 -- =================================================
-CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_sampling`
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_sampling`
 PARTITION BY _date
 AS 
 SELECT 
@@ -30,12 +30,12 @@ FROM `etsy-search-ml-dev.search.yzhang_emqueries_issue_base`
 -- =================================================
 -- _base
 -- =================================================
-CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_base`
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_base`
 PARTITION BY _date
 AS (
   WITH new_samples AS (
     SELECT *
-    FROM `etsy-data-warehouse-prod.search.sem_rel_labels_sampling`
+    FROM `etsy-search-ml-dev.search.sem_rel_labels_sampling`
     WHERE _date = "2025-09-19"
   ),
   -- find distinct query listing pairs in nes sample
@@ -67,7 +67,7 @@ AS (
 -- =================================================
 -- _llm
 -- =================================================
-CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_llm`
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_llm`
 PARTITION BY _date
 AS (
     WITH tmp AS (
@@ -92,7 +92,7 @@ AS (
 -- =================================================
 -- _human_sampling
 -- =================================================
-CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_human_sampling`
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_human_sampling`
 PARTITION BY _date
 AS (
     WITH tmp AS (
@@ -111,8 +111,18 @@ AS (
 -- -- =================================================
 -- -- _human_base
 -- -- =================================================
--- CREATE OR REPLACE TABLE `etsy-data-warehouse-prod.search.sem_rel_labels_human_base`
+-- CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_human_base`
 -- PARTITION BY _date
 -- AS (
---     SELECT * FROM `etsy-data-warehouse-prod.search.sem_rel_labels_human_sampling`
+--     SELECT * FROM `etsy-search-ml-dev.search.sem_rel_labels_human_sampling`
 -- )
+
+
+-- =================================================
+-- copy to prod
+-- =================================================
+CREATE OR REPLACE TABLE `etsy-search-ml-prod.search.sem_rel_labels_sampling`
+PARTITION BY _date
+AS (
+    SELECT * FROM `etsy-search-ml-dev.search.sem_rel_labels_sampling`
+)

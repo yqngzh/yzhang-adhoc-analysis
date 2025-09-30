@@ -1,4 +1,9 @@
--- ======================== diagnosis ====================================
+-- ======================== diagnosis-prod ====================================
+
+
+
+
+-- ======================== diagnosis-dev ====================================
 with tmp as (
   select distinct _date, mmxRequestUUID, query, queryEn, querySpellCorrect, listingId
   from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
