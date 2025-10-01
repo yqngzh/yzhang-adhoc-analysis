@@ -32,6 +32,7 @@ tmp as (
   -- LEFT JOIN existing_qlp e USING (query, listingId)
   -- WHERE e.seen IS NULL
 )
+-- select count(*) from distinct_qlp
 select count(*) from tmp
 -- 936 + 41718 = 42654
 
