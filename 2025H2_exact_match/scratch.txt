@@ -21,7 +21,7 @@ loc_nir_unify: ${matching.default} {
       candidate_source: ann
       config: {
         ann_ensemble: {
-          seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
+          seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose_tm}
         }
       }
     }
