@@ -1,11 +1,11 @@
-nir_tm_si: ${matching.default} {
-     owners: ["#search-retrieval", "@mcastanos"]
-     description: "SI: NIR with TM data (based on exact_match_unify_v2student_si)"
+exact_match_student_v3_contextual_us: ${matching.default} {
+     owners: ["#search-retrieval", "@yzhang"]
+     description: "Semrel context filtering: context conditioned rule (US, based on nir_tm_so/si)"
      semrel_config {
-         relevance_threshold: 0.27
+         relevance_threshold: 0.0 //not used, set dynamically within the rule
          shop_score_threshold: 0.7
          tfserving:${semrel.tfserving.semrel-student-v3}
-         ruleset: ["GlobalThresholdRule"]
+         ruleset: ["WebContextConditionedRule"]
      }
      dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
        blending_backend: seldon
@@ -49,14 +49,14 @@ nir_tm_si: ${matching.default} {
     }
   }
 
-loc_nir_unify: ${matching.default} {
-    owners: ["#search-retrieval", "@ylien"]
-    description: "loc: using domestic nir (based on loc_exact_match_unify_v3student)"
+loc_exact_match_student_v3_contextual: ${matching.default} {
+    owners: ["#search-retrieval", "@yzhang"]
+    description: "Semrel context filtering: context conditioned rule (INTL, based on loc_nir_unify)"
     semrel_config {
-        relevance_threshold: 0.32
+        relevance_threshold: 0.0 //not used, set dynamically within the rule
         shop_score_threshold: 0.7
         tfserving:${semrel.tfserving.semrel-student-v3}
-        ruleset: ["GlobalThresholdRule"]
+        ruleset: ["WebContextConditionedRule"]
     }
     dynamic_ir_config: ${core-matching.common.dynamic_ir_config} {
       blending_backend: seldon
@@ -72,7 +72,7 @@ loc_nir_unify: ${matching.default} {
       candidate_source: ann
       config: {
         ann_ensemble: {
-          seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose}
+          seldon: ${services.ann_seldon.ann_ensemble_nir_plite_noxformer_loose_tm}
         }
       }
     }
