@@ -49,7 +49,7 @@ nir_tm_si: ${matching.default} {
     }
   }
 
-  loc_nir_unify: ${matching.default} {
+loc_nir_unify: ${matching.default} {
     owners: ["#search-retrieval", "@ylien"]
     description: "loc: using domestic nir (based on loc_exact_match_unify_v3student)"
     semrel_config {
