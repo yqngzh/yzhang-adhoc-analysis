@@ -5,7 +5,7 @@ create or replace table `etsy-search-ml-dev.search.yzhang_tire_solr_entity` as (
         select 
             key as listingId,
             IFNULL(
-                COALESCE(NULLIF(verticaListings_title, ""), verticaListingTranslations_primaryLanguageTitle),
+                COALESCE(NULLIF(verticaListings_title, ''), NULLIF(verticaListingTranslations_machineTranslatedEnglishTitle, '')),
                 ""
             ) listingTitle,
             IFNULL(verticaSellerBasics_shopName, "") listingShopName,
