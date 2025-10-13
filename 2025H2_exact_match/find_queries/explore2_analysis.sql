@@ -256,13 +256,14 @@ create or replace table `etsy-search-ml-dev.search.yzhang_emqueries_issue_proble
     with qlm as (
         select distinct 
             query_raw as query, 
+            REGEXP_CONTAINS(query, '(\?i)\\bgift|\\bfor (\\bhim|\\bher|\\bmom|\\bdad|\\bmother|\\bfather|\\bdaughter|\\bson|\\bwife|\\bhusband|\\bpartner|\\baunt|\\buncle|\\bniece|\\bnephew|\\bfiance|\\bcousin|\\bin law|\\bboyfriend|\\bgirlfriend|\\bgrand|\\bfriend|\\bbest friend)') queryIsGift,
             if(total_clicks > 0, "has_clicks", "no_clicks") as queryPriorClicks,
             if(total_purchases > 0, "has_purchase", "no_purchase") as queryPriorPurchase,
         from `etsy-data-warehouse-prod.rollups.query_level_metrics_raw`
     )
     select 
         x.*,
-        queryPriorClicks, queryPriorPurchase
+        queryIsGift, queryPriorClicks, queryPriorPurchase
     from `etsy-search-ml-dev.search.yzhang_emqueries_issue_problem_requests_wqee` x
     left join qlm using (query)
 )
