@@ -1,12 +1,12 @@
 -- ======================== diagnosis-prod ====================================
 select _date, count(*) 
-from `etsy-search-ml-dev.search.sem_rel_labels_sampling`
+from `etsy-search-ml-prod.search.sem_rel_labels_sampling`
 group by _date
 order by _date
 
 with tmp as (
   select distinct _date, query, listingId
-  from `etsy-search-ml-dev.search.sem_rel_labels_human_sampling`
+  from `etsy-search-ml-prod.search.sem_rel_labels_human_sampling`
 )
 select _date, query, count(*) cnt
 from tmp 
@@ -15,13 +15,13 @@ order by _date desc, cnt desc
 
 with distinct_qlp as (
   select distinct query, listingId 
-  from `etsy-search-ml-dev.search.sem_rel_labels_sampling`
-  where _date = "2025-09-26"
+  from `etsy-search-ml-prod.search.sem_rel_labels_sampling`
+  where _date = "2025-10-20"
 ),
 existing_qlp as (
   select distinct query, listingId, 1 as seen 
-  from `etsy-search-ml-dev.search.sem_rel_labels_sampling`
-  where _date < "2025-09-26"
+  from `etsy-search-ml-prod.search.sem_rel_labels_sampling`
+  where _date < "2025-10-20"
 ),
 tmp as (
   select * 
@@ -34,14 +34,28 @@ tmp as (
 )
 -- select count(*) from distinct_qlp
 select count(*) from tmp
--- 936 + 41718 = 42654
+
+
+-- sampling
+---- 2025-10-20	5837 - distinct qlp 4464, seen 537
+---- 2025-10-21	5664 - distinct qlp 4335, seen 828
+-- base
+---- 2025-10-20	3927
+---- 2025-10-21	3507
+-- human sampling
+---- 2025-10-20	75
+---- 2025-10-21	129
+-- human base
+---- 2025-10-20	75
+---- 2025-10-21	129
+
 
 
 
 -- ======================== diagnosis-dev ====================================
 with tmp as (
   select distinct _date, mmxRequestUUID, query, queryEn, querySpellCorrect, listingId
-  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+  from `etsy-search-ml-prod.search.yzhang_emqueries_dag_sampling`
 )
 select _date, count(*) 
 from tmp
@@ -51,12 +65,12 @@ order by _date
 
 with new_qlp as (
   select distinct query, listingId
-  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+  from `etsy-search-ml-prod.search.yzhang_emqueries_dag_sampling`
   where _date = "2025-09-22"
 ),
 existing_qlp as (
   select distinct query, listingId
-  from `etsy-search-ml-dev.search.yzhang_emqueries_dag_sampling`
+  from `etsy-search-ml-prod.search.yzhang_emqueries_dag_sampling`
   where _date < "2025-09-22"
 ),
 res as (

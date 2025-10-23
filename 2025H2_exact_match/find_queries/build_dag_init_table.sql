@@ -111,11 +111,11 @@ AS (
 -- -- =================================================
 -- -- _human_base
 -- -- =================================================
--- CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_human_base`
--- PARTITION BY _date
--- AS (
---     SELECT * FROM `etsy-search-ml-dev.search.sem_rel_labels_human_sampling`
--- )
+CREATE OR REPLACE TABLE `etsy-search-ml-dev.search.sem_rel_labels_human_base`
+PARTITION BY _date
+AS (
+    SELECT * FROM `etsy-search-ml-dev.search.sem_rel_labels_human_sampling`
+)
 
 
 -- =================================================
