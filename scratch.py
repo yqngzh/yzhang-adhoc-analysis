@@ -1,69 +1,154 @@
-import numpy as np
-from functools import partial
+from enum import Enum
+from typing import Dict, List, Tuple
 
-sig1 = [5, 8, 10, 4, 7, 1, 8, 7, 1, 6, 4] # cols
-sig2 = [6, 5, 6, 5, 7, 10, 3, 5, 3, 6, 6] # rows 
-
-N = len(sig1)
-mat = np.zeros((N, N), dtype=np.int64)
-
-mat[0, 0] = np.abs(sig1[0] - sig2[0])
-
-for row in range(1, N):
-    mat[row, 0] = np.abs(sig2[row] - sig1[0]) + mat[row-1, 0]
-
-for col in range(1, N):
-    mat[0, col] = np.abs(sig2[0] - sig1[col]) + mat[0, col-1]
-
-for r in range(1, N):
-    for c in range(1, N):
-        prev = np.min([mat[r-1, c], mat[r, c-1], mat[r-1, c-1]])
-        mat[r,c] = np.abs(sig2[r] - sig1[c]) + prev
-
-mat[0, :]
+import torch
 
 
-# path = [1,1,2,2,3,3,4,6,8,10,11,16,16,18]
-path = [1,1,3,7,8,8,11,13,16,18,20,20,22]
-x = 0
-for idx in range(len(path)-1):
-    x += (path[idx] - path[idx + 1]) ** 2
-print(x)
+class MetricSpace(Enum):
+    """Metric space that the model embeds queries and listings into"""
+
+    COSINE = "COSINE"
+    L2 = "L2"
+    MAXSIM = "MAXSIM"
+    DOT = "DOT"
 
 
-def gaussian(x, mu, sigma):
-    res = 1. / np.sqrt(2 * np.pi * (sigma ** 2))
-    res = res * np.exp( - ((x - mu) ** 2) / (2 * (sigma ** 2)) )
-    return res
+class ScoreSlice(Enum):
+    LABELED = "LABELED"  # positive pairs
+    IN_BATCH_NEG = "IN_BATCH_NEG"  # positive listings from other queries in batch
+    RANDOM_NEG = "RANDOM_NEG"  # true random negatives
+    HARD_NEG = "HARD_NEG"  # mined hard negatives (through megaminer)
 
-pa = partial(gaussian, mu=0, sigma=1.8)
-pb = partial(gaussian, mu=-1, sigma=1.6)
-pc = partial(gaussian, mu=1, sigma=1.3)
+    def is_negative(self):
+        return self != ScoreSlice.LABELED
 
-0.7 * pa(0.3) * 0.1
-0.3 * pb(0.3) * 0.2
-
-0.7 * pa(0.3) * 0.5 * pa(-0.1) * 0.1
-0.7 * pa(0.3) * 0.3 * pb(-0.1) * 0.2
-0.7 * pa(0.3) * 0.1 * pc(-0.1) * 0.5
-
-0.5 * pa(-0.1) * 0.5 * pa(0.3) * 0.1
-0.5 * pa(-0.1) * 0.3 * pb(0.3) * 0.2
-0.3 * pb(-0.1) * 0.2 * pc(0.3) * 0.5 
-
-0.7 * pa(0.3) * 0.5 * pa(-0.1) * 0.5 * pa(0.3) * 0.5 * pa(0.5) * 0.1
-0.7 * pa(0.3) * 0.5 * pa(-0.1) * 0.5 * pa(0.3) * 0.3 * pb(0.5) * 0.3
-0.7 * pa(0.3) * 0.3 * pb(-0.1) * 0.2 * pc(0.3) * 0.5 * pc(0.5) * 0.4
+    def __lt__(self, other):
+        # This is added so that ScoreSlice can be used in dictionary keys of nn layer subclasses
+        # it throws upon layer construction otherwise
+        # TODO: check if this is still needed
+        return self.value < other.value
 
 
-"""
-A 0.7  N(0,  1.8^2)
-B 0.3  N(-1, 1.6^2)
-C 0    N(1,  1.3^2)
-E 0    
+ScoreSlices = Dict[ScoreSlice, torch.Tensor]
 
-    A       B       C       E
-A   0.5     0.3     0.1     0.1 
-B   0       0.5     0.2     0.3
-C   0       0.1     0.5     0.4
-"""
+
+def extract_score_slices(X: torch.Tensor, num_hard_negatives_per_query: int = 0) -> ScoreSlices:
+    """
+    Separate the distance matrix into components
+    Symbol key:
+         - P: positive batch size; number of positive query listing pairs in batch
+         - N: number of sampled random negative listings, from original negative batch size, or after megaminer
+     Args:
+         X: torch tensor of shape [P, P + P * num_hard_negatives_per_query + N].
+             the distance matrics between all queries and listings in batch
+             columns: [ ...in batch neg..., ...extracted random hard negs by megaminer..., ...totally random negs...]
+             It will be separated into the following components by this function
+                - X_labeled     shape [P, 1],   has distances between the labeled (query, listing) pairs
+                - X_inbatch_neg shape [P, P-1], has distances between each labeled query and listing
+                - X_random_neg  shape [P, N]],  has distances beteween each labeled query and random listing
+                - X_hard_neg    shape [P, P * num_hard_negatives_per_query],  has distances beetween each labeled
+                                                                              query and hard mined listing
+         num_hard_negatives_per_query: int. number of hard negatives mined per query by megaminer
+     Returns:
+         ScoreSlices
+    """
+
+    num_labeled = X.shape[0]  # P
+
+    X_diag = torch.diagonal(X)
+    X_labeled = X_diag[:, None]  # (P, 1)
+
+    X_inbatch_raw = X[:, :num_labeled]
+    mask = ~torch.eye(
+        num_labeled, dtype=torch.bool, device=X.device
+    )  # (P, P) mask, all values true, diagonal elements false
+    X_inbatch_neg = X_inbatch_raw[mask].view(num_labeled, num_labeled - 1)  # (P, P-1), remove diagonal
+
+    X_random_neg = X[:, num_labeled * (1 + num_hard_negatives_per_query) :]  # (P, N)
+
+    score_slices: ScoreSlices = {
+        ScoreSlice.LABELED: X_labeled,
+        ScoreSlice.IN_BATCH_NEG: X_inbatch_neg,
+        ScoreSlice.RANDOM_NEG: X_random_neg,
+    }
+
+    if num_hard_negatives_per_query > 0:
+        score_slices[ScoreSlice.HARD_NEG] = X[
+            :, num_labeled : num_labeled * (1 + num_hard_negatives_per_query)
+        ]  # (P, P * num_hard_negatives_per_query)
+
+    return score_slices
+
+
+class MultipartHingeLoss(torch.nn.Module):
+    """
+    All negative slices use the same loss function: if similarity is too high (distance is too low),
+       exceeding threshold `eps_negative`, there is a penalty as similarity gets even higher.
+    The loss for positives is multi-part because it has different settings for different types of labels
+      (no_event, click, cart, purchase, etc.). This is stored in `epsilons`. If similarity is too low (distance too high)
+      than the configured threshold for a type, there is a penalty as similarity gets even lower.
+    """
+
+    def __init__(
+        self,
+        epsilons: List[Tuple[float, bool]],
+        eps_negative: float,
+        metric_space: MetricSpace,
+        power_of_loss: int = 2,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.epsilons = epsilons
+        self.eps_negative = eps_negative
+        self.metric_space = metric_space
+        self.power_of_loss = power_of_loss
+
+    def rightmost_one_hot_encode_positive_counts(self, y_true: torch.Tensor, include_weight: bool = False):
+        """Takes 2-D matrix of counts and one-hot encodes it using the rightmost positive count"""
+        mask = y_true > 0
+
+        # flip mask along the last dimension to find first True from the right
+        flipped = torch.flip(mask, dims=[1])
+        idx_from_right = flipped.float().argmax(dim=1)
+        has_positive = mask.any(dim=1)
+        rightmost_idx = (y_true.size(1) - 1) - idx_from_right
+
+        out = torch.zeros_like(y_true, dtype=torch.float32)
+        # fill 1 at rightmost index with positive counts, only for rows with positive counts
+        out[has_positive, rightmost_idx[has_positive]] = 1.0
+
+        if include_weight:
+            out = out * y_true.float()
+        return out
+
+    def labeled_loss(self, labeled_scores: torch.Tensor, y_true: torch.Tensor):
+        y_true_one_hot = self.rightmost_one_hot_encode_positive_counts(y_true)
+        labeled_loss_parts = []
+        for margin, is_positive_label in self.epsilons:
+            is_similarity_metric = self.metric_space in (MetricSpace.COSINE, MetricSpace.MAXSIM, MetricSpace.DOT)
+            sign = 1 if (is_positive_label ^ is_similarity_metric) else -1  # xor, true when different, false when same
+            l_part = torch.clamp(sign * (labeled_scores - margin), min=0.0)
+
+            l_part = torch.pow(l_part, self.power_of_loss)  # no op if power_of_loss = 1
+
+            labeled_loss_parts.append(l_part)
+
+        # n_queries X n_targets matrix with the losses for positive (q,l) pairs that would be seen
+        #   for each target (interaction) type
+        l_vec = torch.cat(labeled_loss_parts, dim=1)
+
+        # Loss for positive pairs.
+        # Multiply by one-hot encoding of interaction type to get appropriate loss for interaction,
+        #   then sum everything up
+        return torch.sum(l_vec * y_true_one_hot, dim=1)
+
+    def negative_loss(self, negative_scores: torch.Tensor):
+        # n_queries X (n_random_negatives) matrix of losses for random negatives
+        sign = 1 if self.metric_space in (MetricSpace.COSINE, MetricSpace.MAXSIM, MetricSpace.DOT) else -1
+        loss = torch.pow(torch.clamp(sign * (negative_scores - self.eps_negative), min=0.0), self.power_of_loss)
+        return loss
+
+    def forward(self, y_pred: ScoreSlices, y_true: torch.Tensor) -> ScoreSlices:
+        losses = {ScoreSlice.LABELED: self.labeled_loss(y_pred[ScoreSlice.LABELED], y_true)}
+        losses.update({slice: self.negative_loss(scores) for slice, scores in y_pred.items() if slice.is_negative()})
+        return losses
