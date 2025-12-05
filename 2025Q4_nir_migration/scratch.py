@@ -25,11 +25,10 @@ def load_raw_data_from_parquet_file(
 
 
 columns = [
-    "query_requestUUID",
-    "query_clientProvidedInfo.user.userCountry",
-    "listing_candidateInfo.docInfo.listingInfo.verticaListings.taxonomyPath"
+    "query_clientProvidedInfo.query.query#clientProvidedInfo.query.queryEn#clientProvidedInfo.query.queryCorrected#contextualInfo[name=target].docInfo.queryInfo.query#contextualInfo[name=target].id#fallback#word_2grams",
+    "listing_candidateInfo.docInfo.listingInfo.verticaListings.tags#word_2grams",
 ]
-fpath = "gs://training-dev-search-data-jtzn/user/ci/preprocess-test-neural-ir-dedupe-combine-nesting-asherrick/_split=train/315_e1691320bd6e47de8d94262828bc33a5_000000_000000-0.parquet"
+fpath = "gs://training-dev-search-data-jtzn/user/ci/preprocess-test-neural-ir-dedupe-combine-randomize-slim-yzhang/_split=train/30_fef2d51d7f8b4736936d86e743a2ecf8_000000_000000-0.parquet"
 
 data = load_raw_data_from_parquet_file(fpath, columns)
 first_request = data[0]
