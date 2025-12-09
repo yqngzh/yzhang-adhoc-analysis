@@ -32,6 +32,12 @@ fpath = "gs://training-dev-search-data-jtzn/user/ci/preprocess-test-neural-ir-de
 
 data = load_raw_data_from_parquet_file(fpath, columns)
 first_request = data[0]
-len(first_request["query_requestUUID"]) # 6 (1+5)
-len(first_request["query_clientProvidedInfo.user.userCountry"]) # 6 (1+5)
-len(first_request["listing_candidateInfo.docInfo.listingInfo.verticaListings.taxonomyPath"]) # 6 (1+5)
+# len(first_request["query_requestUUID"]) # 6 (1+5)
+# len(first_request["query_clientProvidedInfo.user.userCountry"]) # 6 (1+5)
+# len(first_request["listing_candidateInfo.docInfo.listingInfo.verticaListings.taxonomyPath"]) # 6 (1+5)
+
+
+listing_feature_data = first_request["listing_candidateInfo.docInfo.listingInfo.verticaListings.tags#word_2grams"]
+len(listing_feature_data)
+len(listing_feature_data[0])
+listing_feature_data[0]
