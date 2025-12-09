@@ -24,11 +24,14 @@ def load_raw_data_from_parquet_file(
     return data
 
 
+columns = None
 columns = [
     "query_clientProvidedInfo.query.query#clientProvidedInfo.query.queryEn#clientProvidedInfo.query.queryCorrected#contextualInfo[name=target].docInfo.queryInfo.query#contextualInfo[name=target].id#fallback#word_2grams",
     "listing_candidateInfo.docInfo.listingInfo.verticaListings.tags#word_2grams",
 ]
-fpath = "gs://training-dev-search-data-jtzn/user/ci/preprocess-test-neural-ir-dedupe-combine-randomize-slim-yzhang/_split=train/30_fef2d51d7f8b4736936d86e743a2ecf8_000000_000000-0.parquet"
+# fpath = "gs://training-dev-search-data-jtzn/user/ci/preprocess-test-neural-ir-dedupe-combine-randomize-slim-yzhang/_split=train/30_fef2d51d7f8b4736936d86e743a2ecf8_000000_000000-0.parquet"
+# fpath = "gs://etldata-prod-adhoc-data-hkwv8r/data/shared/neural_ir/all/sample_for_testing/negatives/_DATE=2025-11-01/part-02402-8f7ceeb5-858f-421e-a698-a4e7d24b77b2-c000.gz.parquet"
+fpath = "gs://etldata-prod-adhoc-data-hkwv8r/data/shared/neural_ir/all/sample_for_testing/negatives/_DATE=2025-11-01/part-14840-a6d41b5f-1556-41b4-a0c1-c11bd349c419-c000.gz.parquet"
 
 data = load_raw_data_from_parquet_file(fpath, columns)
 first_request = data[0]
