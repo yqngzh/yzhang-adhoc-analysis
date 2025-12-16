@@ -4,6 +4,7 @@ __pycache__
 .vscode
 
 venv*
+tf_env
 
 *.pkl
 *.png
