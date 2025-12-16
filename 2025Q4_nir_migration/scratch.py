@@ -50,3 +50,37 @@ listing_feature_data = first_request["listing_candidateInfo.docInfo.listingInfo.
 len(listing_feature_data)
 len(listing_feature_data[0])
 listing_feature_data[0]
+
+
+import torch
+import numpy as np
+import gcsfs
+from models.neural_ir.config import NeuralIR
+
+tensor_request = {
+    'query_clientProvidedInfo.query.query#clientProvidedInfo.query.queryEn#clientProvidedInfo.query.queryCorrected#contextualInfo[name=target].docInfo.queryInfo.query#contextualInfo[name=target].id#fallback#word_2grams': torch.from_numpy(np.array([[]], dtype=np.int64)), 
+    'query_clientProvidedInfo.user.userPreferredLanguage#hash_6_7': torch.tensor([[552, 660]]), 
+    'query_clientProvidedInfo.user.userCountry#hash_2_3': torch.tensor([[ 78, 191]]), 
+    'query_contextualInfo[name=user].userInfo.activeUserShipToLocations.latitude#clientProvidedInfo.user.locationLatitude#fallback:log1p': torch.tensor([0]), 
+    'query_contextualInfo[name=user].userInfo.activeUserShipToLocations.longitude#clientProvidedInfo.user.locationLongitude#fallback:log1p': torch.tensor([0]), 
+    'listing_candidateInfo.docInfo.listingInfo.activeListingLocation.longitude:log1p': torch.tensor([-4]), 
+    'listing_candidateInfo.docInfo.listingInfo.activeListingLocation.latitude:log1p': torch.tensor([3]), 
+    'listing_candidateInfo.docInfo.listingInfo.verticaListings.title#candidateInfo.docInfo.listingInfo.verticaListingTranslations.primaryLanguageTitle#fallback#word_2grams': torch.tensor([[79732, 63359, 29907, 47750]]), 
+    'listing_candidateInfo.docInfo.shopInfo.verticaShopSettings.primaryLanguage#hash_6_7': torch.tensor([[875, 549]]), 
+    'listing_candidateInfo.docInfo.listingInfo.activeListingBasics.priceUsd:log1p': torch.tensor([3]), 
+    'listing_candidateInfo.docInfo.listingInfo.verticaListings.tags#word_2grams': torch.from_numpy(np.array([[]], dtype=np.int64)), 
+    'listing_candidateInfo.docInfo.listingInfo.activeListingBasics.maxPriceUsd:log1p': torch.tensor([0]), 
+    'listing_candidateInfo.docInfo.listingInfo.localeFeatures.listingCountry#hash_2_3': torch.tensor([[148, 642]])
+}
+
+
+model = NeuralIR().model()
+model_path = "gs://training-dev-search-data-jtzn/user/ci/neuralir-test-100K-toks-asherrick/train/checkpoint_20/model.pt"
+fs = gcsfs.GCSFileSystem()
+model_path = model_path.replace("gs://", "")
+with fs.open(model_path, "rb") as f:
+    state_dict = torch.load(f, map_location="cpu")
+
+model.load_state_dict(state_dict, strict=False)
+
+model(tensor_request)
