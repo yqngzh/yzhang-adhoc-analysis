@@ -37,7 +37,8 @@ columns = None
 # fpath = "gs://etldata-prod-search-ranking-data-hkwv8r/data/shared/neural_ir/all/ListingFeatures/active_listings/v2/_DATE=2025-12-09/part-03499-25dd0037-e493-4bf8-aa90-53baa14a8270-c000.snappy.parquet"
 # fpath = "gs://training-dev-search-data-jtzn/user/ci/preprocess-test-neural-ir-main-yzhang/_split=train/30_d9939ad684e9415eafda2f8a5a1628fb_000000_000000-0.parquet"
 # fpath = "gs://training-dev-search-data-jtzn/user/user/nir_processed_2026-01-16/_split=train/1322_09abafc2612e4b47900f75f1c5fdfe2f_005949_000000-0.parquet"
-fpath = "gs://training-dev-search-data-jtzn/user/yzhang/yzhang-data-statictokenizer/_split=train/62_f75502e0c3a34ef08a449702b4de27da_004534_000000-0.parquet"
+# fpath = "gs://training-dev-search-data-jtzn/user/yzhang/yzhang-data-statictokenizer/_split=train/62_f75502e0c3a34ef08a449702b4de27da_004534_000000-0.parquet"
+fpath = "gs://training-dev-search-data-jtzn/user/yzhang/data-30d-20260202-loose-fallback-tight/_split=train/34_52fc17c91ede47d58f8d1fa2f6feb64a_041999_000000-0.parquet"
 
 data = load_raw_data_from_parquet_file(fpath, columns)
 first_request = data[0]
