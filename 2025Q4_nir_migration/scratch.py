@@ -39,7 +39,7 @@ columns = None
 # fpath = "gs://training-dev-search-data-jtzn/user/user/nir_processed_2026-01-16/_split=train/1322_09abafc2612e4b47900f75f1c5fdfe2f_005949_000000-0.parquet"
 # fpath = "gs://training-dev-search-data-jtzn/user/yzhang/yzhang-data-statictokenizer/_split=train/62_f75502e0c3a34ef08a449702b4de27da_004534_000000-0.parquet"
 # fpath = "gs://training-dev-search-data-jtzn/user/yzhang/data-30d-20260202-loose-fallback-tight/_split=train/34_52fc17c91ede47d58f8d1fa2f6feb64a_041999_000000-0.parquet"
-fpath = "gs://training-dev-search-data-jtzn/user/csu/test-nir-onboarding/_split=train/9_9c59618c3d3f4309af584e81840bc248_000753_000000-0.parquet"
+fpath = "gs://training-dev-search-data-jtzn/user/yzhang/xformer-data-test/_split=train/9_338317a8bff24241a64a4dc7a3013cfd_000820_000000-0.parquet"
 
 data = load_raw_data_from_parquet_file(fpath, columns)
 first_request = data[0]
