@@ -40,8 +40,11 @@ columns = None
 # fpath = "gs://training-dev-search-data-jtzn/user/yzhang/yzhang-data-statictokenizer/_split=train/62_f75502e0c3a34ef08a449702b4de27da_004534_000000-0.parquet"
 # fpath = "gs://training-dev-search-data-jtzn/user/yzhang/data-30d-20260202-loose-fallback-tight/_split=train/34_52fc17c91ede47d58f8d1fa2f6feb64a_041999_000000-0.parquet"
 # fpath = "gs://training-dev-search-data-jtzn/user/yzhang/xformer-data-npq1-1d/_split=train/55_b06aa1a7839a4201b04163702800ba98_003419_000000-0.parquet"
-fpath = "gs://training-dev-search-data-jtzn/user/yzhang/xformer-data-npq4-1d/_split=train/86_f4fd37c9164842a48c24463ecc9d8ded_003418_000000-0.parquet"
-fpath = "gs://training-dev-search-data-jtzn/user/mcastanos/nir-30d-20260202-loose-fallback-tight/2026-02-03/eval-filtered-v1-boe/55_826152cf7bbd46b5a209b914c41a19c7_000000_000000-0.parquet"
+# fpath = "gs://training-dev-search-data-jtzn/user/yzhang/xformer-data-npq4-1d/_split=train/86_f4fd37c9164842a48c24463ecc9d8ded_003418_000000-0.parquet"
+# fpath = "gs://training-dev-search-data-jtzn/user/mcastanos/nir-30d-20260202-loose-fallback-tight/2026-02-03/eval-filtered-v1-boe/55_826152cf7bbd46b5a209b914c41a19c7_000000_000000-0.parquet"
+fpath = "gs://training-dev-search-data-jtzn/user/yzhang/data-larger-batch-1d-10pctneg/_split=train/15_6d41d5ad165342bb9683b2ae5d074b3b_000709_000000-0.parquet"
+fpath = "gs://training-dev-search-data-jtzn/user/susanliu/test_preproc_400_30d_all_largecpu_var/_split=train/43_db8e75ea33a2496298a31799ca5e49e3_054999_000000-0.parquet"
+
 
 data = load_raw_data_from_parquet_file(fpath, columns)
 first_request = data[0]
